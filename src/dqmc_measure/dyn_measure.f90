@@ -1,0 +1,46 @@
+  subroutine dyn_measure(nt,gt0up,g0tup,gttup,g00up)
+    
+    implicit none
+    
+    !g0t_(i,j) =-<c^{dagger}(tau)_j c_i>
+    !gt0_(i,j) = <c_i(tau) c^{dagger}_j>
+
+    !	arguments.
+    type(gfunc), intent(in) :: g00up, g0tup, gt0up, gttup
+    integer, intent(in) :: nt
+    
+    !       local
+
+    !g0t_(i,j) = -<c^{dagger}(tau)_j c_i>
+    !gt0_(i,j) =  <c_i(tau) c^{dagger}_j>
+    ! Attention to this definition!!!  
+    ! As in projector version code, I define g0t_(i,j) = <c^{dagger}(tau)_j c_i>, has NO sgn in front
+    !
+    ! How to use it?
+    ! for example, we calculate 
+    ! <S^+_i(tau) S^-_j(0)> = < cup^+_i(tau) cdn_i(tau) cdn^+_j(0) cup_j(0) >
+    !                       = < cup^+_i(tau) cup_j(0) > < cdn_i(tau) cdn^+_j(0) >
+    !                       = -g0tup(j,i) gt0dn(i,j)
+    
+    !!!allocate( g00do(ndim,ndim), g0tdo(ndim,ndim), gt0do(ndim,ndim), gttdo(ndim,ndim) )
+    !!!do j = 1,ndim
+    !!!   xj = 1.d0
+    !!!   if (list(j,2) == 1 ) xj= -1.d0
+    !!!   do i = 1,ndim
+    !!!      xi = 1.d0
+    !!!      if (list(i,2) == 1 ) xi = -1.d0
+    !!!      gt0do(i,j)  = dcmplx(xi*xj,0.d0)*dconjg( g0tup(j,i) )
+    !!!      g0tdo(i,j)  = dcmplx(xi*xj,0.d0)*dconjg( gt0up(j,i) )
+    !!!      gttdo(i,j)  = dcmplx(xi*xj,0.d0)* ( Imat(i,j) - dconjg( gttup(j,i) ) )
+    !!!      g00do(i,j)  = dcmplx(xi*xj,0.d0)* ( Imat(i,j) - dconjg( g00up(j,i) ) )
+    !!!   enddo
+    !!!enddo
+
+    if( dble(phase) < 0.d0 ) then
+        sgn = -1.d0
+    else
+        sgn = 1.d0
+    end if
+    zphi = dcmplx(sgn/dble(phase), 0.d0) * phase
+
+  end subroutine dyn_measure

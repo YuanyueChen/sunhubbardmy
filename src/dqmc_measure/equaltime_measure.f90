@@ -69,9 +69,37 @@
           i_0 = latt%nnlf_list(i)
           do nf = 1, latt%nn_nf
               i_n = latt%nnlist(i_0,nf)
-              zkint = zkint + dcmplx(-2.d0*dble( gfc%orb1(i_0,i_n)*expar(i_0,nf,xmag,flux_x,flux_y,dimer) ), 0.d0 )
+              zkint = zkint + dcmplx(-2.d0*rt*dble( gfc%orb1(i_0,i_n)*expar(i_0,nf,xmag,flux_x,flux_y,dimer) ), 0.d0 )
           end do
       end do
+      ! second nearest hopping
+      if( t2 .ne. 0.d0 ) then
+      do i_0 = 1, latt%nsites
+#IFDEF SQUARE
+        do nf = 1, 4
+#ELIF HONEYCOMB
+        do nf = 1, 6
+#ENDIF
+          i_n = latt%snlist(i_0,nf)
+          ! 0.5 factor to avoid double counting
+          zkint = zkint + dcmplx(-t2*dble( gfc%orb1(i_0,i_n) ), 0.d0 )
+        end do
+      end do
+      end if
+      ! third nearest hopping
+      if( t3 .ne. 0.d0 ) then
+      do i_0 = 1, latt%nsites
+#IFDEF SQUARE
+        do nf = 1, 4
+#ELIF HONEYCOMB
+        do nf = 1, 3
+#ENDIF
+          i_n = latt%tnlist(i_0,nf)
+          ! 0.5 factor to avoid double counting
+          zkint = zkint + dcmplx(-t3*dble( gfc%orb1(i_0,i_n) ), 0.d0 )
+        end do
+      end do
+      end if
     end function zkint
 
     

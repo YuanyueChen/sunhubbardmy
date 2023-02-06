@@ -1,4 +1,4 @@
-module dqmc_ft_basic_data
+module dqmc_basic_data
   use constants, only: dp, czi
   implicit none
 
@@ -199,4 +199,4 @@ module dqmc_ft_basic_data
       !write(*,*) " deallocate_dfint is performed "
     end subroutine deallocate_dfint
 
-end module dqmc_ft_basic_data
+end module dqmc_basic_data

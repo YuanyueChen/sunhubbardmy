@@ -1,9 +1,6 @@
 program dqmc_main
-#IFDEF _OPENMP
-  USE OMP_LIB
-#ENDIF
   use constants
-  use model_para
+  use dqmc_util
   use dqmc_ctrl
   implicit none
 
@@ -15,6 +12,7 @@ program dqmc_main
 
   if(irank==0) open( unit=fout, file='dqmc.out', status='unknown' )
 
+  call dqmc_initial
   call dqmc_start
   call dqmc_warmup
 
@@ -29,6 +27,7 @@ program dqmc_main
       call dqmc_timing
   end do
   
+  call dqmc_core_deallocate
   call dqmc_end
 
   call MPI_BARRIER(MPI_COMM_WORLD,ierr)

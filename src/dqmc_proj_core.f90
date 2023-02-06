@@ -3,12 +3,8 @@ module dqmc_proj_core
 #IFDEF _OPENMP
     USE OMP_LIB
 #ENDIF
-  use spring
   use model_para
-  use dqmc_ft_basic_data
-  use dqmc_config_h0
-  use dqmc_config_plqu
-  use dqmc_config_u
+  use dqmc_para
   use dqmc_measure
   implicit none
 
@@ -21,9 +17,6 @@ module dqmc_proj_core
   type(zfunc), allocatable, dimension(:), save :: logdetQst, logdetQst_tmp
   type(rfunc), allocatable, dimension(:), save :: logwDV, logwDV_tmp
   type(gfunc), save :: gt0, g0t, g00
-  type(h0conf), save :: h0c
-  type(plqconf), save :: hconf
-  type(uconf), save :: u0conf
 
   contains
 

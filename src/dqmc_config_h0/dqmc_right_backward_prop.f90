@@ -5,7 +5,7 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
   USE OMP_LIB
 #ENDIF
   use model_para
-  use dqmc_ft_basic_data
+  use dqmc_basic_data
   implicit none
   class(h0conf) :: this
   integer, intent(in) :: nf

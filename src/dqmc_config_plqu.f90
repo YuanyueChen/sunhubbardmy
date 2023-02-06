@@ -1,7 +1,7 @@
 module dqmc_config_plqu
   use constants, only: dp, cone, czero, pi
   use model_para, only: fout, ierr, irank, isize, lprojplqu, nflr
-  use dqmc_ft_basic_data
+  use dqmc_basic_data
   type plqconf
       logical :: lwarmup
       integer :: lq, ltrot, lcomp

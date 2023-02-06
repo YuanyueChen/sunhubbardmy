@@ -1,6 +1,6 @@
 module dqmc_measure
   use model_para
-  use dqmc_ft_basic_data
+  use dqmc_basic_data
   use dqmc_config_h0
   !use dqmc_config_plqu
 

@@ -1,7 +1,7 @@
 module dqmc_config_u
   use constants, only: dp, cone, czero, pi
   use model_para, only: fout, ierr, irank, isize, lproju, nflr, latt
-  use dqmc_ft_basic_data
+  use dqmc_basic_data
   type uconf
       logical :: lwarmup
       integer :: lq, nsites, ltrot, lcomp

@@ -2,7 +2,7 @@ subroutine dqmc_proj_update_plqu(this, isite, ntau, ul, ur, ulrinv)
 
   use spring
   use model_para
-  use dqmc_ft_basic_data
+  use dqmc_basic_data
 
   implicit none
 

@@ -2,7 +2,7 @@ subroutine dqmc_update_plqu(this, gmat, isite, ntau )
 
   use spring
   use model_para
-  use dqmc_ft_basic_data
+  use dqmc_basic_data
 
   implicit none
 

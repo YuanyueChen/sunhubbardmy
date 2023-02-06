@@ -9,7 +9,7 @@ subroutine dqmc_proj_dyn(ust, ul, ur, xmax_dyn1)
   type(gfunc) :: gftmpb, gftmp, g00, g0t, gt0, gtt, temp
   type(gfunc):: ulr, ulrinv
   type(rfunc) :: logwtmp
-  integer :: nt, ntau, nt_st, i, nt1, ntau1
+  integer :: nt, ntau, nt_st, nl, i, nt1, ntau1
   real(dp) :: xmax
   call allocate_gfunc( gftmpb, ndim, ndim )
   call allocate_gfunc( gftmp, ndim, ndim )
@@ -23,7 +23,7 @@ subroutine dqmc_proj_dyn(ust, ul, ur, xmax_dyn1)
 #IFDEF TEST
   write(fout,*) 'starting dyn'
 #ENDIF
-  do nt = ntauin, ntauin + ntdm -1
+  do nt = ntauin, ntauin + ntdm - 1
 #IFDEF TEST
      write(fout,'(a,i6)') 'in dyn, nt = ', nt
 #ENDIF
@@ -36,8 +36,12 @@ subroutine dqmc_proj_dyn(ust, ul, ur, xmax_dyn1)
         !nt_st = nt/nwrap
         nt_st = iwrap_nt(nt)
         if (ntau.gt.0) then
-           ul = ust(nt_st)
-        endif
+           do nl = 1,ne
+              do i = 1,ndim
+                  ul%orb1(nl,i) = ust(nt_st)%orb1(i,nl)
+              end do
+           end do
+        end if
         !write(fout, '(a)') 'ul='
         !do i = 1, ne
         !    write(fout,'(8(2e12.4,2x))') ul(i,:)
@@ -67,8 +71,7 @@ subroutine dqmc_proj_dyn(ust, ul, ur, xmax_dyn1)
            gtt = gftmp
            gt0 = gftmp
            g0t%orb1 = -gftmpb%orb1
-           nt1 = 0
-           call dyn_measure(nt,gt0,g0t,gtt,g00)
+           call dyn_measure(ntau+1,gt0,g0t,gtt,g00)
         else
            xmax = 0.d0
            call s_compare_max_z(ndim, gtt%orb1, gftmp%orb1, xmax)
@@ -103,7 +106,7 @@ subroutine dqmc_proj_dyn(ust, ul, ur, xmax_dyn1)
      call Bmat_left_forward(nt1,nt1,gtt)
      ntau1 = nt1 - ntauin
      ! write(6,*) 'dyn: calling obsett: ', ntau1
-     call dyn_measure(ntau1,gt0,g0t,gtt,g00)
+     call dyn_measure(ntau1+1,gt0,g0t,gtt,g00)
 
      call Bmat_left_forward(nt1,nt1,ur)
 

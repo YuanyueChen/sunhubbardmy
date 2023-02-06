@@ -33,6 +33,9 @@
           gt0 = gf
           g0t = gf - Ifmat
       end if
+      if( ltau .and. lmeasure_dyn .and. (.not.lupdate) ) then
+          call dyn_measure(1,gt0,g0t,gf,g00)
+      end if ! if( ltau .and. lmeasure_dyn .and. (.not.lupdate) ) then
   
       do nt = 1, ltrot, 1
 

@@ -1,5 +1,8 @@
 module model_para
   use constants, only: dp, czero, cone, ctwo, cthree, cfour, pi
+#IFDEF HONEYCOMB
+  use honeycomb_lattice
+#ENDIF
 #IFDEF SQUARE
   use square_lattice
 #ENDIF
@@ -11,6 +14,9 @@ module model_para
   implicit none
 
   ! lattice
+#IFDEF HONEYCOMB
+  type(honeycomb) :: latt
+#ENDIF
 #IFDEF SQUARE
   type(square) :: latt
 #ENDIF
@@ -27,6 +33,8 @@ module model_para
   real(dp), save :: beta
   real(dp), save :: dtau
   real(dp), save :: rt
+  real(dp), save :: t2
+  real(dp), save :: t3
   real(dp), save :: nu
   real(dp), save :: mu
   real(dp), save :: rhub
@@ -104,9 +112,9 @@ module model_para
 #ENDIF
 
 #IFDEF CUBIC
-    namelist /model_para/ la, lb, lc, beta, dtau, rt, nu, mu, rhub, rhub_plq, alpha, theta, nflr, lprojplqu, lproju, xmag, flux_x, flux_y, dimer
+    namelist /model_para/ la, lb, lc, beta, dtau, rt, t2, t3, nu, mu, rhub, rhub_plq, alpha, theta, nflr, lprojplqu, lproju, xmag, flux_x, flux_y, dimer
 #ELSE
-    namelist /model_para/ la, lb, beta, dtau, rt, nu, mu, rhub, rhub_plq, alpha, theta, nflr, lprojplqu, lproju, xmag, flux_x, flux_y, dimer
+    namelist /model_para/ la, lb, beta, dtau, rt, t2, t3, nu, mu, rhub, rhub_plq, alpha, theta, nflr, lprojplqu, lproju, xmag, flux_x, flux_y, dimer
 #ENDIF
     namelist /ctrl_para/ lstabilize, nwrap, nsweep, nbin, nublock, ltau, dyntau, obs_eqt_mid_len
 
@@ -119,6 +127,8 @@ module model_para
     beta = 20
     dtau = 0.05d0
     rt   = 1.d0
+    t2   = 0.d0
+    t3   = 0.d0
     nu = 0.d0
     mu   = 0.d0 ! default is half filling
     rhub = 0.0d0
@@ -163,6 +173,8 @@ module model_para
     call mpi_bcast( beta,         1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( dtau,         1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( rt,           1, mpi_real8,    0, mpi_comm_world, ierr )
+    call mpi_bcast( t2,           1, mpi_real8,    0, mpi_comm_world, ierr )
+    call mpi_bcast( t3,           1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( nu,           1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( mu,           1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( rhub,         1, mpi_real8,    0, mpi_comm_world, ierr )
@@ -232,7 +244,14 @@ module model_para
         lupdateplqu = .false.
     end if
 
-
+#IFDEF HONEYCOMB
+    ! lattice
+    lq = la*lb
+    ndim = lq*2
+   	a1_p(1) = 0.5d0 ; a1_p(2) = -0.5d0*dsqrt(3.d0)
+    a2_p(1) = 0.5d0 ; a2_p(2) =  0.5d0*dsqrt(3.d0)
+    call setup_honeycomb(la,lb,a1_p,a2_p,latt)
+#ENDIF
 #IFDEF SQUARE
     ! lattice
     lq = la*lb

@@ -33,6 +33,6 @@
 !!!                  write(fout,'(4(2e12.4))') grup(i,:)
 !!!              end do
 #ENDIF
-              call dyn_measure(nt,gt0,g0t,gf,g00)
+              call dyn_measure(nt+1,gt0,g0t,gf,g00)
 
           end if ! if( ltau .and. lmeasure_dyn .and. (.not.lupdate) ) then

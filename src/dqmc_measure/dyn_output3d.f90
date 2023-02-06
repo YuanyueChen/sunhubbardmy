@@ -55,12 +55,12 @@ subroutine fourier_trans_tau(gr,ftag)
   filek = trim(ftag)//trim('_ktau.bin')
   filer = trim(ftag)//trim('_rtau.bin')
 
-  allocate (gk(lq,ltrot))
+  allocate (gk(lq,ntdm+1))
 
   gk = dcmplx(0.d0,0.d0)
   open (unit=20,file=filer,status='unknown', action="write", position="append")
   do imj = 1,lq
-     do nt = 1,ltrot
+     do nt = 1,ntdm+1
         do nk = 1,lq
            gk(nk,nt) = gk(nk,nt) +  gr(imj,nt)/latt%zexpiqr(nk, imj)
         enddo
@@ -74,7 +74,7 @@ subroutine fourier_trans_tau(gr,ftag)
   open (unit=20,file=filek,status='unknown', action="write", position="append")
   do nk = 1,lq
      write(20,'(3f16.8)') latt%listk(nk,1)/dble(latt%l1), latt%listk(nk,2)/dble(latt%l2), latt%listk(nk,3)/dble(latt%l3)
-     do nt = 1,ltrot
+     do nt = 1,ntdm+1
          write(20,'(2e16.8)') gk(nk,nt)
      enddo
   enddo

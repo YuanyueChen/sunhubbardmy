@@ -3,51 +3,16 @@
 """
 Author:         Xiao-Yan Xu <wanderxu@gmail.com>
 Description:
-use chi square to do fitting.
 
 """
 import sys
 import math as mh
-import numpy as np
-import scipy.optimize as opt
-#from scipy.interpolate import spline
-from scipy.interpolate import CubicSpline
-from scipy.interpolate import griddata
-from matplotlib import gridspec
-from matplotlib.ticker import ScalarFormatter
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from matplotlib import collections as mc
 
 
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}',r'\usepackage{amssymb}',r'\usepackage{wasysym}'] #for \text command
-
-###### define curvefunc for curve_fit
-####def curvefunc (xv, *p0 ):
-####        results = p0[0] + p0[1]*xv**p0[2]
-####        return results
-####
-####def chi_square ( xdata, ydata, ydata_sigma, p0 ):
-####        popt,pcov = opt.curve_fit(curvefunc, xdata, ydata, p0, sigma=ydata_sigma, absolute_sigma=False )
-####        perr = np.sqrt(np.diag(pcov))
-####        rchi_sq = np.sum( ( (ydata-curvefunc(xdata, *popt ) ) / ydata_sigma )**2 ) / len(ydata)
-####        return popt, perr, rchi_sq
-####
-###### define curvefunc2 for curve_fit
-####def curvefunc2 (xv, *p0 ):
-####        results = p0[0] + p0[1]*xv
-####        return results
-####
-####def chi_square2 ( xdata, ydata, ydata_sigma, p0 ):
-####        popt,pcov = opt.curve_fit(curvefunc2, xdata, ydata, p0, sigma=ydata_sigma, absolute_sigma=False )
-####        perr = np.sqrt(np.diag(pcov))
-####        rchi_sq = np.sum( ( (ydata-curvefunc2(xdata, *popt ) ) / ydata_sigma )**2 ) / len(ydata)
-####        return popt, perr, rchi_sq
-####
-####
-#####assert len(sys.argv) == 7, "Usage: python file.py f1.dat f2.dat f3.dat f4.dat f5.dat f6.dat"
-#####print "reading file "+sys.argv[1]+" ......"
 
 fig, ( (ax1, ax3, ax5), (ax2, ax4, ax6) ) = plt.subplots(2,3,figsize=(8, 5))
 plt.rc('font', size=10)
@@ -184,13 +149,6 @@ ax5.plot([mh.sqrt(3)*4,  mh.sqrt(3)*9/2],   [6,5.5], 'k-', lw=0.5)
 ax5.plot([mh.sqrt(3)*9/2,mh.sqrt(3)*9/2],   [5.5,4.5], 'k-', lw=0.5)
 ax5.plot([mh.sqrt(3)*9/2,mh.sqrt(3)*4],     [4.5,4], 'k-', lw=0.5)
 ax5.plot([mh.sqrt(3)*4, mh.sqrt(3)*7/2],    [4,4.5], 'k-', lw=0.5)
-
-
-# 倒格矢
-#ax2 = fig.add_subplot(1, 2, 1, projection='3d')
-
-
-
 
 plt.tight_layout()
 plt.savefig("fig_lattice.pdf", dpi=300)

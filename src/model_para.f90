@@ -1,4 +1,10 @@
 module model_para
+  ! in this module, we define model related parameters and calculation control parameters
+  ! The model related parameters include lattice, orbitals, hopping, interaction, ...
+  ! The control parameters includes  parameters for mpi, parameters for numerical stablization, parameters for update, ...
+  ! It also contains several subroutines:
+  ! subroutine make_tables, read parameters from input file, and set up parameters
+  ! subroutine deallocate_tables, deallocate parameter arrays
   use constants, only: dp, czero, cone, ctwo, cthree, cfour, pi
 #IFDEF HONEYCOMB
   use honeycomb_lattice
@@ -9,7 +15,7 @@ module model_para
 #IFDEF CUBIC
   use cubic_lattice
 #ENDIF
-  use spring
+  use spring ! random number generator
   use dqmc_basic_data
   implicit none
 
@@ -23,73 +29,85 @@ module model_para
 #IFDEF CUBIC
   type(cubic) :: latt
 #ENDIF
-  integer, save :: ndim
-  integer, save :: lq
-  integer, save :: norb
-  integer, save :: nzz, nnzz
+  integer, save :: ndim ! typical dimension of matrix, usually it is the total number of sites of the system
+  integer, save :: lq   ! total number of unit cell
+  integer, save :: norb ! number of orbital*sublattice (e.g. for single orbital model, 1 for square, 2 for honeycomb)
+  integer, save :: nzz, nnzz ! coordination number of the nearest neighbor and next nearest neighbor
 
   ! model
-  integer, save :: ne
-  real(dp), save :: beta
-  real(dp), save :: dtau
-  real(dp), save :: rt
-  real(dp), save :: t2
-  real(dp), save :: t3
-  real(dp), save :: nu
-  real(dp), save :: mu
-  real(dp), save :: rhub
-  real(dp), save :: rhub_plq
-  real(dp), save :: alpha
-  real(dp), save :: theta
-  logical, save :: lproju
-  logical, save :: lprojplqu
-  real(dp), save :: xmag
-  real(dp), save :: flux_x
-  real(dp), save :: flux_y
-  real(dp), save :: dimer
-  integer, save :: ltrot
-  integer, save :: nflr
+  integer, save :: ne ! number of particles, ne/ndim is the filling factor
+  real(dp), save :: beta ! inverse temperature
+  real(dp), save :: dtau ! time step
+  real(dp), save :: rt   ! nearest neighbor hopping
+  real(dp), save :: t2   ! second nearest neighbor hopping
+  real(dp), save :: t3   ! third nearest neighbor hopping
+  real(dp), save :: nu   ! reference filling factor (0 for half-filling)
+  real(dp), save :: mu   ! chemical potential
+  real(dp), save :: rhub  ! Hubbard onsite interaction
+  real(dp), save :: rhub_plq ! plaquette interaction
+  real(dp), save :: alpha    ! parameter in front of asistant hopping term
+  real(dp), save :: theta    ! phase factor in asistant hopping term
+  logical, save :: lproju     ! whether using infinite interaction projection for Hubbard onsite interaction
+  logical, save :: lprojplqu  ! whether using infinite interaction projection for plaquette interaction
+  real(dp), save :: xmag  ! z-direction magnetic field
+  real(dp), save :: flux_x ! twisting flux, magnetic field along x-direction
+  real(dp), save :: flux_y ! twisting flux, magnetic field along y-direction
+  real(dp), save :: dimer  ! strength of dimerization
+  integer, save :: ltrot   ! total number of time slices
+  integer, save :: nflr    ! total number of fermion flavors (2 for spin-1/2 fermion systems)
 
   ! global para
-  integer, parameter :: fout = 50
-  integer, save :: irank, isize, ierr
-  complex(dp), dimension(10), save :: main_obs, main_obs_recv, mpi_main_obs
+  integer, parameter :: fout = 50  ! tag for main output
+  integer, save :: irank ! mpi parameters, which process id
+  integer, save :: isize ! mpi parameters, total number process
+  integer, save :: ierr  ! mpi parameters, error tag
+  complex(dp), dimension(10), save :: main_obs, main_obs_recv, mpi_main_obs ! global observables, monitoring running status
 
   ! dqmc relative
-  logical, save :: lwrapT, lwrapu, lwrapplqu, llocal, lstglobal, lworm
-  logical, save :: lupdateu, lupdateplqu
-  complex(dp), save :: phase, phase_tmp
-  real(dp), save :: weight_track
-  real(dp), save :: logweightf_old, logweightf_new, logweights_old, logweights_new
-  complex(dp), save :: logweightf_up, logweightf_dn
-  real(dp), save :: sgnm, nupdate
+  logical, save :: lwrapT ! whether wrap hopping (false when rt=0, true when rt \= 0)
+  logical, save :: lwrapu ! whether wrap onsite interaction (false when rhub=0, true when rhub\=0)
+  logical, save :: lwrapplqu ! whether wrap plaquette interaction (false when rhub_plq=0, true when rhub_plq\=0)
+  logical, save :: llocal ! whether use local update
+  logical, save :: lstglobal ! whether use space-time global update
+  logical, save :: lworm     ! whether use worm update
+  logical, save :: lupdateu  ! whether update configurations for onsite interaction
+  logical, save :: lupdateplqu ! whether update configurations for plaquette interaction
+  complex(dp), save :: phase, phase_tmp ! phase factor of determinant
+  real(dp), save :: weight_track ! track the weight of determinant
+  real(dp), save :: logweightf_old, logweightf_new ! log weight of fermion part
+  real(dp), save :: logweights_old, logweights_new ! log weight of bosonic part
 
   ! cal. control
-  integer, save :: nbin
-  integer, save :: nsweep
-  integer, save :: nst
-  integer, save :: nwrap
-  logical, save :: lstabilize
-  logical, save :: lwarmup
-  integer, save :: nwarmup
-  integer, save :: n_outconf_pace 
-  integer, allocatable, dimension(:) :: iwrap_nt
-  integer, allocatable, dimension(:,:) :: wrap_step
+  integer, save :: nbin  ! total number of bins
+  integer, save :: nsweep ! number of sweeps in each bin
+  integer, save :: nst    ! number of stablization from 0 to beta (or from beta to 0)
+  integer, save :: nwrap  ! time step for stablization
+  logical, save :: lstabilize ! whether use stablization
+  logical, save :: lwarmup ! whether use warmup
+  integer, save :: nwarmup ! number of sweeps for warmup
+  integer, save :: n_outconf_pace  ! pace for output configurations
+  integer, allocatable, dimension(:) :: iwrap_nt    ! for the control of stablization, >0 at the time point of stablization
+  integer, allocatable, dimension(:,:) :: wrap_step ! for the control of stablization, begin and end time point for each stablization
 
   ! for dynamical
-  logical, save :: ltau
+  logical, save :: ltau ! whether measure unequal-time correlations
   real(dp), save :: dyntau ! max dynamical tau
-  integer, save :: obs_eqt_mid_len
-  integer, save :: ntdm
-  integer, save :: ntauin
+  integer, save :: obs_eqt_mid_len ! length of equal-time observation time points for projection QMC
+  integer, save :: ntdm   ! number of time slices for unequal-time measurements
+  integer, save :: ntauin ! start point for unequal-time measurements
 
 
-  real(dp), save :: max_wrap_error, max_wrap_error_tmp, max_phasediff, max_phasediff_tmp
-  real(dp), save :: xmax_dyn, xmax_dyn_tmp
-  real(dp), save :: avglog10error, avgexpphasediff, logcount, logdyncount, avglog10dynerror
+  real(dp), save :: max_wrap_error, max_wrap_error_tmp ! record max wrap error
+  real(dp), save :: max_phasediff, max_phasediff_tmp   ! record max wrap phase error
+  real(dp), save :: xmax_dyn, xmax_dyn_tmp             ! record max dyn error
+  real(dp), save :: avglog10error    ! average of log10 of max wrap error
+  real(dp), save :: avgexpphasediff  ! average of log10 of max wrap phase error
+  real(dp), save :: avglog10dynerror ! average of log10 of max dyn error
+  real(dp), save :: logcount      ! counter for calculating average of log10 of max wrap error
+  real(dp), save :: logdyncount   ! counter for calculating average of log10 of max dyn error
 
   ! delay update
-  integer, save :: nublock
+  integer, save :: nublock ! size of block when doing delay update
 
   contains
 
@@ -104,13 +122,14 @@ module model_para
     logical :: exists
 
 #IFDEF CUBIC
-    integer :: la, lb, lc
-    real(dp) :: a1_p(3), a2_p(3), a3_p(3)
+    integer :: la, lb, lc ! lattice size in each direction, for 3d
+    real(dp) :: a1_p(3), a2_p(3), a3_p(3) ! primitive vectors, for 3d
 #ELSE
-    integer :: la, lb
-    real(dp) :: a1_p(2), a2_p(2)
+    integer :: la, lb ! lattice size in each direction, for 2d
+    real(dp) :: a1_p(2), a2_p(2) ! primitive vectors, for 2d
 #ENDIF
 
+    ! namelist is used for reading parameters from input file
 #IFDEF CUBIC
     namelist /model_para/ la, lb, lc, beta, dtau, rt, t2, t3, nu, mu, rhub, rhub_plq, alpha, theta, nflr, lprojplqu, lproju, xmag, flux_x, flux_y, dimer
 #ELSE
@@ -152,7 +171,7 @@ module model_para
     dyntau = 0
     obs_eqt_mid_len = 1
 
-    ! read parameters
+    ! read parameters, read only in irank=0 process
     if ( irank.eq.0 ) then
         exists = .false.
         inquire (file = 'dqmc.in', exist = exists)
@@ -165,6 +184,7 @@ module model_para
     end if
 
 !#ifdef MPI
+    ! broadcast parameters to all processes
     call mpi_bcast( la,           1, mpi_integer,  0, mpi_comm_world, ierr )
     call mpi_bcast( lb,           1, mpi_integer,  0, mpi_comm_world, ierr )
 #IFDEF CUBIC
@@ -214,7 +234,7 @@ module model_para
         end if
     end if
 
-    if( rt .gt. 0.d0 ) then
+    if( rt .ne. 0.d0 ) then
         lwrapT = .true.
     else
         lwrapT = .false.
@@ -244,13 +264,14 @@ module model_para
         lupdateplqu = .false.
     end if
 
+    ! set up lattice
 #IFDEF HONEYCOMB
     ! lattice
     lq = la*lb
     ndim = lq*2
    	a1_p(1) = 0.5d0 ; a1_p(2) = -0.5d0*dsqrt(3.d0)
     a2_p(1) = 0.5d0 ; a2_p(2) =  0.5d0*dsqrt(3.d0)
-    call setup_honeycomb(la,lb,a1_p,a2_p,latt)
+    call latt%setup_honeycomb(la,lb,a1_p,a2_p)
 #ENDIF
 #IFDEF SQUARE
     ! lattice
@@ -258,7 +279,7 @@ module model_para
     ndim = lq
    	a1_p(1) = 1.0d0 ; a1_p(2) =  0.0d0
     a2_p(1) = 0.0d0 ; a2_p(2) =  1.0d0
-    call setup_square(la,lb,a1_p,a2_p,latt)
+    call latt%setup_square(la,lb,a1_p,a2_p)
 #ENDIF
 #IFDEF CUBIC
     ! lattice
@@ -267,18 +288,17 @@ module model_para
    	a1_p(1) = 1.0d0 ; a1_p(2) =  0.0d0; a1_p(3) = 0.d0;
     a2_p(1) = 0.0d0 ; a2_p(2) =  1.0d0; a2_p(3) = 0.d0;
     a3_p(1) = 0.0d0 ; a3_p(2) =  0.0d0; a3_p(3) = 1.d0;
-    call setup_cubic(la,lb,lc,a1_p,a2_p,a3_p,latt)
+    call latt%setup_cubic(la,lb,lc,a1_p,a2_p,a3_p)
 #ENDIF
-    call print_latt( latt )
 
     ne = ndim/2+int(nu*dble(ndim)/8.d0)  ! number of particles
-    ltrot = nint( beta / dtau )
+    ltrot = nint( beta / dtau ) ! total number of time slices
 
 #IFDEF PIFLUX
     xmag = dble(la*lb)*(a1_p(1)*a2_p(2) - a1_p(2)*a2_p(1))/2.d0
 #ENDIF
 
-    ! tune para for delay update
+    ! tune para for delay update, it is based on some experiences
     if( lq/5 .lt. 16) then
         nublock = 4
     else if( lq/5 .lt. 32 ) then
@@ -291,9 +311,9 @@ module model_para
         nublock = 64
     end if
 
+    ! set nst, iwrap_nt and wrap_step
     allocate( iwrap_nt(0:ltrot) )
     iwrap_nt(0:ltrot) = 0
-    ! set nst, and wrap_step
     if( ltrot .lt. nwrap ) then
         nwrap = ltrot
         if(irank.eq.0) write(fout,'(a,i3,a)')  " WARNNING, ltrot is less than nwrap ", ltrot, ', then nwrap set to equal to ltrot '
@@ -325,6 +345,7 @@ module model_para
         end if
     end if
 
+    ! set ntdm, ntauin
     if(ltau) then
         ntdm = nint(dyntau/dtau)
         ntauin = (ltrot - ntdm)/2
@@ -334,21 +355,21 @@ module model_para
     weight_track = 0.d0
 
     allocate( Imat(ndim,ndim) )
-    call s_identity_z(ndim,Imat)
+    call s_identity_z(ndim,Imat) ! identity matrix
     allocate( Imat_plq(latt%z_plq,latt%z_plq) )
-    call s_identity_z(latt%z_plq,Imat_plq)
-    allocate( Ivec(ndim) )
+    call s_identity_z(latt%z_plq,Imat_plq) ! identity matrix with dimension latt%z_plq*latt%z_plq
+    allocate( Ivec(ndim) ) ! identity vector
     do i = 1, ndim
         Ivec(i) = 1.d0
     end do
-    sgnm = 1.d0
-    phase = cone
+    phase = cone ! inital phase factor is one
 
   end subroutine make_tables
 
   subroutine deallocate_tables
     deallocate( wrap_step )
     deallocate( iwrap_nt )
+    call latt%deallocate_latt
   end subroutine deallocate_tables
 
 end module model_para

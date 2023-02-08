@@ -175,7 +175,7 @@ module dqmc_util
   subroutine dqmc_initial_print
     implicit none
   
-    integer :: i, j, nf, imj
+    integer :: i
   
     IF(irank.eq.0) THEN
   
@@ -225,84 +225,18 @@ module dqmc_util
     do i = 1, nst
         write( fout, '(3i16)') wrap_step(1,i), wrap_step(2,i), iwrap_nt( wrap_step(2,i) )
     end do
-  
-    write(fout,*)
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)')' The lattice sites list '
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)') '   i     list(i,:) '
-    do i = 1, ndim
-        write(fout,'(i6,3i4)') i,  latt%list(i,:)
-    end do
 
-    write(fout,*)
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)')' The lattice sites cord '
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)') '   i     cord(i,:) '
-    do i = 1, ndim
-        write(fout,'(i6,3i4)') i,  latt%cord(i,:)
-    end do
-
-    write(fout,*)
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)')' The lattice nnlist '
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)') '   i     nnlist(i,:) '
-    do i = 1, ndim
-        write(fout,'(i6,12i4)') i,  latt%nnlist(i,:)
-    end do
-
-    write(fout,*)
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)')' The lattice snlist '
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)') '   i     snlist(i,:) '
-    do i = 1, ndim
-        write(fout,'(i6,12i4)') i,  latt%snlist(i,:)
-    end do
-
-    write(fout,*)
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)')' The lattice tnlist '
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)') '   i     tnlist(i,:) '
-    do i = 1, ndim
-        write(fout,'(i6,12i4)') i,  latt%tnlist(i,:)
-    end do
-
-    write(fout,*)
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)')' The lattice plq_cord '
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)') '   i     plq_cord(:,i) '
-    do i = 1, latt%ncell
-        write(fout,'(i6,8i4)') i,  latt%plq_cord(:,i)
-    end do
-
-    write(fout,*)
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)')' The momentum listk '
-    write(fout,'(a)')' --------------------- '
-    write(fout,'(a)') '   i     listk(i,:) '
-    do i = 1, latt%ncell
-        write(fout,'(i6,3i4)') i,  latt%listk(i,:)
-    end do
-  
-    if( latt%ncell < 50 ) then
-    write(fout, *)
-    write(fout,'(a)') '----------------------------'
-    write(fout,'(a)') ' latt_imj info   '
-    write(fout,'(a)') '----------------------------'
-    write(fout, '(a)') '   i   j   imj '
-    do j = 1, latt%ncell
-        do i = 1, latt%ncell
-            imj  = latt%imj(i,j)
-            write(fout, '(3i4)') i, j, imj
-        end do
-    end do
-    end if
-  
+    write(fout,'(a)') ' '
+#IFDEF HONEYCOMB
+    write(fout,'(a)') 'honeycomb_lattice'
+#ENDIF
+#IFDEF SQUARE
+    write(fout,'(a)') 'square_lattice'
+#ENDIF
+#IFDEF CUBIC
+    write(fout,'(a)') 'cubic_lattice'
+#ENDIF
+    call latt%print_latt(fout)
   
     END IF
   

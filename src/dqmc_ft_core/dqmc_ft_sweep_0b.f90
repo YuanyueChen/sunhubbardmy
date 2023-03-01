@@ -8,6 +8,10 @@
       type(gfunc) :: gf_tmp, g0t_tmp, gt0_tmp, UR, VR, UL, VL
       type(dfunc) :: DRvec, DLvec
       type(zfunc) :: logdetQR, logdetQL, logweightf_tmp
+#IFDEF TIMING
+      real(dp) :: starttime19, endtime19
+#ENDIF
+
       call allocate_gfunc(gf_tmp,ndim,ndim)
       call allocate_gfunc(g0t_tmp,ndim,ndim)
       call allocate_gfunc(gt0_tmp,ndim,ndim)
@@ -17,6 +21,10 @@
       call allocate_gfunc(UL,ndim,ndim)
       call allocate_gfunc(VL,ndim,ndim)
       call allocate_dfunc(DLvec,ndim)
+#IFDEF TIMING
+      starttime19 = omp_get_wtime()
+#ENDIF
+
       ! at tau = 0
       if(nst.gt.0) then
       Ust(0) = Ifmat
@@ -224,6 +232,10 @@
 #include "dqmc_ft_core/dyn.f90"
   
       end do
+#IFDEF TIMING
+      endtime19 = omp_get_wtime()
+      timecalculation(1)=timecalculation(1)+endtime19-starttime19
+#ENDIF
 
       call deallocate_gfunc(gf_tmp)
       call deallocate_gfunc(UR)

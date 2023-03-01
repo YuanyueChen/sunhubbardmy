@@ -12,6 +12,13 @@ subroutine dqmc_left_backward_prop(this, gmat, ntau )
 
   ! local
   integer :: i, n2, is, isite
+#IFDEF TIMING
+  real(dp) :: starttime7, endtime7
+#ENDIF
+#IFDEF TIMING
+  starttime7 = omp_get_wtime()
+#ENDIF
+
   n2 = size(gmat%orb1,2)
 
 !$OMP PARALLEL &
@@ -25,5 +32,9 @@ subroutine dqmc_left_backward_prop(this, gmat, ntau )
   end do
 !$OMP END DO
 !$OMP END PARALLEL
+#IFDEF TIMING
+  endtime7 = omp_get_wtime()
+  timecalculation(10)=timecalculation(10)+endtime7-starttime7
+#ENDIF
 
 end subroutine dqmc_left_backward_prop

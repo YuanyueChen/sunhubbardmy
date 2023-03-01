@@ -1,4 +1,7 @@
   subroutine equaltime_measure(nt, gf, gfc)
+#IFDEF _OPENMP
+    USE OMP_LIB
+#ENDIF
     implicit none
     integer,intent(in) :: nt
     type(gfunc) :: gf, gfc
@@ -6,6 +9,12 @@
     ! local 
     integer :: i, j
     complex(dp) :: zne
+#IFDEF TIMING
+    real(dp) :: starttime22, endtime22
+#ENDIF
+#IFDEF TIMING
+    starttime22 = omp_get_wtime()
+#ENDIF
 
     nobs = nobs + 1
 
@@ -55,6 +64,10 @@
     pair_onsite_orb1_bin = pair_onsite_orb1_bin + pair_onsite_orb1*zphi
     pair_nn_orb1_bin = pair_nn_orb1_bin + pair_nn_orb1*zphi
     pair_sn_orb1_bin = pair_sn_orb1_bin + pair_sn_orb1*zphi
+#IFDEF TIMING
+    endtime22 = omp_get_wtime()
+    timecalculation(4)=timecalculation(4)+endtime22-starttime22
+#ENDIF
 
   end subroutine equaltime_measure
 

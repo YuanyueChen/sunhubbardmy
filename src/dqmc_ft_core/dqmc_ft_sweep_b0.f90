@@ -8,6 +8,10 @@
       type(gfunc) :: gf_tmp, UR, VR, UL, VL
       type(dfunc) :: DRvec, DLvec
       type(zfunc) :: logdetQR, logdetQL, logweightf_tmp
+#IFDEF TIMING
+      real(dp) :: starttime20, endtime20
+#ENDIF
+
       call allocate_gfunc(gf_tmp,ndim,ndim)
       call allocate_gfunc(UR,ndim,ndim)
       call allocate_gfunc(VR,ndim,ndim)
@@ -15,6 +19,9 @@
       call allocate_gfunc(UL,ndim,ndim)
       call allocate_gfunc(VL,ndim,ndim)
       call allocate_dfunc(DLvec,ndim)
+#IFDEF TIMING
+      starttime20 = omp_get_wtime()
+#ENDIF
 
       ! at tau = beta
       if(nst.gt.0) then
@@ -91,7 +98,7 @@
           !if ( (iwrap_nt(nt-1).gt.0 .and. (nt.ne.ltrot .or. nwrap.eq.1)) .or. (nt.eq.1) ) then
           if ( (iwrap_nt(nt-1).gt.0 .or. nwrap.eq.1) .or. (nt .eq. 1) ) then
               n = iwrap_nt(nt-1)
-              ! at tau = n * tau1
+               ! at tau = n * tau1
               UR    = Ust(n)
               DRvec = Dst(n)
               VR    = Vst(n)
@@ -162,6 +169,10 @@
 
           end if
       end do
+#IFDEF TIMING
+      endtime20 = omp_get_wtime()
+      timecalculation(1)=timecalculation(1)+endtime20-starttime20
+#ENDIF
 
       call deallocate_gfunc(gf_tmp)
       call deallocate_gfunc(UR)
@@ -170,4 +181,5 @@
       call deallocate_gfunc(UL)
       call deallocate_gfunc(VL)
       call deallocate_dfunc(DLvec)
+
     end subroutine dqmc_ft_sweep_b0

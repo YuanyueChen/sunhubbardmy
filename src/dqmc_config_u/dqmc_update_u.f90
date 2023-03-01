@@ -3,9 +3,10 @@ subroutine dqmc_update_u(this, gmat, ntau )
   use spring
   use model_para
   use dqmc_basic_data
-
+#IFDEF _OPENMP
+  USE OMP_LIB
+#ENDIF
   implicit none
-
   !arguments
   class(uconf), intent(inout) :: this
   integer,intent(in) :: ntau
@@ -18,6 +19,13 @@ subroutine dqmc_update_u(this, gmat, ntau )
 
   type(zvfunc) :: ukmat, vkmat
   type(zfunc) :: sscl
+#IFDEF TIMING
+  real(dp) :: starttime23, endtime23
+#ENDIF
+#IFDEF TIMING
+  starttime23 = omp_get_wtime()
+#ENDIF
+
 
   call allocate_zvfunc( ukmat, ndim)
   call allocate_zvfunc( vkmat, ndim)
@@ -78,4 +86,8 @@ subroutine dqmc_update_u(this, gmat, ntau )
       endif
    end do
    main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
+#IFDEF TIMING
+  endtime23 = omp_get_wtime()
+  timecalculation(14)=timecalculation(14)+endtime23-starttime23
+#ENDIF
 end subroutine dqmc_update_u

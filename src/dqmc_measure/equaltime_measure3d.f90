@@ -1,4 +1,7 @@
   subroutine equaltime_measure(nt, gf, gfc)
+#IFDEF _OPENMP
+    USE OMP_LIB
+#ENDIF
     implicit none
     integer,intent(in) :: nt
     type(gfunc) :: gf, gfc
@@ -6,6 +9,12 @@
     ! local 
     integer :: i, j
     complex(dp) :: zne
+#IFDEF TIMING
+    real(dp) :: starttime22, endtime22
+#ENDIF
+#IFDEF TIMING
+    starttime22 = omp_get_wtime()
+#ENDIF
 
     nobs = nobs + 1
 
@@ -45,7 +54,10 @@
     call measure_bondcorr(gf,gfc)
     zbb_orb1_bin = zbb_orb1_bin + zbb_orb1*zphi
     zb_orb1_bin = zb_orb1_bin + zb_orb1*zphi
-
+#IFDEF TIMING
+    endtime22 = omp_get_wtime()
+    timecalculation(4)=timecalculation(4)+endtime22-starttime22
+#ENDIF
   end subroutine equaltime_measure
 
     complex(dp) function zkint(gf,gfc)
@@ -152,4 +164,5 @@
                                             +   zi*dconjg(zj)*gfc%orb1(i_0,j_0)*gf%orb1(i_n,j_n) + dconjg(zi)*zj*gfc%orb1(i_n,j_n)*gf%orb1(i_0,j_0) )*dcmplx(1.d0/dble(nflr),0.d0)
           end do
       end do
+
     end subroutine measure_bondcorr

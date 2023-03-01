@@ -12,6 +12,13 @@ subroutine dqmc_left_forward_prop(this, gmat, ntau)
 
   ! local
   integer :: i, n2, is, isite
+#IFDEF TIMING
+  real(dp) :: starttime8, endtime8
+#ENDIF
+#IFDEF TIMING
+  starttime8 = omp_get_wtime()
+#ENDIF
+
   n2 = size(gmat%orb1,2)
 
 !$OMP PARALLEL &
@@ -25,5 +32,8 @@ subroutine dqmc_left_forward_prop(this, gmat, ntau)
   end do
 !$OMP END DO
 !$OMP END PARALLEL
-
+#IFDEF TIMING
+      endtime8 = omp_get_wtime()
+      timecalculation(10)=timecalculation(10)+endtime8-starttime8
+#ENDIF
 end subroutine dqmc_left_forward_prop

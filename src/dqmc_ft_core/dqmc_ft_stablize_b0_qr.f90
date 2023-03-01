@@ -8,6 +8,9 @@
       type(dfint) :: jpvt
       type(dfunc) :: Dvec1, Dvec2
       type(gfunc) :: Umat2, Vmat1, Vmat2, Bdtau1, Btmp, Vtmp
+#IFDEF TIMING
+      real(dp) :: starttime17, endtime17
+#ENDIF
 
       call allocate_dfint(jpvt,ndim)
       call allocate_dfunc(Dvec1,ndim)
@@ -18,7 +21,9 @@
       call allocate_gfunc(Bdtau1,ndim,ndim)
       call allocate_gfunc(Btmp,ndim,ndim)
       call allocate_gfunc(Vtmp,ndim,ndim)
-
+#IFDEF TIMING
+      starttime17 = omp_get_wtime()
+#ENDIF
       Bdtau1 = Ust(n)
       ! Bdtau1 = U*B(tau+dtau,tau)
       ! call Bmat_right_forward( wrap_step(2,n), wrap_step(1,n), Bdtau1 )
@@ -48,6 +53,11 @@
       Ust(n-1) = Umat2  ! note we have Umat2^+ and Vmat2^+
       Dst(n-1) = Dvec2
       Vst(n-1) = Vmat2
+#IFDEF TIMING
+      endtime17 = omp_get_wtime()
+      timecalculation(7)=timecalculation(7)+endtime17-starttime17
+#ENDIF
+
       call deallocate_dfint(jpvt)
       call deallocate_dfunc(Dvec1)
       call deallocate_dfunc(Dvec2)

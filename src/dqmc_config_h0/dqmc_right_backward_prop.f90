@@ -11,9 +11,15 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
   integer, intent(in) :: nf
   type(gfunc) :: gmat
   integer :: n1
+#IFDEF TIMING
+  real(dp) :: starttime5, endtime5
+#ENDIF
 #IFDEF BREAKUP_T
   complex(dp), allocatable, dimension(:) :: v1, v2
   integer :: i, ist, i1, i2, j
+#IFDEF TIMING
+  starttime5 = omp_get_wtime()
+#ENDIF
   n1 = size(gmat%orb1,1)
   allocate( v1(n1), v2(n1) )
   if (rt.gt.zero) then
@@ -39,6 +45,9 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
   deallocate(v1, v2)
 #ELSE
   type(gfunc) :: Atmp
+#IFDEF TIMING
+  starttime5 = omp_get_wtime()
+#ENDIF
   n1 = size(gmat%orb1,1)
   call allocate_gfunc( Atmp, n1, ndim )
   if (rt.gt.zero) then
@@ -46,4 +55,8 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
       gmat = Atmp
   endif
 #ENDIF
+#IFDEF TIMING
+  endtime5 = omp_get_wtime()
+  timecalculation(9)=timecalculation(9)+endtime5-starttime5
+#ENDIF 
 end subroutine dqmc_right_backward_prop

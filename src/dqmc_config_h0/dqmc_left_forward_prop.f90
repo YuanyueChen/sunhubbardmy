@@ -11,9 +11,15 @@ subroutine dqmc_left_forward_prop(this, nf, gmat)
   integer, intent(in) :: nf
   type(gfunc) :: gmat
   integer :: n2
+#IFDEF TIMING
+  real(dp) :: starttime3, endtime3
+#ENDIF
 #IFDEF BREAKUP_T
   complex(dp), allocatable, dimension(:) :: v1, v2
   integer :: i, ist, i1, i2, j
+#IFDEF TIMING
+  starttime3 = omp_get_wtime()
+#ENDIF
   n2 = size(gmat%orb1,2)
   allocate( v1(n2), v2(n2) )
   if (rt.gt.zero) then
@@ -39,11 +45,18 @@ subroutine dqmc_left_forward_prop(this, nf, gmat)
   deallocate(v1, v2)
 #ELSE
   type(gfunc) :: Atmp
+#IFDEF TIMING
+  starttime3 = omp_get_wtime()
+#ENDIF
   n2 = size(gmat%orb1,2)
   call allocate_gfunc( Atmp, ndim, n2 )
   if (rt.gt.zero) then
       call zgemm('n','n',ndim,n2,ndim,cone,this%urt,ndim,gmat%orb1,ndim,czero,Atmp%orb1,ndim)
       gmat = Atmp
   endif
+#ENDIF
+#IFDEF TIMING
+  endtime3 = omp_get_wtime()
+  timecalculation(8)=timecalculation(8)+endtime3-starttime3
 #ENDIF
 end subroutine dqmc_left_forward_prop

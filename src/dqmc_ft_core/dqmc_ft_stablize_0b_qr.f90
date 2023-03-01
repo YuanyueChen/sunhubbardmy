@@ -8,7 +8,9 @@
       type(dfint) :: jpvt
       type(dfunc) :: Dvec1, Dvec2
       type(gfunc) :: Umat2, Vmat1, Vmat2, Bdtau1, Btmp, Vtmp
-
+#IFDEF TIMING
+      real(dp) :: starttime16, endtime16
+#ENDIF
       call allocate_dfint(jpvt,ndim)
       call allocate_dfunc(Dvec1,ndim)
       call allocate_dfunc(Dvec2,ndim)
@@ -18,6 +20,9 @@
       call allocate_gfunc(Bdtau1,ndim,ndim)
       call allocate_gfunc(Btmp,ndim,ndim)
       call allocate_gfunc(Vtmp,ndim,ndim)
+#IFDEF TIMING
+      starttime16 = omp_get_wtime()
+#ENDIF
 
       Bdtau1 = Ust(n-1)
       ! Bdtau1 = B(tau+dtau,tau)*U
@@ -48,6 +53,11 @@
       Ust(n) = Umat2
       Dst(n) = Dvec2
       Vst(n) = Vmat2
+#IFDEF TIMING
+      endtime16 = omp_get_wtime()
+      timecalculation(7)=timecalculation(7)+endtime16-starttime16
+#ENDIF
+
       call deallocate_dfint(jpvt)
       call deallocate_dfunc(Dvec1)
       call deallocate_dfunc(Dvec2)

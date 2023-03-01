@@ -119,6 +119,9 @@ module dqmc_util
     call cpu_time(start_time)
 #ENDIF
     main_obs(:) = czero
+#IFDEF TIMING
+    timecalculation(:)=0.d0
+#ENDIF
     max_wrap_error = 0.d0
     max_phasediff = 0.d0
     logcount = 0.d0
@@ -266,6 +269,27 @@ module dqmc_util
         write(fout,'(a,f10.2,a)') ' >>> Total time spent:', end_time-start_time, 's'
         write(fout,'(a)') ' >>> Happy ending at '//date_time_string
         write(fout,*)
+#IFDEF TIMING
+        write(fout,'(a,f10.2,a)') 'The total time of sweep:', timecalculation(1), 's'  
+        write(fout,'(a,f10.2,a)') 'The time of sweep in calculation:', timecalculation(2), 's'
+        write(fout,'(a,f10.2,a)') 'The time of sweep in warmup:', timecalculation(3), 's' 
+        write(fout,'(a,f10.2,a)') 'The time of measuring equaltime:', timecalculation(4), 's'  
+        write(fout,'(a,f10.2,a)') 'The time of measuring unequaltime:', timecalculation(5), 's'
+        write(fout,'(a,f10.2,a)') 'The time of outputing each bin:', timecalculation(6), 's'     
+        write(fout,'(a,f10.2,a)') 'The total time of numerical stability:', timecalculation(7), 's'
+        write(fout,'(a,f10.2,a)') 'The time of H0 left:', timecalculation(8), 's'
+        write(fout,'(a,f10.2,a)') 'The time of H0 right:', timecalculation(9), 's'
+        write(fout,'(a,f10.2,a)') 'The time of u left:', timecalculation(10), 's'
+        write(fout,'(a,f10.2,a)') 'The time of u right:', timecalculation(11), 's'
+        write(fout,'(a,f10.2,a)') 'The time of plqu left:', timecalculation(12), 's'
+        write(fout,'(a,f10.2,a)') 'The time of plqu right:', timecalculation(13), 's'
+        if( timecalculation(14).ne.0.d0 ) then
+            write(fout,'(a,f10.2,a)') 'The time of update without delay update:', timecalculation(14), 's'
+        end if
+        if( timecalculation(15).ne.0.d0 ) then
+            write(fout,'(a,f10.2,a)') 'The time of update with delay update:', timecalculation(15), 's'
+        end if
+#ENDIF      
         write(fout,'(a)') ' The simulation done !!! '
         write(fout,*)
         write(fout,'(a)') '        o         o    '

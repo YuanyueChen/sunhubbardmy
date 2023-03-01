@@ -1,5 +1,7 @@
   subroutine dyn_measure(nt,gt0up,g0tup,gttup,g00up)
-    
+#IFDEF _OPENMP
+    USE OMP_LIB
+#ENDIF    
     implicit none
     
     !g0t_(i,j) =-<c^{dagger}(tau)_j c_i>
@@ -8,6 +10,9 @@
     !	arguments.
     type(gfunc), intent(in) :: g00up, g0tup, gt0up, gttup
     integer, intent(in) :: nt
+#IFDEF TIMING
+    real(dp) :: starttime21, endtime21
+#ENDIF
     
     !       local
     integer :: i, j, no_i, no_j, nu_i, nu_j, imj
@@ -36,6 +41,9 @@
     !!!      g00do(i,j)  = dcmplx(xi*xj,0.d0)* ( Imat(i,j) - dconjg( g00up(j,i) ) )
     !!!   enddo
     !!!enddo
+#IFDEF TIMING
+    starttime21 = omp_get_wtime()
+#ENDIF
 
     if( dble(phase) < 0.d0 ) then
         sgn = -1.d0
@@ -63,5 +71,9 @@
     gtau0_bin = gtau0_bin + gtau0*zphi
     zspsm_tau_bin = zspsm_tau_bin + zspsm_tau*zphi
     znn_tau_bin = znn_tau_bin + znn_tau*zphi
+#IFDEF TIMING
+    endtime21 = omp_get_wtime()
+    timecalculation(5)=timecalculation(5)+endtime21-starttime21
+#ENDIF
 
   end subroutine dyn_measure

@@ -1,5 +1,8 @@
 subroutine dqmc_left_forward_prop(this, gmat, isite, ntau)
   ! B(t+dt,t)*gmat
+#IFDEF _OPENMP
+  USE OMP_LIB
+#ENDIF
   use model_para
   implicit none
 
@@ -10,6 +13,13 @@ subroutine dqmc_left_forward_prop(this, gmat, isite, ntau)
   ! local
   integer :: i, i0, i1, n2, is
   type(gfunc) :: vkmat, vkmat_tmp
+#IFDEF TIMING
+  real(dp) :: starttime12, endtime12
+#ENDIF
+#IFDEF TIMING
+  starttime12 = omp_get_wtime()
+#ENDIF
+
   n2 = size(gmat%orb1,2)
   call allocate_gfunc( vkmat, latt%z_plq, n2 )
   call allocate_gfunc( vkmat_tmp, latt%z_plq, n2 )
@@ -27,5 +37,9 @@ subroutine dqmc_left_forward_prop(this, gmat, isite, ntau)
       gmat%orb1(i1, i) = vkmat_tmp%orb1(i0, i)
     end do
   end do
+#IFDEF TIMING
+  endtime12 = omp_get_wtime()
+  timecalculation(12)=timecalculation(12)+endtime12-starttime12
+#ENDIF
 
 end subroutine dqmc_left_forward_prop

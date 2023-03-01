@@ -1,5 +1,8 @@
 subroutine dqmc_right_backward_prop(this,gmat,jsite,ntau)
   ! gmat*B(t+dt,t)^-1
+#IFDEF _OPENMP
+  USE OMP_LIB
+#ENDIF
   use model_para
   implicit none
 
@@ -10,6 +13,13 @@ subroutine dqmc_right_backward_prop(this,gmat,jsite,ntau)
   ! local
   integer :: i, i0, i1, n1, is
   type(gfunc) :: ukmat, ukmat_tmp
+#IFDEF TIMING
+  real(dp) :: starttime14, endtime14
+#ENDIF
+#IFDEF TIMING
+  starttime14 = omp_get_wtime()
+#ENDIF
+
   n1 = size(gmat%orb1,1)
   call allocate_gfunc(ukmat, n1, latt%z_plq)
   call allocate_gfunc(ukmat_tmp, n1, latt%z_plq)
@@ -27,5 +37,9 @@ subroutine dqmc_right_backward_prop(this,gmat,jsite,ntau)
       gmat%orb1(i, i1) = ukmat_tmp%orb1(i, i0)
     end do
   end do
+#IFDEF TIMING
+  endtime14 = omp_get_wtime()
+  timecalculation(13)=timecalculation(13)+endtime14-starttime14
+#ENDIF
 
 end subroutine dqmc_right_backward_prop

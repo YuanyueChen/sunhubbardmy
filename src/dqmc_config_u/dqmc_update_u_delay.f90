@@ -3,9 +3,10 @@ subroutine dqmc_update_u(this, gmat, ntau )
   use spring
   use model_para
   use dqmc_basic_data
-
+#IFDEF _OPENMP
+  USE OMP_LIB
+#ENDIF
   implicit none
-
   !arguments
   class(uconf), intent(inout) :: this
   integer,intent(in) :: ntau
@@ -23,7 +24,12 @@ subroutine dqmc_update_u(this, gmat, ntau )
   complex(dp), allocatable, dimension(:,:) :: avec_up, bvec_up
   complex(dp), allocatable, dimension(:,:) :: avec_dn, bvec_dn
   integer :: i, ik, m
-
+#IFDEF TIMING
+  real(dp) :: starttime23, endtime23
+#ENDIF
+#IFDEF TIMING
+  starttime23 = omp_get_wtime()
+#ENDIF
   allocate( diagg_up(ndim) )
   allocate( avec_up(ndim,nublock) )
   allocate( bvec_up(ndim,nublock) )
@@ -111,6 +117,10 @@ subroutine dqmc_update_u(this, gmat, ntau )
       end if
    end do
    main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
+#IFDEF TIMING
+  endtime23 = omp_get_wtime()
+  timecalculation(15)=timecalculation(15)+endtime23-starttime23
+#ENDIF
    deallocate( bvec_up )
    deallocate( avec_up )
    deallocate( diagg_up )

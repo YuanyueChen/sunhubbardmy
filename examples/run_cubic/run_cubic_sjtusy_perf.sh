@@ -7,7 +7,7 @@ source cal_para.sh
 
 WORKDIR="$PWD"
 echo $WORKDIR
-EXE=$HOME/mywork/sun-hubbard/bin/${code}_20220208
+EXE=$HOME/sun-hubbard-main/bin/dqmc_ft
 cd $WORKDIR
 for beta in ${betaarray}; do
 for u in ${uarray}; do
@@ -77,15 +77,20 @@ cat>${maindir}.sub<<endsub
 ###SBATCH --exclusive
 #SBATCH -n $NP
 #SBATCH --ntasks-per-node=$NP
-#SBATCH -t 168:00:00
+#SBATCH -t 10:00:00
 #SBATCH -o job.%j.%N.out
 #SBATCH -e job.%j.%N.err
 
 module load intel-oneapi-compilers
 module load intel-oneapi-mkl
 module load intel-oneapi-mpi
-
-mpirun -np $NP $EXE
+module load miniconda3/4.10.3
+conda create --name perf
+source activate perf
+conda install -c conda-forge linux-perf
+perf record mpirun -np $NP $EXE
+##mpirun -np $NP $EXE
+##gprof $EXE > gprof.out
 endsub
 
        #nb=$( wc -l energy.bin |awk '{print $1}' )

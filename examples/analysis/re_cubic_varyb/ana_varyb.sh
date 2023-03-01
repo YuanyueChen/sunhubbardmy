@@ -6,8 +6,7 @@ nskps=0
 nskpl=0
 
 WORKDIR="$PWD"
-#datadir=$WORKDIR/../../run_cubic/
-datadir=~/sun-hubbard-main/examples/run_cubic
+datadir=$WORKDIR/../../run_cubic/
 echo $WORKDIR
 cd $WORKDIR
 for u in ${uarray}; do

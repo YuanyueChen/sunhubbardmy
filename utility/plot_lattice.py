@@ -12,7 +12,7 @@ import matplotlib as mpl
 
 
 mpl.rcParams['text.usetex'] = True
-#mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}',r'\usepackage{amssymb}',r'\usepackage{wasysym}'] #for \text command
+mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}',r'\usepackage{amssymb}',r'\usepackage{wasysym}'] #for \text command
 
 fig, ( (ax1, ax3, ax5), (ax2, ax4, ax6) ) = plt.subplots(2,3,figsize=(8, 5))
 plt.rc('font', size=10)

@@ -289,6 +289,12 @@ module dqmc_util
         if( timecalculation(15).ne.0.d0 ) then
             write(fout,'(a,f10.2,a)') 'The time of update with delay update:', timecalculation(15), 's'
         end if
+        if( timecalculation(16).ne.0.d0 ) then
+            write(fout,'(a,f10.2,a)') 'The time of update without delay update in proj:', timecalculation(16), 's'
+        end if
+        if( timecalculation(17).ne.0.d0 ) then
+            write(fout,'(a,f10.2,a)') 'The time of update with delay update in proj:', timecalculation(17), 's'
+        end if
 #ENDIF      
         write(fout,'(a)') ' The simulation done !!! '
         write(fout,*)

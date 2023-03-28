@@ -62,8 +62,11 @@ module dqmc_config_u
 #ELSE
 #include 'dqmc_config_u/dqmc_update_u.f90'
 #ENDIF
+#IFDEF DELAY
+#include 'dqmc_config_u/dqmc_proj_update_u_delay.f90'
+#ELSE
 #include 'dqmc_config_u/dqmc_proj_update_u.f90'
-
+#ENDIF
   subroutine deallocate_uconf( this )
     implicit none
     type(uconf) :: this

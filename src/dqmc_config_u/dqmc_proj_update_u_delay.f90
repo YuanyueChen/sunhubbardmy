@@ -33,8 +33,8 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
 #ENDIF
 
   allocate( diagg_up(ndim) )
-  allocate( avec_up(ndim,ndim) )
-  allocate( bvec_up(ndim,ndim) )
+  allocate( avec_up(ndim,nublock) )
+  allocate( bvec_up(ndim,nublock) )
   allocate( gmmat(ndim,ndim) )
   allocate( ulrinvul(ne,ndim) )
   allocate( urrecord(ndim,ne) )
@@ -113,7 +113,22 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
          ! flip
          this%conf_u(isite,ntau) =  isp
      end if
-     
+      
+     if( (ik.eq.nublock) .and. (isite.ne.latt%nsites) ) then
+          ik = 0
+          ! delay update: update the whole Green function
+          call  zgemm('N', 'T', ndim, ndim, nublock, cone, avec_up, ndim, bvec_up, ndim, cone, gmmat, ndim)
+          if( isite.lt.latt%nsites) then
+              ! initial diag G
+              do i = 1, ndim
+              diagg_up(i) = gmmat(i,i)
+              end do
+              ! intial avec, bvec
+              avec_up = czero
+              bvec_up = czero
+          end if
+      end if
+
      if(  isite.eq.latt%nsites ) then
           ik = 0
           ! delay update: update the R and the (LR)^-1

@@ -40,15 +40,12 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
   allocate( urrecord(ndim,ne) )
   
   ulrinvul = czero
-  gmmat = czero
+  gmmat = Imat
   urrecord = ur%orb1
   !calculate the G function
   call zgemm('N', 'N', ne, ndim, ne, cone, ulrinv%orb1, ne, ul%orb1, ne, czero, ulrinvul, ne)
-  call zgemm('N', 'N', ndim, ndim, ne, cone, ur%orb1, ndim, ulrinvul,ne, czero, gmmat, ndim)
-  gmmat(:,:) =-gmmat(:,:)
-  do isite = 1, latt%nsites
-      gmmat(isite,isite) =cone + gmmat(isite,isite)
-  end do
+  call zgemm('N', 'N', ndim, ndim, ne, -cone, ur%orb1, ndim, ulrinvul,ne, cone, gmmat, ndim)
+
   accm  = 0.d0
   ik = 0
   ! initial diag G

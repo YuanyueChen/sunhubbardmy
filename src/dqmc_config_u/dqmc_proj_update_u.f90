@@ -114,7 +114,7 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
   main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
 #IFDEF TIMING
   endtime26 = omp_get_wtime()
-  timecalculation(16)=timecalculation(16)+endtime26-starttime2    6
+  timecalculation(16)=timecalculation(16)+endtime26-starttime26
 #ENDIF 
 
 end subroutine dqmc_proj_update_u

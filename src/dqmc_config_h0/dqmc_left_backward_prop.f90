@@ -14,6 +14,7 @@ subroutine dqmc_left_backward_prop(this, nf, gmat)
 #IFDEF TIMING
   real(dp) :: starttime2, endtime2
 #ENDIF
+! case 1, use trotter
 #IFDEF BREAKUP_T
   complex(dp), allocatable, dimension(:) :: v1, v2
   integer :: i, ist, i1, i2, j
@@ -43,6 +44,140 @@ subroutine dqmc_left_backward_prop(this, nf, gmat)
 !$OMP END PARALLEL
   endif
   deallocate(v1, v2)
+
+! case 2, use fft
+#ELIF DEFINED(FFT)
+
+  integer :: Status, i, j
+  type(DFTI_DESCRIPTOR), POINTER :: Desc_Handle_Dim1
+  complex(dp), dimension(:), allocatable :: fftmp
+
+#IFDEF SQUARE
+  integer :: dimm(2)
+  n2 = size(gmat%orb1,2)
+  dimm(:) = (/latt%l1,latt%l2/)
+  Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 2, dimm)
+  allocate( fftmp(lq*n2) )
+
+  ! perform n2 two-dimensional transforms along 1st dimension of gmat
+  fftmp = reshape( gmat%orb1, (/lq*n2/) )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_NUMBER_OF_TRANSFORMS, n2 )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_INPUT_DISTANCE, lq )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_OUTPUT_DISTANCE, lq )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_FORWARD_SCALE, 1.d0/dsqrt(dble(lq)) )
+  Status = DftiCommitDescriptor( Desc_Handle_Dim1 )
+  Status = DftiComputeForward( Desc_Handle_Dim1, fftmp )
+
+  gmat%orb1 = reshape( fftmp, (/lq,n2/) )
+  do j = 1, n2
+      do i = 1, lq
+          gmat%orb1(i,j) = gmat%orb1(i,j) * this%exph0kinv(i)
+      end do
+  end do
+
+  ! perform n2 two-dimensional transforms along 1st dimension of gmat
+  fftmp = reshape( gmat%orb1, (/lq*n2/) )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_BACKWARD_SCALE, 1.d0/dsqrt(dble(lq)) )
+  Status = DftiCommitDescriptor( Desc_Handle_Dim1 )
+  Status = DftiComputeBackward( Desc_Handle_Dim1, fftmp )
+
+  Status = DftiFreeDescriptor( Desc_Handle_Dim1 )
+
+  gmat%orb1 = reshape( fftmp, (/lq,n2/) )
+
+  deallocate( fftmp )
+#ELIF CUBIC
+  integer :: dimm(3)
+  n2 = size(gmat%orb1,2)
+  dimm(:) = (/latt%l1,latt%l2,latt%l3/)
+  Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 3, dimm)
+  allocate( fftmp(lq*n2) )
+
+  ! perform n2 three-dimensional transforms along 1st dimension of gmat
+  fftmp = reshape( gmat%orb1, (/lq*n2/) )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_NUMBER_OF_TRANSFORMS, n2 )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_INPUT_DISTANCE, lq )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_OUTPUT_DISTANCE, lq )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_FORWARD_SCALE, 1.d0/dsqrt(dble(lq)) )
+  Status = DftiCommitDescriptor( Desc_Handle_Dim1 )
+  Status = DftiComputeForward( Desc_Handle_Dim1, fftmp )
+
+  gmat%orb1 = reshape( fftmp, (/lq,n2/) )
+  do j = 1, n2
+      do i = 1, lq
+          gmat%orb1(i,j) = gmat%orb1(i,j) * this%exph0kinv(i)
+      end do
+  end do
+
+  ! perform n2 three-dimensional transforms along 1st dimension of gmat
+  fftmp = reshape( gmat%orb1, (/lq*n2/) )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_BACKWARD_SCALE, 1.d0/dsqrt(dble(lq)) )
+  Status = DftiCommitDescriptor( Desc_Handle_Dim1 )
+  Status = DftiComputeBackward( Desc_Handle_Dim1, fftmp )
+
+  Status = DftiFreeDescriptor( Desc_Handle_Dim1 )
+
+  gmat%orb1 = reshape( fftmp, (/lq,n2/) )
+
+  deallocate( fftmp )
+#ELIF HONEYCOMB
+  integer :: i1, i2, dimm(2)
+  complex(dp), dimension(:,:), allocatable :: gtmp
+  complex(dp), dimension(:), allocatable :: v1, v2
+  n2 = size(gmat%orb1,2)
+  dimm(:) = (/latt%l1,latt%l2/)
+  Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 2, dimm)
+  allocate( fftmp(lq*2*n2) )
+  allocate( gtmp(lq*2,n2) )
+  allocate( v1(n2), v2(n2) )
+  ! we first reshape gmat, such that the 1st dimension has basis:
+  ! all sites of sublattice A, all sites of sublattice B
+  do i = 1, 2*lq, 2
+      gtmp((i+1)/2,    :) = gmat%orb1(i,   :)
+      gtmp((i+1)/2+lq, :) = gmat%orb1(i+1, :)
+  end do
+
+  ! perform 2*n2 two-dimensional transforms along 1st dimension of gmat, factor 2 comes from sublattices
+  fftmp = reshape( gtmp, (/lq*2*n2/) )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_NUMBER_OF_TRANSFORMS, 2*n2 )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_INPUT_DISTANCE, lq )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_OUTPUT_DISTANCE, lq )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_FORWARD_SCALE, 1.d0/dsqrt(dble(lq)) )
+  Status = DftiCommitDescriptor( Desc_Handle_Dim1 )
+  Status = DftiComputeForward( Desc_Handle_Dim1, fftmp )
+
+  gtmp = reshape( fftmp, (/lq*2,n2/) )
+  do i = 1, lq
+      i1 = i
+      i2 = i + lq
+      v1(:) = this%exph0kinv(1,1,i)*gtmp(i1,:) + this%exph0kinv(1,2,i)*gtmp(i2,:)
+      v2(:) = this%exph0kinv(2,1,i)*gtmp(i1,:) + this%exph0kinv(2,2,i)*gtmp(i2,:)
+      gtmp(i1,:) = v1(:)
+      gtmp(i2,:) = v2(:)
+  end do
+
+  ! perform 2*n2 two-dimensional transforms along 1st dimension of gmat, factor 2 comes from sublattices
+  fftmp = reshape( gtmp, (/lq*2*n2/) )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_BACKWARD_SCALE, 1.d0/dsqrt(dble(lq)) )
+  Status = DftiCommitDescriptor( Desc_Handle_Dim1 )
+  Status = DftiComputeBackward( Desc_Handle_Dim1, fftmp )
+
+  Status = DftiFreeDescriptor( Desc_Handle_Dim1 )
+
+  gtmp = reshape( fftmp, (/lq*2,n2/) )
+
+  ! reshape back to gmat
+  do i = 1, 2*lq, 2
+      gmat%orb1(i,   :) = gtmp((i+1)/2,    :)
+      gmat%orb1(i+1, :) = gtmp((i+1)/2+lq, :)
+  end do
+
+  deallocate( fftmp )
+  deallocate( gtmp )
+  deallocate( v1, v2 )
+#ENDIF
+
+! case 3, use zgemm
 #ELSE
   type(gfunc) :: Atmp
 #IFDEF TIMING

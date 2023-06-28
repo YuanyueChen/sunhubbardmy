@@ -1,12 +1,28 @@
 module dqmc_config_h0
+  use mkl_dfti
   use constants, only: dp, cone, czero, pi, zero
   use model_para, only: fout, ierr, irank, isize, lprojplqu, ndim
 
   type h0conf
       integer :: lq, ltrot
       real(dp) :: rt, mu
+      complex(dp), allocatable :: h0mat(:,:)
 #IFDEF BREAKUP_T
       complex(dp), allocatable :: urt(:,:,:), urtm1(:,:,:)
+
+#ELIF FFT
+
+#IFDEF SQUARE
+      complex(dp), allocatable :: exph0k(:)
+      complex(dp), allocatable :: exph0kinv(:)
+#ELIF CUBIC
+      complex(dp), allocatable :: exph0k(:)
+      complex(dp), allocatable :: exph0kinv(:)
+#ELIF HONEYCOMB
+      complex(dp), allocatable :: exph0k(:,:,:)
+      complex(dp), allocatable :: exph0kinv(:,:,:)
+#ENDIF
+
 #ELSE
       complex(dp), allocatable :: urt(:,:), urtm1(:,:)
 #ENDIF
@@ -45,8 +61,14 @@ module dqmc_config_h0
   subroutine deallocate_h0conf( this )
     implicit none
     type(h0conf) :: this
+    deallocate( this%h0mat )
+#IFDEF FFT
+    deallocate( this%exph0k )
+    deallocate( this%exph0kinv )
+#ELSE
     deallocate( this%urt )
     deallocate( this%urtm1 )
+#ENDIF
   end subroutine deallocate_h0conf
 
 end module dqmc_config_h0

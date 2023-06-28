@@ -3,7 +3,7 @@
     implicit none
     
     real(dp), intent(in) :: rt, mu
-    complex(dp), dimension(ndim,ndim), intent(out) :: h0mat
+    complex(dp), dimension(latt%nsites,latt%nsites), intent(out) :: h0mat
     
     ! local
     integer :: i, i_0, i_n, nf
@@ -22,7 +22,7 @@
       end do
     end do
     ! add chemical potential
-    do i = 1, ndim
+    do i = 1, latt%nsites
         h0mat(i,i) = h0mat(i,i) - dcmplx(mu, 0.d0)
     end do
   end subroutine seth0

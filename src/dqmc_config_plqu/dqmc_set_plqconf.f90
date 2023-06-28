@@ -62,6 +62,7 @@
           ,(/latt%z_plq,latt%z_plq/))
     end if
     call s_eig_he(latt%z_plq,latt%z_plq,vstmat_tmp,eig_tmp,umat_tmp)
+#IFDEF PLEVEL2
     if( irank == 0 ) then
         write(fout,'(a)') " "
         write(fout,'(a)') "vstmat_tmp(:,:) = "
@@ -79,6 +80,7 @@
             write(fout,'(f9.5)') eig_tmp(i)
         end do
     end if
+#ENDIF
 
     do is = 1, this%lcomp
       do i = 1, latt%z_plq
@@ -121,6 +123,7 @@
           this%phase(is) = exp( dcmplx(0.d0, this%alpha_plqu*(-etal(is))*0.5d0*(dble(nflr)+nu)) )
 #ENDIF
       end if
+#IFDEF PLEVEL2
       if( irank == 0 ) then
           write(fout,'(a)') " "
           write(fout,'(a,i3,a)') "bmat_plqu_orb1(:,:,",is," ) = "
@@ -135,6 +138,7 @@
           write(fout,'(a)') " "
           write(fout,'(a,i3,a,2f16.8)') "phase(",is," ) = ", this%phase(is)
       end if
+#ENDIF
     end do
     do is = 1, this%lcomp
     do iflip = 1, this%lcomp-1
@@ -176,6 +180,7 @@
           this%phase_ratio(iflip,is) = exp( dcmplx(0.d0, this%alpha_plqu*(etal(is)-etal(isp))*0.5d0*(dble(nflr)+nu)) )
 #ENDIF
       end if
+#IFDEF PLEVEL2
       if( irank == 0 ) then
           write(fout,'(a)') " "
           write(fout,'(a,i3,a,i3,a)') "delta_bmat_plqu_orb1(:,:,",iflip," ,",is," ) = "
@@ -185,6 +190,7 @@
           write(fout,'(a)') " "
           write(fout,'(a,i3,a,i3,a,2f16.8)') "phase_ratio(",iflip," ,",is," ) = ", this%phase_ratio(iflip,is)
       end if
+#ENDIF
     end do
     end do
 

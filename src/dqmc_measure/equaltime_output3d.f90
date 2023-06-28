@@ -11,6 +11,7 @@ subroutine equaltime_output
   complex(dp) :: znorm
   character(40) :: ftag
 
+  call mpi_reduce( zcpcm_orb1_bin, zcpcm_orb1, size(zcpcm_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( zspsm_orb1_bin, zspsm_orb1, size(zspsm_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( znn_orb1_bin, znn_orb1, size(znn_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( zn_orb1_bin, zn_orb1, 1, mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
@@ -23,6 +24,10 @@ subroutine equaltime_output
   if( irank .eq. 0 ) then
       rnorm = dble( isize*nobs )
       znorm = dcmplx( rnorm, 0.d0 )
+
+      zcpcm_orb1 = zcpcm_orb1 / znorm
+      ftag = "cpcm_orb1"
+      call fourier_trans_eqt(zcpcm_orb1, ftag)
 
       zspsm_orb1 = zspsm_orb1 / znorm
       ftag = "spsm_orb1"

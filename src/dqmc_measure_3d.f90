@@ -10,6 +10,7 @@ module dqmc_measure
 
 
 
+  complex(dp), allocatable, dimension(:), save :: zcpcm_orb1, zcpcm_orb1_bin
   complex(dp), allocatable, dimension(:), save :: zspsm_orb1, zspsm_orb1_bin
   complex(dp), allocatable, dimension(:), save :: znn_orb1_bin, znn_orb1
   complex(dp), allocatable, dimension(:), save :: zbb_orb1_bin, zbb_orb1
@@ -30,6 +31,8 @@ module dqmc_measure
 
   subroutine allocate_obs
     implicit none
+    allocate( zcpcm_orb1_bin(lq) )
+    allocate( zcpcm_orb1(lq) )
     allocate( zspsm_orb1_bin(lq) )
     allocate( zspsm_orb1(lq) )
     if(ltau) then
@@ -49,6 +52,8 @@ module dqmc_measure
 
   subroutine deallocate_obs
     implicit none
+    deallocate( zcpcm_orb1_bin )
+    deallocate( zcpcm_orb1 )
     deallocate( zspsm_orb1_bin )
     deallocate( zspsm_orb1 )
     if(allocated(znn_tau))      deallocate(znn_tau)
@@ -69,6 +74,7 @@ module dqmc_measure
     nobst = 0
     energy_bin = czero
     zspsm_orb1_bin = czero
+    zcpcm_orb1_bin = czero
     znn_orb1_bin = czero
     zn_orb1_bin = czero
     zbb_orb1_bin = czero

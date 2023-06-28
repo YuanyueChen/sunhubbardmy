@@ -41,11 +41,13 @@
     ! zne
     zne = czero
     do i = 1, ndim
-        zne = zne + dcmplx( dble(gfc%orb1(i,i)), 0.d0 )
+        zne = zne + gfc%orb1(i,i)
     end do
     energy_bin(2) = energy_bin(2) + zne*zphi/dcmplx(dble(lq),0.d0)
     energy_bin(3) = energy_bin(3) + zkint(gf,gfc)*zphi
     energy_bin(4) = energy_bin(4) + zint_u(gf,gfc)*zphi
+    call measure_cpcm(gf,gfc)
+    zcpcm_orb1_bin = zcpcm_orb1_bin + zcpcm_orb1*zphi
     call measure_spsm(gf,gfc)
     zspsm_orb1_bin = zspsm_orb1_bin + zspsm_orb1*zphi
     call measure_nn(gf,gfc)
@@ -58,6 +60,7 @@
     endtime22 = omp_get_wtime()
     timecalculation(4)=timecalculation(4)+endtime22-starttime22
 #ENDIF
+
   end subroutine equaltime_measure
 
     complex(dp) function zkint(gf,gfc)
@@ -88,16 +91,34 @@
       end do
     end function zint_u
 
+    subroutine measure_cpcm(gf,gfc)
+      ! <c+ c->
+      implicit none
+      type(gfunc), intent(in) :: gf, gfc
+      integer :: j, nu_j, no_j, i, nu_i, no_i, imj
+      zcpcm_orb1 = czero
+      do j = 1, latt%nsites
+          nu_j = latt%list(j,1)
+          no_j = latt%list(j,2)
+          do i = 1, latt%nsites
+              nu_i = latt%list(i,1)
+              no_i = latt%list(i,2)
+              imj  = latt%imj(nu_i,nu_j)
+              zcpcm_orb1(imj) = zcpcm_orb1(imj) + gfc%orb1(i,j)
+          end do
+      end do
+    end subroutine measure_cpcm
+
     subroutine measure_spsm(gf,gfc)
       ! <S+ S-> for orb1
       implicit none
       type(gfunc), intent(in) :: gf, gfc
       integer :: j, nu_j, no_j, i, nu_i, no_i, imj
       zspsm_orb1 = czero
-      do j = 1, ndim
+      do j = 1, latt%nsites
           nu_j = latt%list(j,1)
           no_j = latt%list(j,2)
-          do i = 1, ndim
+          do i = 1, latt%nsites
               nu_i = latt%list(i,1)
               no_i = latt%list(i,2)
               imj  = latt%imj(nu_i,nu_j)
@@ -112,15 +133,15 @@
       integer :: j, nu_j, no_j, i, nu_i, no_i, imj
       znn_orb1 = czero
       zn_orb1 = czero
-      do j = 1, ndim
+      do j = 1, latt%nsites
           nu_j = latt%list(j,1)
           no_j = latt%list(j,2)
-          zn_orb1 = zn_orb1 + (dble(gfc%orb1(j,j))-0.5d0)
-          do i = 1, ndim
+          zn_orb1 = zn_orb1 + gfc%orb1(j,j)
+          do i = 1, latt%nsites
               nu_i = latt%list(i,1)
               no_i = latt%list(i,2)
               imj  = latt%imj(nu_i,nu_j)
-              znn_orb1(imj) = znn_orb1(imj) + dcmplx( (dble(gfc%orb1(i,i))-0.5d0)*(dble(gfc%orb1(j,j))-0.5d0), 0.d0 ) + dcmplx(1.d0/dble(nflr),0.d0)*gfc%orb1(i,j)*gf%orb1(i,j)
+              znn_orb1(imj) = znn_orb1(imj) + gfc%orb1(i,i)*gfc%orb1(j,j) + dcmplx(1.d0/dble(nflr),0.d0)*gfc%orb1(i,j)*gf%orb1(i,j)
           end do
       end do
     end subroutine measure_nn

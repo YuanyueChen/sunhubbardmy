@@ -61,7 +61,7 @@ module latt2d_class
     if( allocated(this%nnvecr) ) deallocate( this%nnvecr )
     if( allocated(this%rcord) ) deallocate( this%rcord )
     if( allocated(this%zexpiqr) ) deallocate( this%zexpiqr )
-    write(*,*) " deallocate_latt2d is performed "
+    !write(*,*) " deallocate_latt2d is performed "
   end subroutine deallocate_latt2d_sub
   
   subroutine setup_latt2d_sub(this, l1, l2, a1_p, a2_p)
@@ -257,6 +257,7 @@ module latt2d_class
         write(fid,'(i6,3i4)') i,  this%listk(i,:)
     end do
   
+#IFDEF PLEVEL2
     if( this%ncell < 50 ) then
     write(fid, *)
     write(fid,'(a)') '----------------------------'
@@ -270,6 +271,7 @@ module latt2d_class
         end do
     end do
     end if
+#ENDIF
   end subroutine print_latt2d_sub
 
 end module latt2d_class
@@ -706,7 +708,7 @@ module latt3d_class
     if( allocated(this%nnvecr) ) deallocate( this%nnvecr )
     if( allocated(this%rcord) ) deallocate( this%rcord )
     if( allocated(this%zexpiqr) ) deallocate( this%zexpiqr )
-    write(*,*) " deallocate_latt3d is performed "
+    !write(*,*) " deallocate_latt3d is performed "
   end subroutine deallocate_latt3d_sub
 
   subroutine setup_latt3d_sub(this, l1, l2, l3, a1_p, a2_p, a3_p)
@@ -923,6 +925,7 @@ module latt3d_class
         write(fid,'(i6,3i4)') i,  this%listk(i,:)
     end do
   
+#IFDEF PLEVEL2
     if( this%ncell < 50 ) then
     write(fid, *)
     write(fid,'(a)') '----------------------------'
@@ -936,6 +939,7 @@ module latt3d_class
         end do
     end do
     end if
+#ENDIF
   end subroutine print_latt3d_sub
 
 end module latt3d_class

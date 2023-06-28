@@ -9,14 +9,23 @@ module dqmc_ctrl
     use spring
   
     ! prepare for the DQMC
+    ! check dyntau
+    if( dyntau .eq. beta ) stop "ERROR: you should not set dyntau = beta in dmqc_proj code"
+
+    ! H0 part
     call h0c%set_h0conf(lq, ltrot, rt, mu)
+
+    ! plaquette interaction
     call hconf%set_plqconf(lq, ltrot, nu, lprojplqu, alpha, theta, rhub_plq, dtau )
     call hconf%input_plqconf
+
+    ! on-site interaction
     call u0conf%set_uconf(lq, ltrot, nu, lproju, alpha, theta, rhub, dtau )
     call u0conf%input_uconf
 
     call allocate_core
     call dqmc_set_proj
+    ! allocate observables
     call allocate_obs
     call dqmc_proj_sweep_start_0b
 

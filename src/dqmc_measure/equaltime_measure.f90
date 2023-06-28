@@ -49,6 +49,8 @@
     energy_bin(5) = energy_bin(5) + zqsq(gf,gfc)*dcmplx(1.d0/9.d0,0.d0)*zphi
     energy_bin(6) = energy_bin(6) + ztsq(gf,gfc)*zphi
     energy_bin(7) = energy_bin(7) + ztq(gf,gfc)*zphi
+    call measure_cpcm(gf,gfc)
+    zcpcm_orb1_bin = zcpcm_orb1_bin + zcpcm_orb1*zphi
     call measure_spsm(gf,gfc)
     zspsm_orb1_bin = zspsm_orb1_bin + zspsm_orb1*zphi
     call measure_nn(gf,gfc)
@@ -82,7 +84,7 @@
           i_0 = latt%nnlf_list(i)
           do nf = 1, latt%nn_nf
               i_n = latt%nnlist(i_0,nf)
-              zkint = zkint + dcmplx(-2.d0*rt*dble( gfc%orb1(i_0,i_n)*expar(i_0,nf,xmag,flux_x,flux_y,dimer) ), 0.d0 )
+              zkint = zkint + dcmplx(-2.d0*dble( gfc%orb1(i_0,i_n)*expar(i_0,nf,xmag,flux_x,flux_y,dimer) ), 0.d0 )
           end do
       end do
       ! second nearest hopping
@@ -249,6 +251,23 @@
       end do
     end function ztq
 
+    subroutine measure_cpcm(gf,gfc)
+      ! <c+ c->
+      implicit none
+      type(gfunc), intent(in) :: gf, gfc
+      integer :: j, nu_j, no_j, i, nu_i, no_i, imj
+      zcpcm_orb1 = czero
+      do j = 1, latt%nsites
+          nu_j = latt%list(j,1)
+          no_j = latt%list(j,2)
+          do i = 1, latt%nsites
+              nu_i = latt%list(i,1)
+              no_i = latt%list(i,2)
+              imj  = latt%imj(nu_i,nu_j)
+              zcpcm_orb1(imj,no_i,no_j) = zcpcm_orb1(imj,no_i,no_j) + gfc%orb1(i,j)
+          end do
+      end do
+    end subroutine measure_cpcm
 
     subroutine measure_spsm(gf,gfc)
       ! <S+ S-> for orb1
@@ -256,10 +275,10 @@
       type(gfunc), intent(in) :: gf, gfc
       integer :: j, nu_j, no_j, i, nu_i, no_i, imj
       zspsm_orb1 = czero
-      do j = 1, ndim
+      do j = 1, latt%nsites
           nu_j = latt%list(j,1)
           no_j = latt%list(j,2)
-          do i = 1, ndim
+          do i = 1, latt%nsites
               nu_i = latt%list(i,1)
               no_i = latt%list(i,2)
               imj  = latt%imj(nu_i,nu_j)
@@ -274,11 +293,11 @@
       integer :: j, nu_j, no_j, i, nu_i, no_i, imj
       znn_orb1 = czero
       zn_orb1 = czero
-      do j = 1, ndim
+      do j = 1, latt%nsites
           nu_j = latt%list(j,1)
           no_j = latt%list(j,2)
           zn_orb1(no_j) = zn_orb1(no_j) + gfc%orb1(j,j)
-          do i = 1, ndim
+          do i = 1, latt%nsites
               nu_i = latt%list(i,1)
               no_i = latt%list(i,2)
               imj  = latt%imj(nu_i,nu_j)
@@ -303,8 +322,7 @@
 #IFDEF HONEYCOMB
           j_0 = 2*j - 1
           j_n = latt%snlist(j_0,1)
-#ENDIF
-#IFDEF SQUARE
+#ELIF SQUARE
           j_0 = j
           j_n = latt%nnlist(j_0,1)
 #ENDIF
@@ -313,8 +331,7 @@
 #IFDEF HONEYCOMB
               i_0 = 2*i - 1
               i_n = latt%snlist(i_0,1)
-#ENDIF
-#IFDEF SQUARE
+#ELIF SQUARE
               i_0 = i
               i_n = latt%nnlist(i_0,1)
 #ENDIF
@@ -332,8 +349,7 @@
 #IFDEF HONEYCOMB
           i_0 = 2*i - 1
           i_n = latt%snlist(i_0,1)
-#ENDIF
-#IFDEF SQUARE
+#ELIF SQUARE
           i_0 = i
           i_n = latt%nnlist(i_0,1)
 #ENDIF
@@ -353,8 +369,7 @@
 #IFDEF HONEYCOMB
           j_0 = 2*nu_j - 1 ! A site
           j_n = latt%nnlist(j_0,1) ! B site
-#ENDIF
-#IFDEF SQUARE
+#ELIF SQUARE
           j_0 = nu_j  ! A site
           j_n = latt%nnlist(j_0,1) ! B site
 #ENDIF
@@ -364,8 +379,7 @@
 #IFDEF HONEYCOMB
               i_0 = 2*nu_i - 1 ! A site
               i_n = latt%nnlist(i_0,1) ! B site
-#ENDIF
-#IFDEF SQUARE
+#ELIF SQUARE
               i_0 = nu_i ! A site
               i_n = latt%nnlist(i_0,1) ! B site
 #ENDIF
@@ -391,8 +405,7 @@
           zj = expar(j_0,1,xmag,flux_x,flux_y,dimer)
           ztmp = ztmp + (zj*gfc%orb1(j_0,j_n) + dconjg(zj)*gfc%orb1(j_n,j_0))*latt%zexpiqr( (latt%l1-1)/2*latt%l2+latt%l1/3*latt%l2+(latt%l2-1)/2+latt%l2/3+1, nu_j )
           !write(*,'(i6,2e16.8)') (latt%l1-1)/2*latt%l2+latt%l1/3*latt%l2+(latt%l2-1)/2+latt%l2/3+1, latt%zexpiqr( (latt%l1-1)/2*latt%l2+latt%l1/3*latt%l2+(latt%l2-1)/2+latt%l2/3+1, nu_j )
-#ENDIF
-#IFDEF SQUARE
+#ELIF SQUARE
           j_0 = nu_j ! A site
           j_n = latt%nnlist(j_0,1) ! B site, x-dir
           zj = expar(j_0,1,xmag,flux_x,flux_y,dimer)
@@ -415,10 +428,10 @@
       type(gfunc), intent(in) :: gf, gfc
       integer :: j, nu_j, no_j, i, nu_i, no_i, imj, j_0, j_n, i_0, i_n
       pair_onsite_orb1 = czero
-      do j = 1, ndim
+      do j = 1, latt%nsites
           nu_j = latt%list(j,1)
           no_j = latt%list(j,2)
-          do i = 1, ndim
+          do i = 1, latt%nsites
               nu_i = latt%list(i,1)
               no_i = latt%list(i,2)
               imj  = latt%imj(nu_i,nu_j)
@@ -431,8 +444,7 @@
 #IFDEF HONEYCOMB
           j_0 = 2*nu_j - 1 ! A site
           j_n = latt%nnlist(j_0,1) ! B site
-#ENDIF
-#IFDEF SQUARE
+#ELIF SQUARE
           j_0 = nu_j  ! A site
           j_n = latt%nnlist(j_0,1) ! B site
 #ENDIF
@@ -440,8 +452,7 @@
 #IFDEF HONEYCOMB
               i_0 = 2*nu_i - 1 ! A site
               i_n = latt%nnlist(i_0,1) ! B site
-#ENDIF
-#IFDEF SQUARE
+#ELIF SQUARE
               i_0 = nu_i  ! A site
               i_n = latt%nnlist(i_0,1) ! B site
 #ENDIF
@@ -455,8 +466,7 @@
 #IFDEF HONEYCOMB
           j_0 = 2*nu_j - 1 ! A site
           j_n = latt%snlist(j_0,1) ! A site
-#ENDIF
-#IFDEF SQUARE
+#ELIF SQUARE
           j_0 = nu_j  ! A site
           j_n = latt%snlist(j_0,1) ! A site
 #ENDIF
@@ -464,8 +474,7 @@
 #IFDEF HONEYCOMB
               i_0 = 2*nu_i - 1 ! A site
               i_n = latt%snlist(i_0,1) ! A site
-#ENDIF
-#IFDEF SQUARE
+#ELIF SQUARE
               i_0 = nu_i  ! A site
               i_n = latt%snlist(i_0,1) ! A site
 #ENDIF

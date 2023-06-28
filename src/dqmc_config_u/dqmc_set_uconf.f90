@@ -37,6 +37,7 @@
           this%bmat_u_orb1(is) =      exp( dcmplx(0.d0, this%alpha_u*etal(is)) )
           this%bmat_u_orb1_inv(is) =  exp( dcmplx(0.d0,-this%alpha_u*etal(is)) )
       end if
+#IFDEF PLEVEL2
       if( irank == 0 ) then
           write(fout,'(a)') " "
           write(fout,'(a,i3,a)') "bmat_u_orb1(",is," ) = "
@@ -46,6 +47,7 @@
           write(fout,'(2f9.5)') this%bmat_u_orb1_inv(is)
           write(fout,'(a)') " "
       end if
+#ENDIF
     end do
     do is = 1, this%lcomp
     do iflip = 1, this%lcomp-1
@@ -57,6 +59,7 @@
           this%phase_ratio(iflip,is) = exp( dcmplx(0.d0, this%alpha_u*(etal(is)-etal(isp))*0.5d0*(dble(nflr)+nu)) )
           this%delta_bmat_u_orb1(iflip,is) = exp( dcmplx(0.d0, this%alpha_u*(etal(isp)-etal(is))) ) - cone
       end if
+#IFDEF PLEVEL2
       if( irank == 0 ) then
           write(fout,'(a)') " "
           write(fout,'(a,i3,a,i3,a)') "delta_bmat_u_orb1(",iflip," ,",is," ) = "
@@ -64,6 +67,7 @@
           write(fout,'(a)') " "
           write(fout,'(a,i3,a,i3,a,2f16.8)') "phase_ratio(",iflip," ,",is," ) = ", this%phase_ratio(iflip,is)
       end if
+#ENDIF
     end do
     end do
   end subroutine dqmc_set_uconf

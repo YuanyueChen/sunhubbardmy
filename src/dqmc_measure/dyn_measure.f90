@@ -56,10 +56,10 @@
     gtau0_orb1_tau = czero
     zspsm_orb1_tau = czero
     znn_orb1_tau = czero
-    do j = 1, ndim
+    do j = 1, latt%nsites
         nu_j = latt%list(j,1)
         no_j = latt%list(j,2)
-        do i = 1, ndim
+        do i = 1, latt%nsites
             nu_i = latt%list(i,1)
             no_i = latt%list(i,2)
             imj  = latt%imj(nu_i,nu_j)

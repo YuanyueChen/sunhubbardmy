@@ -21,10 +21,14 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
   type(zvfunc) :: ukmat, vkmat, vuvkmat, lrukmat, vkmat_tmp
   type(zfunc) :: sscl
 #IFDEF TIMING
-  real(dp) :: starttime26, endtime26
+  real(dp) :: starttime, endtime
 #ENDIF
 #IFDEF TIMING
-  starttime26 = omp_get_wtime()
+#IFDEF _OPENMP
+  starttime = omp_get_wtime()
+#ELSE
+  call cpu_time(starttime)
+#ENDIF
 #ENDIF
 
   call allocate_zvfunc( ukmat, ne)
@@ -113,8 +117,12 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
   end do
   main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
 #IFDEF TIMING
-  endtime26 = omp_get_wtime()
-  timecalculation(16)=timecalculation(16)+endtime26-starttime26
+#IFDEF _OPENMP
+  endtime = omp_get_wtime()
+#ELSE
+  call cpu_time(endtime)
+#ENDIF
+  timecalculation(16)=timecalculation(16)+endtime-starttime
 #ENDIF 
 
 end subroutine dqmc_proj_update_u

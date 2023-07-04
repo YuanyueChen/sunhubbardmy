@@ -20,10 +20,14 @@ subroutine dqmc_update_u(this, gmat, ntau )
   type(zvfunc) :: ukmat, vkmat
   type(zfunc) :: sscl
 #IFDEF TIMING
-  real(dp) :: starttime23, endtime23
+  real(dp) :: starttime, endtime
 #ENDIF
 #IFDEF TIMING
-  starttime23 = omp_get_wtime()
+#IFDEF _OPENMP
+  starttime = omp_get_wtime()
+#ELSE
+  call cpu_time(starttime)
+#ENDIF
 #ENDIF
 
 
@@ -87,7 +91,11 @@ subroutine dqmc_update_u(this, gmat, ntau )
    end do
    main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
 #IFDEF TIMING
-  endtime23 = omp_get_wtime()
-  timecalculation(14)=timecalculation(14)+endtime23-starttime23
+#IFDEF _OPENMP
+  endtime = omp_get_wtime()
+#ELSE
+  call cpu_time(endtime)
+#ENDIF
+  timecalculation(14)=timecalculation(14)+endtime-starttime
 #ENDIF
 end subroutine dqmc_update_u

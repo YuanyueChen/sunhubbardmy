@@ -5,8 +5,8 @@ LINKER = $(F90)
 
 # fortran preprocessor options, common setting
 #-------------------------------------------------------------------------
-RUNMODE = -DBREAKUP_T -DDELAY -DHONEYCOMB -DDYNERROR -DWRAPERROR # -DTEST # -DBREAKUP_T #  -DTEST -DTEST_LEVEL3 # DSQUARE
-OMP    = -qopenmp
+RUNMODE = -DFFT -DDELAY -DHONEYCOMB -DDYNERROR -DWRAPERROR # -DTEST # -DBREAKUP_T #  -DTEST -DTEST_LEVEL3 # DSQUARE
+OMP    = # -qopenmp
 FPP    = -fpp
 CPP    = $(FPP) $(RUNMODE) $(OMP)
 
@@ -29,7 +29,7 @@ LFLAGS = $(OMP) $(GPROF) $(MKL)
 # linear algebra library, lapack and blas
 #-------------------------------------------------------------------------
 LIBS= ../lib/libMM.a
-#LIBS+= -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a ${MKLROOT}/lib/intel64/libmkl_core.a \
-#       ${MKLROOT}/lib/intel64/libmkl_sequential.a -Wl,--end-group -lpthread -lm
-LIBS+= -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a ${MKLROOT}/lib/intel64/libmkl_intel_thread.a \
-       ${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -liomp5 -lpthread -lm -ldl
+LIBS+= -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a ${MKLROOT}/lib/intel64/libmkl_core.a \
+       ${MKLROOT}/lib/intel64/libmkl_sequential.a -Wl,--end-group -lpthread -lm
+#LIBS+= -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a ${MKLROOT}/lib/intel64/libmkl_intel_thread.a \
+#       ${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -liomp5 -lpthread -lm -ldl

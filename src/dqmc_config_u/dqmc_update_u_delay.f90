@@ -18,17 +18,16 @@ subroutine dqmc_update_u(this, gmat, ntau )
   real(dp) :: accm, ratio_re, ratio_re_abs, random, weight
 
   type(zfunc) :: sscl
-
   complex(dp), allocatable, dimension(:) :: diagg_up
   complex(dp), allocatable, dimension(:) :: diagg_dn
   complex(dp), allocatable, dimension(:,:) :: avec_up, bvec_up
   complex(dp), allocatable, dimension(:,:) :: avec_dn, bvec_dn
   integer :: i, ik, m
 #IFDEF TIMING
-  real(dp) :: starttime23, endtime23
+  real(dp) :: starttime, endtime
 #ENDIF
 #IFDEF TIMING
-  starttime23 = omp_get_wtime()
+  call cpu_time_now(starttime)
 #ENDIF
   allocate( diagg_up(ndim) )
   allocate( avec_up(ndim,nublock) )
@@ -99,7 +98,7 @@ subroutine dqmc_update_u(this, gmat, ntau )
 
          ! flip
          this%conf_u(isite,ntau) =  isp
-      end if
+     end if
 
       if( (ik.eq.nublock) .or. (isite.eq.latt%nsites) ) then
           ik = 0
@@ -118,10 +117,10 @@ subroutine dqmc_update_u(this, gmat, ntau )
    end do
    main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
 #IFDEF TIMING
-  endtime23 = omp_get_wtime()
-  timecalculation(15)=timecalculation(15)+endtime23-starttime23
+  call cpu_time_now(endtime)
+  timecalculation(15)=timecalculation(15)+endtime-starttime
 #ENDIF
-   deallocate( bvec_up )
-   deallocate( avec_up )
-   deallocate( diagg_up )
+  deallocate( bvec_up )
+  deallocate( avec_up )
+  deallocate( diagg_up )
 end subroutine dqmc_update_u

@@ -9,17 +9,17 @@ subroutine dqmc_left_forward_prop(this, nf, gmat)
   implicit none
   class(h0conf) :: this
   integer, intent(in) :: nf
+#IFDEF TIMING
+  real(dp) :: starttime, endtime
+#ENDIF 
   type(gfunc) :: gmat
   integer :: n2
-#IFDEF TIMING
-  real(dp) :: starttime3, endtime3
-#ENDIF
 ! case 1, use trotter
 #IFDEF BREAKUP_T
   complex(dp), allocatable, dimension(:) :: v1, v2
   integer :: i, ist, i1, i2, j
 #IFDEF TIMING
-  starttime3 = omp_get_wtime()
+  call cpu_time_now(starttime)
 #ENDIF
   n2 = size(gmat%orb1,2)
   allocate( v1(n2), v2(n2) )
@@ -55,6 +55,9 @@ subroutine dqmc_left_forward_prop(this, nf, gmat)
 
 #IFDEF SQUARE
   integer :: dimm(2)
+#IFDEF TIMING 
+  call cpu_time_now(starttime)
+#ENDIF
   n2 = size(gmat%orb1,2)
   dimm(:) = (/latt%l1,latt%l2/)
   Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 2, dimm)
@@ -92,6 +95,9 @@ subroutine dqmc_left_forward_prop(this, nf, gmat)
   deallocate( fftmp )
 #ELIF CUBIC
   integer :: dimm(3)
+#IFDEF TIMING 
+  call cpu_time_now(starttime)
+#ENDIF
   n2 = size(gmat%orb1,2)
   dimm(:) = (/latt%l1,latt%l2,latt%l3/)
   Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 3, dimm)
@@ -128,6 +134,9 @@ subroutine dqmc_left_forward_prop(this, nf, gmat)
   integer :: i1, i2, dimm(2)
   complex(dp), dimension(:,:), allocatable :: gtmp
   complex(dp), dimension(:), allocatable :: v1, v2
+#IFDEF TIMING 
+  call cpu_time_now(starttime)
+#ENDIF
   n2 = size(gmat%orb1,2)
   dimm(:) = (/latt%l1,latt%l2/)
   Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 2, dimm)
@@ -185,7 +194,7 @@ subroutine dqmc_left_forward_prop(this, nf, gmat)
 #ELSE
   type(gfunc) :: Atmp
 #IFDEF TIMING
-  starttime3 = omp_get_wtime()
+  call cpu_time_now(starttime)
 #ENDIF
   n2 = size(gmat%orb1,2)
   call allocate_gfunc( Atmp, ndim, n2 )
@@ -195,7 +204,7 @@ subroutine dqmc_left_forward_prop(this, nf, gmat)
   endif
 #ENDIF
 #IFDEF TIMING
-  endtime3 = omp_get_wtime()
-  timecalculation(8)=timecalculation(8)+endtime3-starttime3
+  call cpu_time_now(endtime)
+  timecalculation(8)=timecalculation(8)+endtime-starttime
 #ENDIF
 end subroutine dqmc_left_forward_prop

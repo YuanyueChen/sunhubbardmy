@@ -9,17 +9,17 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
   implicit none
   class(h0conf) :: this
   integer, intent(in) :: nf
+#IFDEF TIMING
+  real(dp) :: starttime, endtime
+#ENDIF 
   type(gfunc) :: gmat
   integer :: n1
-#IFDEF TIMING
-  real(dp) :: starttime5, endtime5
-#ENDIF
 ! case 1, use trotter
 #IFDEF BREAKUP_T
   complex(dp), allocatable, dimension(:) :: v1, v2
   integer :: i, ist, i1, i2, j
 #IFDEF TIMING
-  starttime5 = omp_get_wtime()
+  call cpu_time_now(starttime)
 #ENDIF
   n1 = size(gmat%orb1,1)
   allocate( v1(n1), v2(n1) )
@@ -44,6 +44,7 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
 !$OMP END PARALLEL
   endif
   deallocate(v1, v2)
+
 ! case 2, use fft
 #ELIF DEFINED(FFT)
 
@@ -54,6 +55,9 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
 
 #IFDEF SQUARE
   integer :: dimm(2)
+#IFDEF TIMING 
+  call cpu_time_now(starttime)
+#ENDIF
   n1 = size(gmat%orb1,1)
   dimm(:) = (/latt%l1,latt%l2/)
   Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 2, dimm)
@@ -96,6 +100,9 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
   deallocate( gtmpC )
 #ELIF CUBIC
   integer :: dimm(3)
+#IFDEF TIMING 
+  call cpu_time_now(starttime)
+#ENDIF
   n1 = size(gmat%orb1,1)
   dimm(:) = (/latt%l1,latt%l2,latt%l3/)
   Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 3, dimm)
@@ -140,6 +147,9 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
   complex(dp), dimension(:,:), allocatable :: gtmp
   complex(dp), dimension(:), allocatable :: v1, v2
   n1 = size(gmat%orb1,1)
+#IFDEF TIMING 
+  call cpu_time_now(starttime)
+#ENDIF
   dimm(:) = (/latt%l1,latt%l2/)
   Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 2, dimm)
   allocate( fftmp(lq*2*n1) )
@@ -204,7 +214,7 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
 #ELSE
   type(gfunc) :: Atmp
 #IFDEF TIMING
-  starttime5 = omp_get_wtime()
+  call cpu_time_now(starttime)
 #ENDIF
   n1 = size(gmat%orb1,1)
   call allocate_gfunc( Atmp, n1, ndim )
@@ -214,8 +224,8 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
   endif
 #ENDIF
 #IFDEF TIMING
-  endtime5 = omp_get_wtime()
-  timecalculation(9)=timecalculation(9)+endtime5-starttime5
-#ENDIF 
+  call cpu_time_now(endtime)
+  timecalculation(9)=timecalculation(9)+endtime-starttime
+#ENDIF
 
 end subroutine dqmc_right_backward_prop

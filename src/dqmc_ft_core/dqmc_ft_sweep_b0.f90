@@ -9,7 +9,7 @@
       type(dfunc) :: DRvec, DLvec
       type(zfunc) :: logdetQR, logdetQL, logweightf_tmp
 #IFDEF TIMING
-      real(dp) :: starttime20, endtime20
+      real(dp) :: starttime, endtime
 #ENDIF
 
       call allocate_gfunc(gf_tmp,ndim,ndim)
@@ -20,7 +20,7 @@
       call allocate_gfunc(VL,ndim,ndim)
       call allocate_dfunc(DLvec,ndim)
 #IFDEF TIMING
-      starttime20 = omp_get_wtime()
+      call cpu_time_now(starttime)
 #ENDIF
 
       ! at tau = beta
@@ -170,8 +170,8 @@
           end if
       end do
 #IFDEF TIMING
-      endtime20 = omp_get_wtime()
-      timecalculation(1)=timecalculation(1)+endtime20-starttime20
+      call cpu_time_now(endtime)
+      timecalculation(1)=timecalculation(1)+endtime-starttime
 #ENDIF
 
       call deallocate_gfunc(gf_tmp)

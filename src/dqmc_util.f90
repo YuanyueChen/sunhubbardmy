@@ -113,11 +113,7 @@ module dqmc_util
         !$OMP END PARALLEL
 #ENDIF
     end if
-#IFDEF _OPENMP
-    start_time = omp_get_wtime()
-#ELSE
-    call cpu_time(start_time)
-#ENDIF
+    call cpu_time_now(start_time)
     main_obs(:) = czero
 #IFDEF TIMING
     timecalculation(:)=0.d0
@@ -144,11 +140,7 @@ module dqmc_util
     include 'mpif.h'
     !!! --- Timming and outconfc
     if( nbc .eq. 1 )  then
-#IFDEF _OPENMP
-        time2 = omp_get_wtime()
-#ELSE
-        call cpu_time(time2)
-#ENDIF
+        call cpu_time_now(time2)
         if(irank.eq.0) then
             n_outconf_pace = nint( dble( 3600 * 12 ) / ( time2-time1 ) )
             if( n_outconf_pace .lt. 1 ) n_outconf_pace = 1
@@ -259,41 +251,37 @@ module dqmc_util
 
     call deallocate_tables
     if( irank.eq.0 ) then
-#IFDEF _OPENMP
-        end_time = omp_get_wtime()
-#ELSE
-        call cpu_time(end_time)
-#ENDIF
+        call cpu_time_now(end_time)
         call fdate( date_time_string )
         write(fout,*)
         write(fout,'(a,f10.2,a)') ' >>> Total time spent:', end_time-start_time, 's'
         write(fout,'(a)') ' >>> Happy ending at '//date_time_string
         write(fout,*)
 #IFDEF TIMING
-        write(fout,'(a,f10.2,a)') 'The total time of sweep:', timecalculation(1), 's'  
-        write(fout,'(a,f10.2,a)') 'The time of sweep in calculation:', timecalculation(2), 's'
-        write(fout,'(a,f10.2,a)') 'The time of sweep in warmup:', timecalculation(3), 's' 
-        write(fout,'(a,f10.2,a)') 'The time of measuring equaltime:', timecalculation(4), 's'  
-        write(fout,'(a,f10.2,a)') 'The time of measuring unequaltime:', timecalculation(5), 's'
-        write(fout,'(a,f10.2,a)') 'The time of outputing each bin:', timecalculation(6), 's'     
-        write(fout,'(a,f10.2,a)') 'The total time of numerical stability:', timecalculation(7), 's'
-        write(fout,'(a,f10.2,a)') 'The time of H0 left:', timecalculation(8), 's'
-        write(fout,'(a,f10.2,a)') 'The time of H0 right:', timecalculation(9), 's'
-        write(fout,'(a,f10.2,a)') 'The time of u left:', timecalculation(10), 's'
-        write(fout,'(a,f10.2,a)') 'The time of u right:', timecalculation(11), 's'
-        write(fout,'(a,f10.2,a)') 'The time of plqu left:', timecalculation(12), 's'
-        write(fout,'(a,f10.2,a)') 'The time of plqu right:', timecalculation(13), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_sweep_in_warmup:      ', timecalculation(3), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_sweep_inside:         ', timecalculation(1), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_sweep_in_total:       ', timecalculation(2), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_measuring_equaltime:  ', timecalculation(4), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_measuring_unequaltime:', timecalculation(5), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_outputing_each_bin:   ', timecalculation(6), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_stabilization:        ', timecalculation(7), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_H0_left:              ', timecalculation(8), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_H0_right:             ', timecalculation(9), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_u_left:               ', timecalculation(10), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_u_right:              ', timecalculation(11), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_plqu_left:            ', timecalculation(12), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_plqu_right:           ', timecalculation(13), 's'
         if( timecalculation(14).ne.0.d0 ) then
-            write(fout,'(a,f10.2,a)') 'The time of update without delay update:', timecalculation(14), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_ft_fast_update:       ', timecalculation(14), 's'
         end if
         if( timecalculation(15).ne.0.d0 ) then
-            write(fout,'(a,f10.2,a)') 'The time of update with delay update:', timecalculation(15), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_ft_delay_update:      ', timecalculation(15), 's'
         end if
         if( timecalculation(16).ne.0.d0 ) then
-            write(fout,'(a,f10.2,a)') 'The time of update without delay update in proj:', timecalculation(16), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_proj_fast_update:     ', timecalculation(16), 's'
         end if
         if( timecalculation(17).ne.0.d0 ) then
-            write(fout,'(a,f10.2,a)') 'The time of update with delay update in proj:', timecalculation(17), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_proj_delay_update:    ', timecalculation(17), 's'
         end if
 #ENDIF      
         write(fout,'(a)') ' The simulation done !!! '

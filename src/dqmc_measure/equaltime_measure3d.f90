@@ -10,10 +10,10 @@
     integer :: i, j
     complex(dp) :: zne
 #IFDEF TIMING
-    real(dp) :: starttime22, endtime22
+    real(dp) :: starttime, endtime
 #ENDIF
 #IFDEF TIMING
-    starttime22 = omp_get_wtime()
+    call cpu_time_now(starttime)
 #ENDIF
 
     nobs = nobs + 1
@@ -57,8 +57,8 @@
     zbb_orb1_bin = zbb_orb1_bin + zbb_orb1*zphi
     zb_orb1_bin = zb_orb1_bin + zb_orb1*zphi
 #IFDEF TIMING
-    endtime22 = omp_get_wtime()
-    timecalculation(4)=timecalculation(4)+endtime22-starttime22
+    call cpu_time_now(endtime)
+    timecalculation(4)=timecalculation(4)+endtime-starttime
 #ENDIF
 
   end subroutine equaltime_measure

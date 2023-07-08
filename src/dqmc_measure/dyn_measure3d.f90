@@ -11,7 +11,7 @@
     type(gfunc), intent(in) :: g00up, g0tup, gt0up, gttup
     integer, intent(in) :: nt
 #IFDEF TIMING
-    real(dp) :: starttime21, endtime21
+    real(dp) :: starttime, endtime
 #ENDIF
     
     !       local
@@ -42,7 +42,7 @@
     !!!   enddo
     !!!enddo
 #IFDEF TIMING
-    starttime21 = omp_get_wtime()
+    call cpu_time_now(starttime)
 #ENDIF
 
     if( dble(phase) < 0.d0 ) then
@@ -72,8 +72,8 @@
     zspsm_tau_bin = zspsm_tau_bin + zspsm_tau*zphi
     znn_tau_bin = znn_tau_bin + znn_tau*zphi
 #IFDEF TIMING
-    endtime21 = omp_get_wtime()
-    timecalculation(5)=timecalculation(5)+endtime21-starttime21
+    call cpu_time_now(endtime)
+    timecalculation(5)=timecalculation(5)+endtime-starttime
 #ENDIF
 
   end subroutine dyn_measure

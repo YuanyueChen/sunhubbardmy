@@ -41,6 +41,13 @@ module dqmc_ctrl
 
   subroutine dqmc_warmup
     implicit none
+#IFDEF TIMING
+    real(dp) :: starttime, endtime
+#ENDIF
+#IFDEF TIMING
+    call cpu_time_now(starttime)
+#ENDIF
+
     ! warmup
     !lwarmup = .false.
     if( lwarmup ) then
@@ -64,11 +71,22 @@ module dqmc_ctrl
         end if
         call wrap_error_print
     end if
+#IFDEF TIMING
+    call cpu_time_now(endtime)
+    timecalculation(3)=timecalculation(3)+endtime-starttime
+#ENDIF
   end subroutine dqmc_warmup
 
   subroutine dqmc_sweep
     implicit none
+#IFDEF TIMING
+    real(dp) :: starttime, endtime
+#ENDIF
+
     include 'mpif.h'
+#IFDEF TIMING
+     call cpu_time_now(starttime)
+#ENDIF
     call obser_init
     do nsw = 1, nsweep
         !! only perform local update, measure equaltime quantities and dyn quantities when turnning off updates
@@ -97,6 +115,10 @@ module dqmc_ctrl
     end do
     call equaltime_output  ! reduce
     if(ltau) call dyn_output
+#IFDEF TIMING
+    call cpu_time_now(endtime)
+    timecalculation(2)=timecalculation(2)+endtime-starttime
+#ENDIF
   end subroutine dqmc_sweep
 
 end module dqmc_ctrl

@@ -16,11 +16,7 @@ subroutine dqmc_left_backward_prop(this, gmat, ntau )
   real(dp) :: starttime, endtime
 #ENDIF
 #IFDEF TIMING
-#IFDEF _OPENMP
-  starttime = omp_get_wtime()
-#ELSE
-  call cpu_time(starttime)
-#ENDIF
+  call cpu_time_now(starttime)
 #ENDIF
 
   n2 = size(gmat%orb1,2)
@@ -37,11 +33,7 @@ subroutine dqmc_left_backward_prop(this, gmat, ntau )
 !$OMP END DO
 !$OMP END PARALLEL
 #IFDEF TIMING
-#IFDEF _OPENMP
-  endtime = omp_get_wtime()
-#ELSE
-  call cpu_time(endtime)
-#ENDIF
+  call cpu_time_now(endtime)
   timecalculation(10)=timecalculation(10)+endtime-starttime
 #ENDIF
 

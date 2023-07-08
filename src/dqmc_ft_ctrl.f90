@@ -40,10 +40,10 @@ module dqmc_ctrl
   subroutine dqmc_warmup
     implicit none
 #IFDEF TIMING
-    real(dp) :: starttime24, endtime24
+    real(dp) :: starttime, endtime
 #ENDIF
 #IFDEF TIMING
-    starttime24 = omp_get_wtime()
+    call cpu_time_now(starttime)
 #ENDIF
 
     ! warmup
@@ -62,7 +62,7 @@ module dqmc_ctrl
                 call dqmc_ft_sweep_b0(lupdate=.true., lmeasure_equaltime=.false.)
                 call dqmc_ft_sweep_0b(lupdate=.true., lmeasure_equaltime=.false., lmeasure_dyn=.false.)
             end if
-        end do  
+        end do
   
         if(irank.eq.0) then
             write(fout, '(a)') 'after warmup : '
@@ -70,20 +70,20 @@ module dqmc_ctrl
         call wrap_error_print
     end if
 #IFDEF TIMING
-    endtime24 = omp_get_wtime()
-    timecalculation(3)=timecalculation(3)+endtime24-starttime24
+    call cpu_time_now(endtime)
+    timecalculation(3)=timecalculation(3)+endtime-starttime
 #ENDIF
   end subroutine dqmc_warmup
 
   subroutine dqmc_sweep
     implicit none
 #IFDEF TIMING
-    real(dp) :: starttime25, endtime25
+    real(dp) :: starttime, endtime
 #ENDIF
 
     include 'mpif.h'
 #IFDEF TIMING
-     starttime25 = omp_get_wtime()
+     call cpu_time_now(starttime)
 #ENDIF
     call obser_init
     do nsw = 1, nsweep
@@ -114,8 +114,8 @@ module dqmc_ctrl
     call equaltime_output  ! reduce
     if(ltau) call dyn_output
 #IFDEF TIMING
-    endtime25 = omp_get_wtime()
-    timecalculation(2)=timecalculation(2)+endtime25-starttime25
+    call cpu_time_now(endtime)
+    timecalculation(2)=timecalculation(2)+endtime-starttime
 #ENDIF
   end subroutine dqmc_sweep
 

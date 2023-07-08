@@ -23,11 +23,7 @@ subroutine dqmc_update_u(this, gmat, ntau )
   real(dp) :: starttime, endtime
 #ENDIF
 #IFDEF TIMING
-#IFDEF _OPENMP
-  starttime = omp_get_wtime()
-#ELSE
-  call cpu_time(starttime)
-#ENDIF
+  call  cpu_time_now(starttime)
 #ENDIF
 
 
@@ -91,11 +87,7 @@ subroutine dqmc_update_u(this, gmat, ntau )
    end do
    main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
 #IFDEF TIMING
-#IFDEF _OPENMP
-  endtime = omp_get_wtime()
-#ELSE
-  call cpu_time(endtime)
-#ENDIF
+  call cpu_time_now(endtime)
   timecalculation(14)=timecalculation(14)+endtime-starttime
 #ENDIF
 end subroutine dqmc_update_u

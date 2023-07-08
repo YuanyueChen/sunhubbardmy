@@ -14,10 +14,10 @@ subroutine dqmc_left_backward_prop(this, gmat, isite, ntau )
   integer :: i, i0, i1, n2, is
   type(gfunc) :: vkmat, vkmat_tmp
 #IFDEF TIMING
-  real(dp) :: starttime01, endtime01
+  real(dp) :: starttime, endtime
 #ENDIF
 #IFDEF TIMING
-  starttime01 = omp_get_wtime()
+  call cpu_time_now(starttime)
 #ENDIF
 
   n2 = size(gmat%orb1,2)
@@ -38,8 +38,8 @@ subroutine dqmc_left_backward_prop(this, gmat, isite, ntau )
     end do
   end do
 #IFDEF TIMING
-  endtime01 = omp_get_wtime()
-  timecalculation(12)=timecalculation(12)+endtime01-starttime01
+  call cpu_time_now(endtime)
+  timecalculation(12)=timecalculation(12)+endtime-starttime
 #ENDIF
 
 end subroutine dqmc_left_backward_prop

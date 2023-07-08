@@ -7,7 +7,6 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
   USE OMP_LIB
 #ENDIF
   implicit none
-
   !arguments
   class(uconf), intent(inout) :: this
   integer,intent(in) :: ntau
@@ -26,12 +25,11 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
   complex(dp), allocatable, dimension(:,:) :: gmmat, ulrinvul, urrecord
   integer :: i, ik, m
 #IFDEF TIMING
-  real(dp) :: starttime26, endtime26
+  real(dp) :: starttime, endtime
 #ENDIF
 #IFDEF TIMING
-  starttime26 = omp_get_wtime()
+  call cpu_time_now(starttime)
 #ENDIF
-
   allocate( diagg_up(ndim) )
   allocate( avec_up(ndim,nublock) )
   allocate( bvec_up(ndim,nublock) )
@@ -50,7 +48,7 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
   ik = 0
   ! initial diag G
   do isite = 1, latt%nsites
-      diagg_up(isite) =gmmat(isite,isite)
+      diagg_up(isite) = gmmat(isite,isite)
   end do
   ! intial avec, bvec
   avec_up = czero
@@ -64,7 +62,6 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
 
       ratio1 = (cone - diagg_up(isite))*this%delta_bmat_u_orb1(iflip, is) + cone
       sscl%orb1 = this%delta_bmat_u_orb1(iflip,is)/ratio1
-
 
       ratiotot = ratio1**nflr
       if( lproju ) then
@@ -114,19 +111,17 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
          this%conf_u(isite,ntau) =  isp
      end if
       
-     if( (ik.eq.nublock) .and. (isite.ne.latt%nsites) ) then
+     if( (ik.eq.nublock) .and. (isite.lt.latt%nsites) ) then
           ik = 0
           ! delay update: update the whole Green function
           call  zgemm('N', 'T', ndim, ndim, nublock, cone, avec_up, ndim, bvec_up, ndim, cone, gmmat, ndim)
-          if( isite.lt.latt%nsites) then
-              ! initial diag G
-              do i = 1, ndim
+          ! initial diag G
+          do i = 1, ndim
               diagg_up(i) = gmmat(i,i)
-              end do
-              ! intial avec, bvec
-              avec_up = czero
-              bvec_up = czero
-          end if
+          end do
+          ! intial avec, bvec
+          avec_up = czero
+          bvec_up = czero
       end if
 
      if(  isite.eq.latt%nsites ) then
@@ -139,8 +134,8 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
   end do
   main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
 #IFDEF TIMING
-  endtime26 = omp_get_wtime()
-  timecalculation(17)=timecalculation(17)+endtime26-starttime26
+  call cpu_time_now(endtime)
+  timecalculation(17)=timecalculation(17)+endtime-starttime
 #ENDIF
   deallocate( bvec_up )
   deallocate( avec_up )

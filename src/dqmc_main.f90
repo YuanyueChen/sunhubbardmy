@@ -16,11 +16,7 @@ program dqmc_main
   call dqmc_start
   call dqmc_warmup
 
-#IFDEF _OPENMP
-  time1 = omp_get_wtime()
-#ELSE
-  call cpu_time(time1)
-#ENDIF
+  call cpu_time_now(time1)
 
   do nbc =  1, nbin
       call dqmc_sweep

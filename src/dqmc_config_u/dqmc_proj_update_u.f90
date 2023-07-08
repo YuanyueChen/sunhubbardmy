@@ -24,11 +24,7 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
   real(dp) :: starttime, endtime
 #ENDIF
 #IFDEF TIMING
-#IFDEF _OPENMP
-  starttime = omp_get_wtime()
-#ELSE
-  call cpu_time(starttime)
-#ENDIF
+  call cpu_time_now(starttime)
 #ENDIF
 
   call allocate_zvfunc( ukmat, ne)
@@ -117,11 +113,7 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
   end do
   main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
 #IFDEF TIMING
-#IFDEF _OPENMP
-  endtime = omp_get_wtime()
-#ELSE
-  call cpu_time(endtime)
-#ENDIF
+  call cpu_time_now(endtime)
   timecalculation(16)=timecalculation(16)+endtime-starttime
 #ENDIF 
 

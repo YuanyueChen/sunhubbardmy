@@ -167,3 +167,17 @@ real(dp) function exp_numeric_d8(x)
   end do
 
 end function exp_numeric_d8
+
+  subroutine cpu_time_now(time_now)
+#IFDEF _OPENMP
+      USE OMP_LIB
+#ENDIF
+      use constants, only : dp
+      implicit none
+      real(dp), intent(out) :: time_now
+#IFDEF _OPENMP
+      time_now = omp_get_wtime()
+#ELSE
+      call cpu_time(time_now)
+#ENDIF
+  end subroutine cpu_time_now

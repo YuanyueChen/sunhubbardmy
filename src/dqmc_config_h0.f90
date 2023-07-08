@@ -51,6 +51,7 @@ module dqmc_config_h0
 #include 'dqmc_config_h0/expar.f90'
 #ENDIF
 #include 'dqmc_config_h0/seth0.f90'
+#include 'dqmc_config_h0/set_trial_h0.f90'
 #include 'dqmc_config_h0/dqmc_set_h0conf.f90'
 #include 'dqmc_config_h0/dqmc_left_backward_prop.f90'
 #include 'dqmc_config_h0/dqmc_left_forward_prop.f90'

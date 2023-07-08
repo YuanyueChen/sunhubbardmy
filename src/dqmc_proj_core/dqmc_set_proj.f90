@@ -3,23 +3,23 @@ subroutine dqmc_set_proj
 
   complex(dp), dimension(:,:), allocatable :: tmp
   real(dp), dimension(:), allocatable ::  wc
-  real(dp) :: rt1, en_free, degen
+  real(dp) :: en_free, degen
+  real(dp) :: rt1, mu1, xmag1, flux_x1, flux_y1, dimer1, rndness1
   integer :: i
 
   allocate(tmp(ndim,ndim), wc(ndim))
   tmp  = czero 
   
-  rt1 = rt
-  if (rt.le.zero)  rt1 = 1.d0
-  call seth0(tmp,rt1,mu)
-  !!!do i = 1, ndim
-  !!!    ! add mass
-  !!!    if( mod(i,2) == 0 ) then
-  !!!        tmp(i,i) = tmp(i,i) + dcmplx(0.d0, 0.00001d0)
-  !!!    else
-  !!!        tmp(i,i) = tmp(i,i) - dcmplx(0.d0, 0.00001d0)
-  !!!    end if
-  !!!end do
+  rt1=rt; mu1=mu; xmag1=xmag; flux_x1=flux_x; flux_y1=flux_y; dimer1=dimer; rndness1=rndness;
+  call set_trial_h0(tmp, rt1, mu1, xmag1, flux_x1, flux_y1, dimer1, rndness1)
+  !do i = 1, ndim
+  !    ! add small mass
+  !    if( mod(i,2) == 0 ) then
+  !        tmp(i,i) = tmp(i,i) + dcmplx(0.d0, 0.00001d0)
+  !    else
+  !        tmp(i,i) = tmp(i,i) - dcmplx(0.d0, 0.00001d0)
+  !    end if
+  !end do
 
 #IFDEF TEST
   write(fout,*)

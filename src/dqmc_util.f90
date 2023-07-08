@@ -267,21 +267,19 @@ module dqmc_util
         write(fout,'(a,f10.2,a)') 'The_time_of_stabilization:        ', timecalculation(7), 's'
         write(fout,'(a,f10.2,a)') 'The_time_of_H0_left:              ', timecalculation(8), 's'
         write(fout,'(a,f10.2,a)') 'The_time_of_H0_right:             ', timecalculation(9), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_u_left:               ', timecalculation(10), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_u_right:              ', timecalculation(11), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_plqu_left:            ', timecalculation(12), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_plqu_right:           ', timecalculation(13), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_HI_left:              ', timecalculation(10), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_HI_right:             ', timecalculation(11), 's'
+        if( timecalculation(12).ne.0.d0 ) then
+        write(fout,'(a,f10.2,a)') 'The_time_of_ft_fast_update:       ', timecalculation(12), 's'
+        end if
+        if( timecalculation(13).ne.0.d0 ) then
+        write(fout,'(a,f10.2,a)') 'The_time_of_ft_delay_update:      ', timecalculation(13), 's'
+        end if
         if( timecalculation(14).ne.0.d0 ) then
-        write(fout,'(a,f10.2,a)') 'The_time_of_ft_fast_update:       ', timecalculation(14), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_proj_fast_update:     ', timecalculation(14), 's'
         end if
         if( timecalculation(15).ne.0.d0 ) then
-        write(fout,'(a,f10.2,a)') 'The_time_of_ft_delay_update:      ', timecalculation(15), 's'
-        end if
-        if( timecalculation(16).ne.0.d0 ) then
-        write(fout,'(a,f10.2,a)') 'The_time_of_proj_fast_update:     ', timecalculation(16), 's'
-        end if
-        if( timecalculation(17).ne.0.d0 ) then
-        write(fout,'(a,f10.2,a)') 'The_time_of_proj_delay_update:    ', timecalculation(17), 's'
+        write(fout,'(a,f10.2,a)') 'The_time_of_proj_delay_update:    ', timecalculation(15), 's'
         end if
 #ENDIF      
         write(fout,'(a)') ' The simulation done !!! '

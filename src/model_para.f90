@@ -55,6 +55,7 @@ module model_para
   real(dp), save :: dimer  ! strength of dimerization
   integer, save :: ltrot   ! total number of time slices
   integer, save :: nflr    ! total number of fermion flavors (2 for spin-1/2 fermion systems)
+  real(dp), save :: rndness  ! a number control the randomness added to hopping when we generate trial wave function in PQMC
 
   ! global para
   integer, parameter :: fout = 50  ! tag for main output
@@ -134,9 +135,9 @@ module model_para
 
     ! namelist is used for reading parameters from input file
 #IFDEF CUBIC
-    namelist /model_para/ la, lb, lc, beta, dtau, rt, t2, t3, nu, mu, rhub, rhub_plq, alpha, theta, nflr, lprojplqu, lproju, xmag, flux_x, flux_y, dimer
+    namelist /model_para/ la, lb, lc, beta, dtau, rt, t2, t3, nu, mu, rhub, rhub_plq, alpha, theta, nflr, lprojplqu, lproju, xmag, flux_x, flux_y, dimer, rndness
 #ELSE
-    namelist /model_para/ la, lb, beta, dtau, rt, t2, t3, nu, mu, rhub, rhub_plq, alpha, theta, nflr, lprojplqu, lproju, xmag, flux_x, flux_y, dimer
+    namelist /model_para/ la, lb, beta, dtau, rt, t2, t3, nu, mu, rhub, rhub_plq, alpha, theta, nflr, lprojplqu, lproju, xmag, flux_x, flux_y, dimer, rndness
 #ENDIF
     namelist /ctrl_para/ lstabilize, nwrap, nsweep, nbin, nublock, ltau, dyntau, obs_eqt_mid_len
     
@@ -164,6 +165,7 @@ module model_para
     flux_x = 0.d0
     flux_y = 0.d0
     dimer = 0.d0
+    rndness = 0.d0
 
     lstabilize = .true.
     nwrap = 10
@@ -211,6 +213,7 @@ module model_para
     call mpi_bcast( flux_x,       1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( flux_y,       1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( dimer,        1, mpi_real8,    0, mpi_comm_world, ierr )
+    call mpi_bcast( rndness,      1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( lstabilize,   1, mpi_logical,  0, mpi_comm_world, ierr )
     call mpi_bcast( nwrap,        1, mpi_integer,  0, mpi_comm_world, ierr )
     call mpi_bcast( nsweep,       1, mpi_integer,  0, mpi_comm_world, ierr )
@@ -302,13 +305,13 @@ module model_para
 #ENDIF
 
     ! tune para for delay update, it is based on some experiences
-    if( lq/5 .lt. 16) then
+    if( ndim/5 .lt. 16) then
         nublock = 4
-    else if( lq/5 .lt. 32 ) then
+    else if( ndim/5 .lt. 32 ) then
         nublock = 8
-    else if( lq/5 .lt. 64 ) then
+    else if( ndim/5 .lt. 64 ) then
         nublock = 16
-    else if( lq/5 .lt. 256 ) then
+    else if( ndim/5 .lt. 256 ) then
         nublock = 32
     else ! equal to or greater than 256
         nublock = 64

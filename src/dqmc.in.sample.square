@@ -13,8 +13,9 @@ nflr = 4,
 lprojplqu = F,
 lproju = F,
 xmag = 0.0,
-flux_x = 0.0001,
+flux_x = 0.0000,
 flux_y = 0.0,
+rndness = 0.00001,
 /
 &ctrl_para
 ltau = T,

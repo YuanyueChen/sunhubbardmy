@@ -10,7 +10,7 @@ module dqmc_ctrl
   
     ! prepare for the DQMC
     ! check dyntau
-    if( dyntau .eq. beta ) stop "ERROR: you should not set dyntau = beta in dmqc_proj code"
+    if( ltau .and. (dyntau .eq. beta) ) stop "ERROR: you should not set dyntau = beta in dmqc_proj code"
 
     ! H0 part
     call h0c%set_h0conf(lq, ltrot, rt, mu)

@@ -118,7 +118,7 @@ subroutine dqmc_update_u(this, gmat, ntau )
    main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
 #IFDEF TIMING
   call cpu_time_now(endtime)
-  timecalculation(15)=timecalculation(15)+endtime-starttime
+  timecalculation(13)=timecalculation(13)+endtime-starttime
 #ENDIF
   deallocate( bvec_up )
   deallocate( avec_up )

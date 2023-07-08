@@ -88,7 +88,7 @@
     allocate( this%h0mat(latt%nsites,latt%nsites) )
     allocate( eig_tmp(latt%nsites) )
     allocate( h0vec(latt%nsites*latt%nsites) )
-    call seth0(this%h0mat,rt, mu)
+    call seth0(this%h0mat, rt, mu, xmag, flux_x, flux_y, dimer)
 
   ! case 2.1, fft for square
   ! H = U D U^+ => D = U^+ H U
@@ -361,7 +361,7 @@
 
     allocate ( this%h0mat(latt%nsites,latt%nsites), umat_tmp(latt%nsites,latt%nsites), eig_tmp(latt%nsites)  )
     
-    call seth0(this%h0mat,rt, mu)
+    call seth0(this%h0mat, rt, mu, xmag, flux_x, flux_y, dimer)
 
     call s_eig_he(latt%nsites,latt%nsites,this%h0mat,eig_tmp,umat_tmp)
           

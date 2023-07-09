@@ -2,10 +2,16 @@
       implicit none
       logical, intent(in) :: lupdate, lmeasure_equaltime, lmeasure_dyn
       ! local variables
-      integer :: nt, n, nf, nl, nr, i
+      integer :: nt, n, nf, nl, nr, i, nflag
       type(rfunc) :: logwtmp
       type(zfunc) :: zlogwtmp, logweightf_tmp
       type(gfunc) :: ultmp, urtmp, ULRtmp, ULRINVtmp, ul_t, ur_t, gftmp, gfctmp
+#IFDEF TIMING
+      real(dp) :: starttime, endtime, time1, time2
+#ENDIF
+#IFDEF TIMING
+      call cpu_time_now(starttime)
+#ENDIF
 
       call allocate_gfunc(ultmp,ne,ndim)
       call allocate_gfunc(urtmp,ndim,ne)
@@ -34,6 +40,9 @@
           write(fout,'(a)') " ----------------"
           write(fout,*)
 #ENDIF
+#IFDEF TIMING
+          call cpu_time_now(time1)
+#ENDIF
           ! wrap H0/2
           if( lwrapT ) then
 #IFDEF BREAKUP_T
@@ -53,6 +62,18 @@
               call hconf%left_forward_prop(UR,i,nt)
               call hconf%right_backward_prop(UL,i,nt)
               if(lupdate .and. lupdateplqu) call hconf%proj_update_plqu(i,nt,UL,UR,ULRINV )
+            end do
+          end if
+          ! updatev
+          if( lwrapv ) then
+            do nf = 1, latt%nn_nf
+                 nflag = 2
+                 call v0conf%left_forward_prop(UR,nt,nf,nflag)
+                 call v0conf%right_backward_prop(UL,nt,nf,nflag)
+                 if(lupdate .and. lupdatev) call v0conf%proj_update_v(nt,nf,UL,UR,ULRINV )
+                 nflag = 1
+                 call v0conf%left_forward_prop(UR,nt,nf,nflag)
+                 call v0conf%right_backward_prop(UL,nt,nf,nflag)
             end do
           end if
           ! updateu
@@ -76,6 +97,10 @@
               call h0c%right_backward_prop(nf,UL)
 #ENDIF
           end if
+#IFDEF TIMING
+          call cpu_time_now(time2)
+          timecalculation(3)=timecalculation(3)+time2-time1
+#ENDIF
 
           ! obser
           if( lmeasure_equaltime .and. nt > (ltrot/2 - (obs_eqt_mid_len+1)/2) .and. nt <= (ltrot/2 + obs_eqt_mid_len/2) ) then
@@ -85,6 +110,10 @@
               call green_equaltime(UL%orb1,UR%orb1,ULRINV%orb1,gf%orb1,gfc%orb1)
               call equaltime_measure(nt,gf,gfc)
           end if
+#IFDEF TIMING
+          call cpu_time_now(time1)
+          timecalculation(4)=timecalculation(4)+time1-time2
+#ENDIF
 
           !if ( mod(nt, nwrap) .eq. 0 ) then
           if ( iwrap_nt(nt) .gt. 0 ) then
@@ -157,6 +186,10 @@
               ! store UR
               Ust(n) = UR
           end if
+#IFDEF TIMING
+          call cpu_time_now(time2)
+          timecalculation(7)=timecalculation(7)+time2-time1
+#ENDIF
 
           !write(fout, '(a,i5,a)') 'nt = ', nt, ' ul = '
           !do i = 1, ne
@@ -174,6 +207,10 @@
               call dqmc_proj_dyn(Ust, ul_t, ur_t, xmax_dyn)
               nobst = nobst + 1
           end if
+#IFDEF TIMING
+          call cpu_time_now(time1)
+          timecalculation(5)=timecalculation(5)+time1-time2
+#ENDIF
   
       end do
       call deallocate_gfunc(ultmp)
@@ -184,4 +221,9 @@
       call deallocate_gfunc(ur_t)
       call deallocate_gfunc(gftmp)
       call deallocate_gfunc(gfctmp)
+
+#IFDEF TIMING
+      call cpu_time_now(endtime)
+      timecalculation(1)=timecalculation(1)+endtime-starttime
+#ENDIF
     end subroutine dqmc_proj_sweep_0b

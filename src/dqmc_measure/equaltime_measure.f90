@@ -9,12 +9,6 @@
     ! local 
     integer :: i, j
     complex(dp) :: zne
-#IFDEF TIMING
-    real(dp) :: starttime, endtime
-#ENDIF
-#IFDEF TIMING
-    call cpu_time_now(starttime)
-#ENDIF
 
     nobs = nobs + 1
 
@@ -49,6 +43,7 @@
     energy_bin(5) = energy_bin(5) + zqsq(gf,gfc)*dcmplx(1.d0/9.d0,0.d0)*zphi
     energy_bin(6) = energy_bin(6) + ztsq(gf,gfc)*zphi
     energy_bin(7) = energy_bin(7) + ztq(gf,gfc)*zphi
+    energy_bin(8) = energy_bin(8) + zint_v(gf,gfc)*rv*zphi
     call measure_cpcm(gf,gfc)
     zcpcm_orb1_bin = zcpcm_orb1_bin + zcpcm_orb1*zphi
     call measure_spsm(gf,gfc)
@@ -66,10 +61,6 @@
     pair_onsite_orb1_bin = pair_onsite_orb1_bin + pair_onsite_orb1*zphi
     pair_nn_orb1_bin = pair_nn_orb1_bin + pair_nn_orb1*zphi
     pair_sn_orb1_bin = pair_sn_orb1_bin + pair_sn_orb1*zphi
-#IFDEF TIMING
-    call cpu_time_now(endtime)
-    timecalculation(4)=timecalculation(4)+endtime-starttime
-#ENDIF
 
   end subroutine equaltime_measure
 
@@ -128,6 +119,22 @@
           zint_u = zint_u + gfc%orb1(i,i)*gfc%orb1(i,i)
       end do
     end function zint_u
+
+    complex(dp) function zint_v(gf,gfc)
+      ! measure nn interaction
+      implicit none
+      type(gfunc), intent(in) :: gf, gfc
+      integer :: i, i_0, nf, i_n
+      zint_v = czero
+      ! nn
+      do i = 1, latt%nn_lf
+          i_0 = latt%nnlf_list(i)
+          do nf = 1, latt%nn_nf
+              i_n = latt%nnlist(i_0,nf)
+              zint_v = zint_v + dcmplx(dble( gfc%orb1(i_0,i_n)), 0.d0 )
+          end do
+      end do
+    end function zint_v
 
     complex(dp) function zqsq(gf,gfc)
       ! Q^2 term

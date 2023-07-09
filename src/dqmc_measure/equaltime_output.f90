@@ -65,7 +65,7 @@ subroutine equaltime_output
       ! calculate energy_bin
       energy_bin(:) = energy_bin(:) / rnorm
       open (unit=90,file='energy.bin',status='unknown', action="write", position="append")
-      write(90, '(14e16.8)') energy_bin(1:7)
+      write(90, '(16e16.8)') energy_bin(1:8)
       close(90)
 
       zn_orb1 = zn_orb1 / znorm

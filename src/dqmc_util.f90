@@ -112,6 +112,25 @@ module dqmc_util
         end if
         !$OMP END PARALLEL
 #ENDIF
+#IFDEF DELAY
+        write(fout,'(a)') ' >>> Delay_update is used'
+#ELSE
+        write(fout,'(a)') ' >>> Fast_update is used'
+#ENDIF
+#IFDEF BREAKUP_T
+        write(fout,'(a)') ' >>> Case 1, use trotter for H0 part'
+#ELIF DEFINED(FFT)
+        write(fout,'(a)') ' >>> Case 2, use fft for H0 part'
+#ELSE
+        write(fout,'(a)') ' >>> Case 3, use zgemm for H0 part'
+#ENDIF
+#IFDEF SQUARE
+        write(fout,'(a)') ' >>> Square lattice model'
+#ELIF HONEYCOMB
+        write(fout,'(a)') ' >>> Honeycomb lattice model'
+#ELIF CUBIC
+        write(fout,'(a)') ' >>> Cubic lattice model'
+#ENDIF
     end if
     call cpu_time_now(start_time)
     main_obs(:) = czero
@@ -153,10 +172,12 @@ module dqmc_util
     if( n_outconf_pace .lt. nbin/3 ) then
         if( mod(nbc,n_outconf_pace) .eq. 0 ) then
             if(lwrapplqu) call hconf%output_plqconf
+            if(lwrapv)    call v0conf%output_vconf
             if(lwrapu)    call u0conf%output_uconf
         end if
     else if( mod( nbc, max(nbin/3,1) ) .eq. 0 ) then
         if(lwrapplqu) call hconf%output_plqconf
+        if(lwrapv)    call v0conf%output_vconf
         if(lwrapu)    call u0conf%output_uconf
     end if
 
@@ -185,6 +206,8 @@ module dqmc_util
     write(fout,*)             ' lprojplqu = ', lprojplqu
     write(fout,'(a,f7.3)')    ' rhub      = ', rhub
     write(fout,*)             ' lproju    = ', lproju
+    write(fout,'(a,f7.3)')    ' rv      = ', rv
+    write(fout,*)             ' lprojv   = ', lprojv
     write(fout,'(a,i4)')      ' la     = ', latt%l1
     write(fout,'(a,i4)')      ' lb     = ', latt%l2
 #IFDEF CUBIC
@@ -241,11 +264,13 @@ module dqmc_util
     implicit none
     include 'mpif.h'
     if(lwrapplqu) call hconf%output_plqconf
+    if(lwrapv)    call v0conf%output_vconf
     if(lwrapu)    call u0conf%output_uconf
 
     call mpi_reduce(main_obs, mpi_main_obs, size(main_obs), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
     if(irank.eq.0) then
         if(lwrapplqu)  write(fout,'(a,e16.8)') ' >>> accep_plqu  = ', dble(mpi_main_obs(2))/aimag(mpi_main_obs(2))
+        if(lwrapv)     write(fout,'(a,e16.8)') ' >>> accep_v     = ', dble(mpi_main_obs(4))/aimag(mpi_main_obs(4))
         if(lwrapu)     write(fout,'(a,e16.8)') ' >>> accep_u     = ', dble(mpi_main_obs(3))/aimag(mpi_main_obs(3))
     end if
 
@@ -258,29 +283,32 @@ module dqmc_util
         write(fout,'(a)') ' >>> Happy ending at '//date_time_string
         write(fout,*)
 #IFDEF TIMING
-        write(fout,'(a,f10.2,a)') 'The_time_of_sweep_in_warmup:      ', timecalculation(3), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_sweep_inside:         ', timecalculation(1), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_sweep_in_total:       ', timecalculation(2), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_measuring_equaltime:  ', timecalculation(4), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_measuring_unequaltime:', timecalculation(5), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_outputing_each_bin:   ', timecalculation(6), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_stabilization:        ', timecalculation(7), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_H0_left:              ', timecalculation(8), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_H0_right:             ', timecalculation(9), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_HI_left:              ', timecalculation(10), 's'
-        write(fout,'(a,f10.2,a)') 'The_time_of_HI_right:             ', timecalculation(11), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_sweep_inside:       ', timecalculation(1), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_sweep_in_total:     ', timecalculation(2), 's'
         if( timecalculation(12).ne.0.d0 ) then
-        write(fout,'(a,f10.2,a)') 'The_time_of_ft_fast_update:       ', timecalculation(12), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(12), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_ft_fast_update:     ', timecalculation(12), 's'
         end if
         if( timecalculation(13).ne.0.d0 ) then
-        write(fout,'(a,f10.2,a)') 'The_time_of_ft_delay_update:      ', timecalculation(13), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(13), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_ft_delay_update:    ', timecalculation(13), 's'
         end if
         if( timecalculation(14).ne.0.d0 ) then
-        write(fout,'(a,f10.2,a)') 'The_time_of_proj_fast_update:     ', timecalculation(14), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(14), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_proj_fast_update:   ', timecalculation(14), 's'
         end if
         if( timecalculation(15).ne.0.d0 ) then
-        write(fout,'(a,f10.2,a)') 'The_time_of_proj_delay_update:    ', timecalculation(15), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(15), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_proj_delay_update:  ', timecalculation(15), 's'
         end if
+        write(fout,'(a,f10.3,a)') 'The_time_of_stabilization:      ', timecalculation(7), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_measuring_equaltime:', timecalculation(4), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_measuring_dynamic:  ', timecalculation(5), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_outputing_bins      ', timecalculation(6), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_H0_left:            ', timecalculation(8), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_H0_right:           ', timecalculation(9), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_HI_left:            ', timecalculation(10), 's'
+        write(fout,'(a,f10.3,a)') 'The_time_of_HI_right:           ', timecalculation(11), 's'
 #ENDIF      
         write(fout,'(a)') ' The simulation done !!! '
         write(fout,*)

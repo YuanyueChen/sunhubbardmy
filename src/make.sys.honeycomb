@@ -5,8 +5,8 @@ LINKER = $(F90)
 
 # fortran preprocessor options, common setting
 #-------------------------------------------------------------------------
-RUNMODE = -DFFT -DDELAY -DHONEYCOMB -DDYNERROR -DWRAPERROR # -DTEST # -DBREAKUP_T #  -DTEST -DTEST_LEVEL3 # DSQUARE
-OMP    = # -qopenmp
+RUNMODE = -DBREAKUP_T -DDELAY -DHONEYCOMB -DDYNERROR -DWRAPERROR # -DTEST # -DBREAKUP_T #  -DTEST -DTEST_LEVEL3 # DSQUARE
+OMP    = #-qopenmp
 FPP    = -fpp
 CPP    = $(FPP) $(RUNMODE) $(OMP)
 

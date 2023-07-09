@@ -133,14 +133,14 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
       end if
   end do
   main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
-#IFDEF TIMING
-  call cpu_time_now(endtime)
-  timecalculation(15)=timecalculation(15)+endtime-starttime
-#ENDIF
   deallocate( bvec_up )
   deallocate( avec_up )
   deallocate( diagg_up )
   deallocate( ulrinvul )
   deallocate( gmmat )
   deallocate( urrecord )
+#IFDEF TIMING
+  call cpu_time_now(endtime)
+  timecalculation(15)=timecalculation(15)+endtime-starttime
+#ENDIF
 end subroutine dqmc_proj_update_u

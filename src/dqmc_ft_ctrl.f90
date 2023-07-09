@@ -12,15 +12,27 @@ module dqmc_ctrl
     ! prepare for the DQMC
 
     ! H0 part
-    call h0c%set_h0conf(lq, ltrot, rt, mu)
+    if(lwrapT) then
+        call h0c%set_h0conf(lq, ltrot, rt, mu)
+    end if
 
     ! plaquette interaction
-!    call hconf%set_plqconf(lq, ltrot, nu, lprojplqu, alpha, theta, rhub_plq, dtau )
-!    call hconf%input_plqconf
+    if(lwrapplqu) then
+        call hconf%set_plqconf(lq, ltrot, nu, lprojplqu, alpha, theta, rhub_plq, dtau )
+        call hconf%input_plqconf
+    end if
 
     ! on-site interaction
-    call u0conf%set_uconf(lq, ltrot, nu, lproju, alpha, theta, rhub, dtau )
-    call u0conf%input_uconf
+    if(lwrapu) then
+        call u0conf%set_uconf(lq, ltrot, nu, lproju, alpha, theta, rhub, dtau )
+        call u0conf%input_uconf
+    end if
+
+    ! nearest neighbor interaction
+    if(lwrapv) then
+        call v0conf%set_vconf(lq, ltrot, nu, lprojv, alpha, theta, rv, dtau )
+        call v0conf%input_vconf
+    end if
 
     call allocate_core
     ! allocate observables
@@ -39,12 +51,6 @@ module dqmc_ctrl
 
   subroutine dqmc_warmup
     implicit none
-#IFDEF TIMING
-    real(dp) :: starttime, endtime
-#ENDIF
-#IFDEF TIMING
-    call cpu_time_now(starttime)
-#ENDIF
 
     ! warmup
     !lwarmup = .false.
@@ -69,16 +75,12 @@ module dqmc_ctrl
         end if
         call wrap_error_print
     end if
-#IFDEF TIMING
-    call cpu_time_now(endtime)
-    timecalculation(3)=timecalculation(3)+endtime-starttime
-#ENDIF
   end subroutine dqmc_warmup
 
   subroutine dqmc_sweep
     implicit none
 #IFDEF TIMING
-    real(dp) :: starttime, endtime
+    real(dp) :: starttime, endtime, time1
 #ENDIF
 
     include 'mpif.h'
@@ -111,10 +113,14 @@ module dqmc_ctrl
         end if
 #ENDIF
     end do
+#IFDEF TIMING
+     call cpu_time_now(time1)
+#ENDIF
     call equaltime_output  ! reduce
     if(ltau) call dyn_output
 #IFDEF TIMING
     call cpu_time_now(endtime)
+    timecalculation(6)=timecalculation(6)+endtime-time1
     timecalculation(2)=timecalculation(2)+endtime-starttime
 #ENDIF
   end subroutine dqmc_sweep

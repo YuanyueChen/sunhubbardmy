@@ -2,14 +2,14 @@
       implicit none
       logical, intent(in) :: lupdate, lmeasure_equaltime, lmeasure_dyn
       ! local variables
-      integer :: nt, n, nf, i, j, info, nt1, nt2
+      integer :: nt, n, nf, i, j, info, nt1, nt2, nflag
       logical :: lterminate 
       real(dp) :: tmp, ratiof, ratiofi
       type(gfunc) :: gf_tmp, g0t_tmp, gt0_tmp, UR, VR, UL, VL
       type(dfunc) :: DRvec, DLvec
       type(zfunc) :: logdetQR, logdetQL, logweightf_tmp
 #IFDEF TIMING
-      real(dp) :: starttime, endtime
+      real(dp) :: starttime, endtime, time1, time2
 #ENDIF
 
       call allocate_gfunc(gf_tmp,ndim,ndim)
@@ -41,9 +41,16 @@
           gt0 = gf
           g0t = gf - Ifmat
       end if
+#IFDEF TIMING
+      call cpu_time_now(time1)
+#ENDIF
       if( ltau .and. lmeasure_dyn .and. (.not.lupdate) ) then
           call dyn_measure(1,gt0,g0t,gf,g00)
       end if ! if( ltau .and. lmeasure_dyn .and. (.not.lupdate) ) then
+#IFDEF TIMING
+      call cpu_time_now(time2)
+      timecalculation(5)=timecalculation(5)+time2-time1
+#ENDIF
   
       do nt = 1, ltrot, 1
 
@@ -53,6 +60,9 @@
           write(fout, '(a,i8)') ' |=> nt = ',  nt
           write(fout,'(a)') " ----------------"
           write(fout,*)
+#ENDIF
+#IFDEF TIMING
+          call cpu_time_now(time1)
 #ENDIF
           ! wrap H0/2
           if( lwrapT ) then
@@ -81,6 +91,19 @@
               if(lupdate .and. lupdateplqu) call hconf%update_plqu(gf,i,nt)
             end do
           end if
+          
+          ! updatev
+          if( lwrapv ) then
+            do  nf = 1, latt%nn_nf
+                nflag = 2
+                call v0conf%left_forward_prop(gf,nt,nf,nflag)
+                call v0conf%right_backward_prop(gf,nt,nf,nflag)
+                if(lupdate .and. lupdatev) call v0conf%update_v(gf,nt,nf)
+                nflag = 1
+                call v0conf%left_forward_prop(gf,nt,nf,nflag)
+                call v0conf%right_backward_prop(gf,nt,nf,nflag)
+            end do
+          end if 
 
           ! updateu
           if( lwrapu ) then
@@ -104,12 +127,21 @@
 #ENDIF
           end if
 
+#IFDEF TIMING
+          call cpu_time_now(time2)
+          timecalculation(3)=timecalculation(3)+time2-time1
+#ENDIF
+
           ! obser
           !!!if( lmeasure_equaltime .and. ( abs(nt-nt_ob) .le. obs_segment_len .or. abs(nt-nt_ob) .ge. (ltrot-obs_segment_len) ) ) then
           if( lmeasure_equaltime ) then
              call equaltime_measure(nt,gf,gfc)
           end if
   
+#IFDEF TIMING
+          call cpu_time_now(time1)
+          timecalculation(4)=timecalculation(4)+time1-time2
+#ENDIF
           if ( iwrap_nt(nt) .gt. 0 ) then
               n = iwrap_nt(nt)
               ! at tau = n * tau1
@@ -227,15 +259,18 @@
               end if
 
           end if
-  
+#IFDEF TIMING
+          call cpu_time_now(time2)
+          timecalculation(7)=timecalculation(7)+time2-time1
+#ENDIF
 
 #include "dqmc_ft_core/dyn.f90"
+#IFDEF TIMING
+          call cpu_time_now(time1)
+          timecalculation(5)=timecalculation(5)+time1-time2
+#ENDIF
   
       end do
-#IFDEF TIMING
-      call cpu_time_now(endtime)
-      timecalculation(1)=timecalculation(1)+endtime-starttime
-#ENDIF
 
       call deallocate_gfunc(gf_tmp)
       call deallocate_gfunc(UR)
@@ -244,4 +279,10 @@
       call deallocate_gfunc(UL)
       call deallocate_gfunc(VL)
       call deallocate_dfunc(DLvec)
+
+#IFDEF TIMING
+      call cpu_time_now(endtime)
+      timecalculation(1)=timecalculation(1)+endtime-starttime
+#ENDIF
+
     end subroutine dqmc_ft_sweep_0b

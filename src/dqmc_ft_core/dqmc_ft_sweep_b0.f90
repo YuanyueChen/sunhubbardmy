@@ -2,14 +2,14 @@
       implicit none
       logical, intent(in) :: lupdate, lmeasure_equaltime
       ! local variables
-      integer :: nt, n, nf, i, j, info
+      integer :: nt, n, nf, i, j, info, nflag
       logical :: lterminate 
       real(dp) :: tmp, ratiof, ratiofi
       type(gfunc) :: gf_tmp, UR, VR, UL, VL
       type(dfunc) :: DRvec, DLvec
       type(zfunc) :: logdetQR, logdetQL, logweightf_tmp
 #IFDEF TIMING
-      real(dp) :: starttime, endtime
+      real(dp) :: starttime, endtime, time2, time1
 #ENDIF
 
       call allocate_gfunc(gf_tmp,ndim,ndim)
@@ -39,11 +39,18 @@
           write(fout,'(a)') " ----------------"
           write(fout,*)
 #ENDIF
+#IFDEF TIMING
+          call cpu_time_now(time1)
+#ENDIF
           !!!! obser
           !!!if( lmeasure_equaltime .and. ( abs(nt-nt_ob) .le. obs_segment_len .or. abs(nt-nt_ob) .ge. (ltrot-obs_segment_len) ) ) then
           if( lmeasure_equaltime ) then
              call equaltime_measure(nt,gf,gfc)
           end if
+#IFDEF TIMING
+          call cpu_time_now(time2)
+          timecalculation(4)=timecalculation(4)+time2-time1
+#ENDIF
 
           ! wrap H0/2
           if( lwrapT ) then
@@ -67,6 +74,20 @@
             call u0conf%right_forward_prop(gf,nt)
             call u0conf%left_backward_prop(gf,nt)
           end if
+
+          ! updatev
+          if( lwrapv ) then
+            do  nf = latt%nn_nf,1,-1
+                nflag = 2
+                call v0conf%right_forward_prop(gf,nt,nf,nflag)
+                call v0conf%left_backward_prop(gf,nt,nf,nflag)
+                if(lupdate .and. lupdatev) call v0conf%update_v(gf,nt,nf)
+                nflag = 1
+                call v0conf%right_forward_prop(gf,nt,nf,nflag)
+                call v0conf%left_backward_prop(gf,nt,nf,nflag)
+            end do
+          end if
+
           ! updateplqu
           if( lwrapplqu ) then
               !if(lupdate) call upgradeuf( nt, grup)
@@ -93,6 +114,11 @@
               call h0c%left_backward_prop(nf,gf)
 #ENDIF
           end if
+
+#IFDEF TIMING
+          call cpu_time_now(time1)
+          timecalculation(3)=timecalculation(3)+time1-time2
+#ENDIF
 
           !if ( (iwrap_nt(nt-1).gt.0 .and. nwrap.eq.1) .or. (iwrap_nt(nt-1) .gt. 0 .and. nt.ne.ltrot) .or. ( nt.eq.1 .and. nst .gt. 0 ) ) then
           !if ( (iwrap_nt(nt-1).gt.0 .and. (nt.ne.ltrot .or. nwrap.eq.1)) .or. (nt.eq.1) ) then
@@ -168,11 +194,11 @@
               end if
 
           end if
-      end do
 #IFDEF TIMING
-      call cpu_time_now(endtime)
-      timecalculation(1)=timecalculation(1)+endtime-starttime
+          call cpu_time_now(time2)
+          timecalculation(7)=timecalculation(7)+time2-time1
 #ENDIF
+      end do
 
       call deallocate_gfunc(gf_tmp)
       call deallocate_gfunc(UR)
@@ -181,5 +207,10 @@
       call deallocate_gfunc(UL)
       call deallocate_gfunc(VL)
       call deallocate_dfunc(DLvec)
+
+#IFDEF TIMING
+      call cpu_time_now(endtime)
+      timecalculation(1)=timecalculation(1)+endtime-starttime
+#ENDIF
 
     end subroutine dqmc_ft_sweep_b0

@@ -45,8 +45,10 @@ module model_para
   real(dp), save :: mu   ! chemical potential
   real(dp), save :: rhub  ! Hubbard onsite interaction
   real(dp), save :: rhub_plq ! plaquette interaction
+  real(dp), save :: rv       ! nn interaction
   real(dp), save :: alpha    ! parameter in front of asistant hopping term
   real(dp), save :: theta    ! phase factor in asistant hopping term
+  logical, save :: lprojv     ! whether using infinite interaction projection for nn interaction
   logical, save :: lproju     ! whether using infinite interaction projection for Hubbard onsite interaction
   logical, save :: lprojplqu  ! whether using infinite interaction projection for plaquette interaction
   real(dp), save :: xmag  ! z-direction magnetic field
@@ -70,11 +72,13 @@ module model_para
   ! dqmc relative
   logical, save :: lwrapT ! whether wrap hopping (false when rt=0, true when rt \= 0)
   logical, save :: lwrapu ! whether wrap onsite interaction (false when rhub=0, true when rhub\=0)
+  logical, save :: lwrapv ! whether wrap nn interaction (false when rv=0, true when rv\=0)
   logical, save :: lwrapplqu ! whether wrap plaquette interaction (false when rhub_plq=0, true when rhub_plq\=0)
   logical, save :: llocal ! whether use local update
   logical, save :: lstglobal ! whether use space-time global update
   logical, save :: lworm     ! whether use worm update
   logical, save :: lupdateu  ! whether update configurations for onsite interaction
+  logical, save :: lupdatev  ! whether update configurations for nn interaction
   logical, save :: lupdateplqu ! whether update configurations for plaquette interaction
   complex(dp), save :: phase, phase_tmp ! phase factor of determinant
   real(dp), save :: weight_track ! track the weight of determinant
@@ -111,7 +115,7 @@ module model_para
   real(dp), save :: logdyncount   ! counter for calculating average of log10 of max dyn error
 
   ! delay update
-  integer, save :: nublock ! size of block when doing delay update
+  integer, save :: nublock ! size of block when doing delay update, if nublock = 0 in input file, it uses default setting based on system size
 
   contains
 
@@ -135,9 +139,9 @@ module model_para
 
     ! namelist is used for reading parameters from input file
 #IFDEF CUBIC
-    namelist /model_para/ la, lb, lc, beta, dtau, rt, t2, t3, nu, mu, rhub, rhub_plq, alpha, theta, nflr, lprojplqu, lproju, xmag, flux_x, flux_y, dimer, rndness
+    namelist /model_para/ la, lb, lc, beta, dtau, rt, t2, t3, nu, mu, rhub, rv, rhub_plq, alpha, theta, nflr, lprojplqu, lprojv, lproju, xmag, flux_x, flux_y, dimer, rndness
 #ELSE
-    namelist /model_para/ la, lb, beta, dtau, rt, t2, t3, nu, mu, rhub, rhub_plq, alpha, theta, nflr, lprojplqu, lproju, xmag, flux_x, flux_y, dimer, rndness
+    namelist /model_para/ la, lb, beta, dtau, rt, t2, t3, nu, mu, rhub, rv, rhub_plq, alpha, theta, nflr, lprojplqu, lprojv, lproju, xmag, flux_x, flux_y, dimer, rndness
 #ENDIF
     namelist /ctrl_para/ lstabilize, nwrap, nsweep, nbin, nublock, ltau, dyntau, obs_eqt_mid_len
     
@@ -155,11 +159,13 @@ module model_para
     nu = 0.d0
     mu   = 0.d0 ! default is half filling
     rhub = 0.0d0
+    rv   = 0.0d0
     rhub_plq = 0.0d0
     alpha = 0.2d0
     theta = 0.d0
     nflr = 2
     lprojplqu = .false.
+    lprojv = .false.
     lproju = .false.
     xmag = 0.d0
     flux_x = 0.d0
@@ -171,7 +177,7 @@ module model_para
     nwrap = 10
     nsweep = 20
     nbin = 10
-    nublock = 16
+    nublock = 0
     ltau = .false.
     dyntau = 0
     obs_eqt_mid_len = 1
@@ -203,11 +209,13 @@ module model_para
     call mpi_bcast( nu,           1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( mu,           1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( rhub,         1, mpi_real8,    0, mpi_comm_world, ierr )
+    call mpi_bcast( rv,           1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( rhub_plq,     1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( alpha,        1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( theta,        1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( nflr,         1, mpi_integer,  0, mpi_comm_world, ierr )
     call mpi_bcast( lprojplqu,    1, mpi_logical,  0, mpi_comm_world, ierr )
+    call mpi_bcast( lprojv,       1, mpi_logical,  0, mpi_comm_world, ierr )   
     call mpi_bcast( lproju,       1, mpi_logical,  0, mpi_comm_world, ierr )
     call mpi_bcast( xmag,         1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( flux_x,       1, mpi_real8,    0, mpi_comm_world, ierr )
@@ -233,6 +241,12 @@ module model_para
             write(fout, '(a)') "nu is not integer, lprojplqu is set to be false!"
         end if
     end if
+    if( dble(int(nu))-nu .ne. 0.d0 ) then ! if nu is not integer
+        lprojv = .false.
+        if( irank == 0 ) then
+            write(fout, '(a)') "nu is not integer, lprojv is set to be false!"
+        end if
+    end if
     if( dble(int(2.d0*nu))-2.d0*nu .ne. 0.d0 ) then ! if 2*nu is not integer
         lproju = .false.
         if( irank == 0 ) then
@@ -252,6 +266,12 @@ module model_para
         lwrapu = .false.
     end if
 
+    if( rv .ne. 0.d0 ) then
+        lwrapv = .true.
+    else
+        lwrapv = .false.
+    end if
+
     if( rhub_plq .ne. 0.d0 ) then
         lwrapplqu = .true.
     else
@@ -262,6 +282,12 @@ module model_para
         lupdateu = .true.
     else
         lupdateu = .false.
+    end if
+
+    if( rv .ne. 0.d0 ) then
+        lupdatev = .true.
+    else
+        lupdatev = .false.
     end if
 
     if( rhub_plq .ne. 0.d0 ) then
@@ -304,17 +330,19 @@ module model_para
     xmag = dble(la*lb)*(a1_p(1)*a2_p(2) - a1_p(2)*a2_p(1))/2.d0
 #ENDIF
 
-    ! tune para for delay update, it is based on some experiences
-    if( ndim/5 .lt. 16) then
-        nublock = 4
-    else if( ndim/5 .lt. 32 ) then
-        nublock = 8
-    else if( ndim/5 .lt. 64 ) then
-        nublock = 16
-    else if( ndim/5 .lt. 256 ) then
-        nublock = 32
-    else ! equal to or greater than 256
-        nublock = 64
+    if( nublock .eq. 0 ) then
+        ! tune para for delay update, it is based on some experiences
+        if( ndim/5 .lt. 16) then
+            nublock = 4
+        else if( ndim/5 .lt. 32 ) then
+            nublock = 8
+        else if( ndim/5 .lt. 64 ) then
+            nublock = 16
+        else if( ndim/5 .lt. 256 ) then
+            nublock = 32
+        else ! equal to or greater than 256
+            nublock = 64
+        end if
     end if
 
     ! set nst, iwrap_nt and wrap_step

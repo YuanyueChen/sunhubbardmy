@@ -26,7 +26,6 @@ subroutine dqmc_update_u(this, gmat, ntau )
   call  cpu_time_now(starttime)
 #ENDIF
 
-
   call allocate_zvfunc( ukmat, ndim)
   call allocate_zvfunc( vkmat, ndim)
 

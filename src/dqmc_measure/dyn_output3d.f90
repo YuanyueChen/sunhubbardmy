@@ -3,12 +3,12 @@ subroutine dyn_output
   USE OMP_LIB
 #ENDIF
   implicit none
+  include 'mpif.h'
 
   complex(dp) :: znorm
   character(40) :: ftag
   integer :: i
 
-  include 'mpif.h'
   if( ltau ) then
       znorm = cone / dcmplx( dble(nsweep*isize), 0.d0 )
   end if
@@ -36,6 +36,7 @@ subroutine dyn_output
       ftag = "gf"
       call fourier_trans_tau(gtau0, ftag)
   end if
+
 end subroutine dyn_output
 
 subroutine fourier_trans_tau(gr,ftag)

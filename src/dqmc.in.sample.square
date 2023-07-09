@@ -7,6 +7,7 @@ dtau = 0.1,
 nu =  0.0,
 rhub = 4.0,
 rhub_plq = 0.0,
+rv = 0.0,
 alpha = 0.0,
 theta = 0.0,
 nflr = 4,
@@ -23,5 +24,6 @@ dyntau = 4.0,
 obs_eqt_mid_len = 21,
 nwrap = 10,
 nsweep = 1,
-nbin = 2
+nbin = 2,
+nublock = 0
 /

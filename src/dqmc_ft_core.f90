@@ -75,7 +75,7 @@ module dqmc_ft_core
       type(gfunc), intent(inout) :: bmat
 
       ! local
-      integer :: nt, nf, i
+      integer :: nt, nf, i, nflag
 
       do nt = nt2, nt1
           if( lwrapT ) then
@@ -93,6 +93,14 @@ module dqmc_ft_core
               do i = 1, lq
                   call hconf%left_forward_prop(bmat,i,nt)
               end do
+          end if
+         
+          if( lwrapv ) then
+                do nf = 1, latt%nn_nf
+                    do nflag = 2, 1, -1 
+                      call v0conf%left_forward_prop(bmat,nt,nf,nflag)
+                    end do
+                end do
           end if
 
           if( lwrapu ) then
@@ -120,7 +128,7 @@ module dqmc_ft_core
       type(gfunc), intent(inout) :: bmat
 
       ! local
-      integer :: nt, nf, i
+      integer :: nt, nf, i, nflag
 
       do nt = nt1, nt2, -1
 
@@ -137,6 +145,14 @@ module dqmc_ft_core
 
           if( lwrapu ) then
               call u0conf%left_forward_prop_hc(bmat,nt)
+          end if
+          
+          if( lwrapv ) then
+                do nf = latt%nn_nf, 1, -1
+                    do nflag = 2, 1, -1
+                      call v0conf%left_forward_prop_hc(bmat,nt,nf,nflag)
+                    end do
+                end do
           end if
 
           if( lwrapplqu ) then
@@ -167,7 +183,7 @@ module dqmc_ft_core
       type(gfunc), intent(inout) :: bmat
 
       ! local
-      integer :: nt, nf, i
+      integer :: nt, nf, i, nflag
 
       do nt = nt1, nt2, -1
           ! wrap H0/2
@@ -185,7 +201,15 @@ module dqmc_ft_core
           if( lwrapu ) then
               call u0conf%right_forward_prop(bmat,nt)
           end if
-  
+          
+          if( lwrapv ) then
+                do nf = latt%nn_nf, 1, -1
+                    do nflag = 2, 1, -1
+                      call v0conf%right_forward_prop(bmat,nt,nf,nflag)
+                    end do
+                end do
+          end if 
+
           if( lwrapplqu ) then
               !call mmuul( bmat_up, ity, nf, nt, nflag )
               do i = lq, 1, -1
@@ -215,7 +239,7 @@ module dqmc_ft_core
       type(gfunc) :: bmat
 
       ! local
-      integer :: nt, nf, i
+      integer :: nt, nf, i, nflag
 
       do nt = nt2, nt1
           ! wrap H0/2
@@ -236,6 +260,14 @@ module dqmc_ft_core
                   call hconf%right_backward_prop(bmat,i,nt)
               end do
           end if
+          
+          if( lwrapv ) then
+                do nf = 1, latt%nn_nf
+                    do nflag = 2,1,-1 
+                      call v0conf%right_backward_prop(bmat,nt,nf,nflag)
+                    end do
+                end do
+          end if 
 
           if( lwrapu ) then
               call u0conf%right_backward_prop(bmat,nt)

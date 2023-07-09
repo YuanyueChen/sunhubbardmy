@@ -2,10 +2,16 @@
       implicit none
       logical, intent(in) :: lupdate, lmeasure_equaltime
       ! local variables
-      integer :: nt, n, nf, nl, i
+      integer :: nt, n, nf, nl, i, nflag
       type(rfunc) :: logwtmp
       type(zfunc) :: zlogwtmp, logweightf_tmp
       type(gfunc) :: ultmp, urtmp, ULRtmp, ULRINVtmp, gftmp, gfctmp
+#IFDEF TIMING
+      real(dp) :: starttime, endtime, time1, time2
+#ENDIF
+#IFDEF TIMING
+      call cpu_time_now(starttime)
+#ENDIF
 
       call allocate_gfunc(ultmp,ne,ndim)
       call allocate_gfunc(urtmp,ndim,ne)
@@ -30,6 +36,9 @@
           write(fout,'(a)') " ----------------"
           write(fout,*)
 #ENDIF
+#IFDEF TIMING
+          call cpu_time_now(time1)
+#ENDIF
           ! obser
           if( lmeasure_equaltime .and. nt > (ltrot/2 - (obs_eqt_mid_len+1)/2) .and. nt <= (ltrot/2 + obs_eqt_mid_len/2) ) then
               call zgemm('n','n',ne,ne,ndim,cone,UL%orb1,ne,UR%orb1,ndim,czero,ULR%orb1,ne)  ! ULR = UL*UR
@@ -38,6 +47,10 @@
               call green_equaltime(UL%orb1,UR%orb1,ULRINV%orb1,gf%orb1,gfc%orb1)
               call equaltime_measure(nt,gf,gfc)
           end if
+#IFDEF TIMING
+          call cpu_time_now(time2)
+          timecalculation(4)=timecalculation(4)+time2-time1
+#ENDIF
 
           ! wrap H0/2
           if( lwrapT ) then
@@ -60,6 +73,18 @@
             if(lupdate .and. lupdateu) call u0conf%proj_update_u(nt,UL,UR,ULRINV)
             call u0conf%right_forward_prop(UL,nt)
             call u0conf%left_backward_prop(UR,nt)
+          end if
+          ! updatev
+          if( lwrapv ) then
+            do  nf = latt%nn_nf,1,-1 
+                nflag = 2
+                call v0conf%right_forward_prop(UL,nt,nf,nflag)
+                call v0conf%left_backward_prop(UR,nt,nf,nflag)
+                if(lupdate .and. lupdatev) call v0conf%proj_update_v(nt,nf,UL,UR,ULRINV)
+                nflag = 1
+                call v0conf%right_forward_prop(UL,nt,nf,nflag)
+                call v0conf%left_backward_prop(UR,nt,nf,nflag)
+            end do    
           end if
           ! updateplqu
           if( lwrapplqu ) then
@@ -85,6 +110,11 @@
               call h0c%left_backward_prop(nf,UR)
 #ENDIF
           end if
+
+#IFDEF TIMING
+          call cpu_time_now(time1)
+          timecalculation(3)=timecalculation(3)+time1-time2
+#ENDIF
 
           !if ( mod(nt, nwrap) .eq. 0  ) then
           if ( (iwrap_nt(nt-1).gt.0 .or. nwrap.eq.1) .or. (nt .eq. 1) ) then
@@ -165,6 +195,10 @@
                  end do
               end do
           end if
+#IFDEF TIMING
+          call cpu_time_now(time2)
+          timecalculation(7)=timecalculation(7)+time2-time1
+#ENDIF
       end do
 
       call deallocate_gfunc(ultmp)
@@ -173,4 +207,9 @@
       call deallocate_gfunc(ULRINVtmp)
       call deallocate_gfunc(gftmp)
       call deallocate_gfunc(gfctmp)
+
+#IFDEF TIMING
+      call cpu_time_now(endtime)
+      timecalculation(1)=timecalculation(1)+endtime-starttime
+#ENDIF
     end subroutine dqmc_proj_sweep_b0

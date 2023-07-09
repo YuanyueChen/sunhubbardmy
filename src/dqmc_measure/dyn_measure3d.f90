@@ -10,9 +10,6 @@
     !	arguments.
     type(gfunc), intent(in) :: g00up, g0tup, gt0up, gttup
     integer, intent(in) :: nt
-#IFDEF TIMING
-    real(dp) :: starttime, endtime
-#ENDIF
     
     !       local
     integer :: i, j, no_i, no_j, nu_i, nu_j, imj
@@ -41,9 +38,6 @@
     !!!      g00do(i,j)  = dcmplx(xi*xj,0.d0)* ( Imat(i,j) - dconjg( g00up(j,i) ) )
     !!!   enddo
     !!!enddo
-#IFDEF TIMING
-    call cpu_time_now(starttime)
-#ENDIF
 
     if( dble(phase) < 0.d0 ) then
         sgn = -1.d0
@@ -55,10 +49,10 @@
     gtau0 = czero
     zspsm_tau = czero
     znn_tau = czero
-    do j = 1, latt%nsites
+    do j = 1, ndim
         nu_j = latt%list(j,1)
         no_j = latt%list(j,2)
-        do i = 1, latt%nsites
+        do i = 1, ndim
             nu_i = latt%list(i,1)
             no_i = latt%list(i,2)
             imj  = latt%imj(nu_i,nu_j)
@@ -71,9 +65,5 @@
     gtau0_bin = gtau0_bin + gtau0*zphi
     zspsm_tau_bin = zspsm_tau_bin + zspsm_tau*zphi
     znn_tau_bin = znn_tau_bin + znn_tau*zphi
-#IFDEF TIMING
-    call cpu_time_now(endtime)
-    timecalculation(5)=timecalculation(5)+endtime-starttime
-#ENDIF
 
   end subroutine dyn_measure

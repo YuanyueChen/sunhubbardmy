@@ -10,9 +10,6 @@
     !	arguments.
     type(gfunc), intent(in) :: g00up, g0tup, gt0up, gttup
     integer, intent(in) :: nt
-#IFDEF TIMING
-    real(dp) :: starttime, endtime
-#ENDIF
     
     !       local
     integer :: i, j, no_i, no_j, nu_i, nu_j, imj, i_0, j_0, i_n, j_n
@@ -42,9 +39,6 @@
     !!!      g00do(i,j)  = dcmplx(xi*xj,0.d0)* ( Imat(i,j) - dconjg( g00up(j,i) ) )
     !!!   enddo
     !!!enddo
-#IFDEF TIMING
-    call cpu_time_now(starttime)
-#ENDIF
 
     if( dble(phase) < 0.d0 ) then
         sgn = -1.d0
@@ -63,49 +57,45 @@
             nu_i = latt%list(i,1)
             no_i = latt%list(i,2)
             imj  = latt%imj(nu_i,nu_j)
-            gtau0_orb1_tau(imj,no_i,no_j,nt) = gtau0_orb1_tau(imj,no_i,no_j,nt) + gt0up%orb1(i,j)
-            zspsm_orb1_tau(imj,no_i,no_j,nt) = zspsm_orb1_tau(imj,no_i,no_j,nt) - g0tup%orb1(j,i)*gt0up%orb1(i,j)*dcmplx(1.d0-1.d0/dble(nflr*nflr), 0.d0)
+!            gtau0_orb1_tau(imj,no_i,no_j,nt) = gtau0_orb1_tau(imj,no_i,no_j,nt) + gt0up%orb1(i,j)
+!            zspsm_orb1_tau(imj,no_i,no_j,nt) = zspsm_orb1_tau(imj,no_i,no_j,nt) - g0tup%orb1(j,i)*gt0up%orb1(i,j)*dcmplx(1.d0-1.d0/dble(nflr*nflr), 0.d0)
             znn_orb1_tau(imj,no_i,no_j,nt) = znn_orb1_tau(imj,no_i,no_j,nt) + dcmplx( (0.5d0-dble(gttup%orb1(i,i)))*(0.5d0-dble(g00up%orb1(j,j))) ) &
                                - dcmplx(1.d0/dble(nflr),0.d0)*g0tup%orb1(j,i)*gt0up%orb1(i,j)
         end do
     end do
-    gtau0_orb1_tau_bin = gtau0_orb1_tau_bin + gtau0_orb1_tau*zphi
-    zspsm_orb1_tau_bin = zspsm_orb1_tau_bin + zspsm_orb1_tau*zphi
+!    gtau0_orb1_tau_bin = gtau0_orb1_tau_bin + gtau0_orb1_tau*zphi
+!    zspsm_orb1_tau_bin = zspsm_orb1_tau_bin + zspsm_orb1_tau*zphi
     znn_orb1_tau_bin = znn_orb1_tau_bin + znn_orb1_tau*zphi
 
-    zbb_orb1_tau = czero
-    zb_orb1_tau = czero
-    do nu_j = 1, lq
-#IFDEF HONEYCOMB
-        j_0 = 2*nu_j - 1 ! A site
-        j_n = latt%nnlist(j_0,1) ! B site
-#ENDIF
-#IFDEF SQUARE
-        j_0 = nu_j  ! A site
-        j_n = latt%nnlist(j_0,1) ! B site
-#ENDIF
-        zj = expar(j_0,1,xmag,flux_x,flux_y,dimer)
-        zb_orb1_tau(nu_j,nt) = zb_orb1_tau(nu_j,nt) + (zj*(-gttup%orb1(j_n,j_0)) + dconjg(zj)*(-gttup%orb1(j_0,j_n)))
-        do nu_i = 1, lq
-#IFDEF HONEYCOMB
-            i_0 = 2*nu_i - 1 ! A site
-            i_n = latt%nnlist(i_0,1) ! B site
-#ENDIF
-#IFDEF SQUARE
-            i_0 = nu_i ! A site
-            i_n = latt%nnlist(i_0,1) ! B site
-#ENDIF
-            zi = expar(i_0,1,xmag,flux_x,flux_y,dimer)
-            imj = latt%imj(nu_i,nu_j)
-            zbb_orb1_tau(imj,nt) = zbb_orb1_tau(imj,nt) + (zj*(-g00up%orb1(j_n,j_0)) + dconjg(zj)*(-g00up%orb1(j_0,j_n)))*(zi*(-gttup%orb1(i_n,i_0)) + dconjg(zi)*(-gttup%orb1(i_0,i_n))) &
-                                          + ( -zi*zj*g0tup%orb1(j_n,i_0)*gt0up%orb1(i_n,j_0) - dconjg(zi)*dconjg(zj)*g0tup%orb1(j_0,i_n)*gt0up%orb1(i_0,j_n) &
-                                          -   zi*dconjg(zj)*g0tup%orb1(j_0,i_0)*gt0up%orb1(i_n,j_n) - dconjg(zi)*zj*g0tup%orb1(j_n,i_n)*gt0up%orb1(i_0,j_0) )*dcmplx(1.d0/dble(nflr),0.d0)
-        end do
-    end do
+!    zbb_orb1_tau = czero
+!    zb_orb1_tau = czero
+!    do nu_j = 1, lq
+!#IFDEF HONEYCOMB
+!        j_0 = 2*nu_j - 1 ! A site
+!        j_n = latt%nnlist(j_0,1) ! B site
+!#ENDIF
+!#IFDEF SQUARE
+!        j_0 = nu_j  ! A site
+!        j_n = latt%nnlist(j_0,1) ! B site
+!#ENDIF
+!        zj = expar(j_0,1,xmag,flux_x,flux_y,dimer)
+!        zb_orb1_tau(nu_j,nt) = zb_orb1_tau(nu_j,nt) + (zj*(-gttup%orb1(j_n,j_0)) + dconjg(zj)*(-gttup%orb1(j_0,j_n)))
+!        do nu_i = 1, lq
+!#IFDEF HONEYCOMB
+!            i_0 = 2*nu_i - 1 ! A site
+!            i_n = latt%nnlist(i_0,1) ! B site
+!#ENDIF
+!#IFDEF SQUARE
+!            i_0 = nu_i ! A site
+!            i_n = latt%nnlist(i_0,1) ! B site
+!#ENDIF
+!            zi = expar(i_0,1,xmag,flux_x,flux_y,dimer)
+!            imj = latt%imj(nu_i,nu_j)
+!            zbb_orb1_tau(imj,nt) = zbb_orb1_tau(imj,nt) + (zj*(-g00up%orb1(j_n,j_0)) + dconjg(zj)*(-g00up%orb1(j_0,j_n)))*(zi*(-gttup%orb1(i_n,i_0)) + dconjg(zi)*(-gttup%orb1(i_0,i_n))) &
+!                                          + ( -zi*zj*g0tup%orb1(j_n,i_0)*gt0up%orb1(i_n,j_0) - dconjg(zi)*dconjg(zj)*g0tup%orb1(j_0,i_n)*gt0up%orb1(i_0,j_n) &
+!                                          -   zi*dconjg(zj)*g0tup%orb1(j_0,i_0)*gt0up%orb1(i_n,j_n) - dconjg(zi)*zj*g0tup%orb1(j_n,i_n)*gt0up%orb1(i_0,j_0) )*dcmplx(1.d0/dble(nflr),0.d0)
+!        end do
+!    end do
     zbb_orb1_tau_bin = zbb_orb1_tau_bin + zbb_orb1_tau*zphi
     zb_orb1_tau_bin = zb_orb1_tau_bin + zb_orb1_tau*zphi
-#IFDEF TIMING
-    call cpu_time_now(endtime)
-    timecalculation(5)=timecalculation(5)+endtime-starttime
-#ENDIF
   end subroutine dyn_measure

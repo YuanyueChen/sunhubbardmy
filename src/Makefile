@@ -8,7 +8,7 @@ include ./make.sys
 default: all
 
 modu1 = lattice.o dqmc_basic_data.o model_para.o 
-modu2 = dqmc_config_u.o dqmc_config_plqu.o dqmc_config_h0.o dqmc_para.o dqmc_util.o dqmc_measure.o
+modu2 = dqmc_config_u.o dqmc_config_plqu.o dqmc_config_h0.o dqmc_config_v.o dqmc_para.o dqmc_util.o dqmc_measure.o
 modu3 = dqmc_ft_core.o  dqmc_ft_ctrl.o
 modu4 = dqmc_proj_core.o dqmc_proj_ctrl.o
 main = dqmc_main.o

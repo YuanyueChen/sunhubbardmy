@@ -12,13 +12,14 @@ EXE=$HOME/mywork/sun-hubbard/bin/${code}
 cd $WORKDIR
 for beta in ${betaarray}; do
 for u in ${uarray}; do
+for rv in ${varray}; do
 for plqu in ${plquarray}; do
 for nu in ${nuarray}; do
 for nflr in ${nflrarray}; do
   for L  in ${Larray}; do
         cd $WORKDIR
         #beta=$( echo "$L" |awk '{printf( "%4i", $1*2)}' | tr -d '[:space:]' )
-        maindir=${code}.b${beta}.dtau${dtau}.t${rt}.U${u}.plqU${plqu}.alpha${alpha}.theta${theta}.Nf${nflr}.nu${nu}.L${L}.proj${lprojplqu}${lproju}
+        maindir=${code}.b${beta}.U${u}.plqU${plqu}.V${rv}.Nf${nflr}.L${L}
         echo "submit job $maindir ... "
         if [ ! -d $maindir ]; then
             mkdir $maindir
@@ -33,6 +34,10 @@ for nflr in ${nflrarray}; do
         fi
         if [ -f conf_u.out ]; then
             cp conf_u.out conf_u.in
+        fi
+
+        if [ -f conf_v.out ]; then
+            cp conf_v.out conf_v.in
         fi
 
         #if [ -f energy.bin ]; then
@@ -51,6 +56,7 @@ dtau = $dtau,
 nu = $nu,
 rhub = $u,
 rhub_plq = $plqu,
+rv = $rv,
 alpha = $alpha,
 theta = $theta,
 nflr = $nflr,
@@ -59,6 +65,7 @@ lproju = $lproju,
 xmag = $xmag,
 flux_x = $flux_x,
 flux_y = $flux_y,
+rndness = $rndness,
 /
 &ctrl_para
 ltau = $ltau,
@@ -66,7 +73,8 @@ dyntau = $dyntau,
 obs_eqt_mid_len = $obs_eqt_mid_len,
 nwrap = $nwrap,
 nsweep = $nsweep,
-nbin = $nbin
+nbin = $nbin,
+nublock = $nublock
 /
 endin
 

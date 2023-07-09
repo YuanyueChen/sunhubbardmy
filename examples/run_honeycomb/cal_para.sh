@@ -1,25 +1,30 @@
 #!/bin/bash
 plquarray=$( echo "0.00")
-uarray=$(awk 'BEGIN{for(i=5.00;i<=5.001;i+=1.00) printf("%6.2f",i)}')
+uarray=$(awk 'BEGIN{for(i=0.00;i<=0.001;i+=1.00) printf("%6.2f",i)}')
 #uarray=$( echo "2.00 3.00 4.00 5.00")
+varray=$(awk 'BEGIN{for(i=1.00;i<=1.001;i+=1.00) printf("%6.2f",i)}')
+#varray=$( echo "2.00 3.00 4.00 5.00")
 betaarray=$( echo "40.000")
-Larray=$( echo "3 6")
+Larray=$( echo "3")
 alpha=0.00
 theta=0.00
 nflrarray=$( echo "2")
 nuarray=$( echo "0.00")
-code="honeycomb_suN_proj_FFT_delay"
+code="proj_FFT_delay"
 xmag=0.0
-flux_x=0.0001
+flux_x=0.0
 flux_y=0.0
+rndness=0.00001
 dtau=0.1
 rt=1.0
 lprojplqu=F
 lproju=F
 ltau=F
+dyntau=0.0
 nwrap=10
 nsweep=20
 nbin=20
+nublock=0
 obs_eqt_mid_len=21
 echo " rt = " $rt
 echo " L = " $Larray
@@ -58,3 +63,13 @@ for nutmp in $nuarray; do
     let num_nu=num_nu+1
 done
 echo " num_nu = " $num_nu
+
+for vtmp in $varray; do
+    let num_v=num_v+1
+done
+echo " num_V = " $num_v
+
+for utmp in $uarray; do
+    let num_u=num_u+1
+done
+echo " num_U = " $num_u

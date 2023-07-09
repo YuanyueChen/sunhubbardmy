@@ -10,16 +10,17 @@ datadir=$WORKDIR/../../run_honeycomb/
 echo $WORKDIR
 cd $WORKDIR
 for beta in ${betaarray}; do
+for rv in ${varray}; do
 for plqu in ${plquarray}; do
 for nu in ${nuarray}; do
 for nflr in ${nflrarray}; do
   for L  in ${Larray}; do
-       pretag=${code}.b${beta}.dtau${dtau}.t${rt}.plqU${plqu}.alpha${alpha}.theta${theta}.Nf${nflr}.nu${nu}.L${L}.proj${lprojplqu}${lproju}
+       pretag=${code}.b${beta}.plqU${plqu}.V${rv}.Nf${nflr}.L${L}
        cd $WORKDIR
        rm ${pretag}*.dat
        for u in ${uarray}; do
          cd $datadir
-         maindir=${code}.b${beta}.dtau${dtau}.t${rt}.U${u}.plqU${plqu}.alpha${alpha}.theta${theta}.Nf${nflr}.nu${nu}.L${L}.proj${lprojplqu}${lproju}
+         maindir=${code}.b${beta}.U${u}.plqU${plqu}.V${rv}.Nf${nflr}.L${L}
          if [ -f $maindir/energy.bin ]; then
             cd $maindir
 	        lq=$( echo "$L" |awk '{print $1^2}' )
@@ -179,6 +180,7 @@ for nflr in ${nflrarray}; do
        done
        paste $WORKDIR/${pretag}_ekint.dat $WORKDIR/${pretag}_eu.dat |awk -v uv=$u '{print $1, $2*2+$5*uv, sqrt(4*$3*$3+$6*$6*uv*uv)}' > $WORKDIR/${pretag}_etot.dat
   done
+done
 done
 done
 done

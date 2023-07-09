@@ -283,28 +283,41 @@ module dqmc_util
         write(fout,'(a)') ' >>> Happy ending at '//date_time_string
         write(fout,*)
 #IFDEF TIMING
-        write(fout,'(a,f10.3,a)') 'The_time_of_sweep_inside:       ', timecalculation(1), 's'
         write(fout,'(a,f10.3,a)') 'The_time_of_sweep_in_total:     ', timecalculation(2), 's'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_sweep_inside:       ', timecalculation(1), 's', &
+                                           ' = ', 100*timecalculation(1)/timecalculation(2), '%'
         if( timecalculation(12).ne.0.d0 ) then
-        write(fout,'(a,f10.3,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(12), 's'
-        write(fout,'(a,f10.3,a)') 'The_time_of_ft_fast_update:     ', timecalculation(12), 's'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(12), 's', & 
+                                           ' = ', 100*(timecalculation(3)-timecalculation(12))/timecalculation(2), '%'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_ft_fast_update:     ', timecalculation(12), 's', &
+                                           ' = ', 100*timecalculation(12)/timecalculation(2), '%'
         end if
         if( timecalculation(13).ne.0.d0 ) then
-        write(fout,'(a,f10.3,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(13), 's'
-        write(fout,'(a,f10.3,a)') 'The_time_of_ft_delay_update:    ', timecalculation(13), 's'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(13), 's', &
+                                           ' = ', 100*(timecalculation(3)-timecalculation(13))/timecalculation(2), '%'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_ft_delay_update:    ', timecalculation(13), 's', &
+                                           ' = ', 100*timecalculation(13)/timecalculation(2), '%'
         end if
         if( timecalculation(14).ne.0.d0 ) then
-        write(fout,'(a,f10.3,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(14), 's'
-        write(fout,'(a,f10.3,a)') 'The_time_of_proj_fast_update:   ', timecalculation(14), 's'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(14), 's', &
+                                           ' = ', 100*(timecalculation(3)-timecalculation(14))/timecalculation(2), '%'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_proj_fast_update:   ', timecalculation(14), 's', &
+                                           ' = ', 100*timecalculation(14)/timecalculation(2), '%'
         end if
         if( timecalculation(15).ne.0.d0 ) then
-        write(fout,'(a,f10.3,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(15), 's'
-        write(fout,'(a,f10.3,a)') 'The_time_of_proj_delay_update:  ', timecalculation(15), 's'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(15), 's', &
+                                           ' = ', 100*(timecalculation(3)-timecalculation(15))/timecalculation(2), '%'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_proj_delay_update:  ', timecalculation(15), 's', &
+                                           ' = ', 100*timecalculation(15)/timecalculation(2), '%'
         end if
-        write(fout,'(a,f10.3,a)') 'The_time_of_stabilization:      ', timecalculation(7), 's'
-        write(fout,'(a,f10.3,a)') 'The_time_of_measuring_equaltime:', timecalculation(4), 's'
-        write(fout,'(a,f10.3,a)') 'The_time_of_measuring_dynamic:  ', timecalculation(5), 's'
-        write(fout,'(a,f10.3,a)') 'The_time_of_outputing_bins      ', timecalculation(6), 's'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_stabilization:      ', timecalculation(7), 's', &
+                                           ' = ', 100*timecalculation(7)/timecalculation(2), '%'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_measuring_equaltime:', timecalculation(4), 's', &
+                                           ' = ', 100*timecalculation(4)/timecalculation(2), '%'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_measuring_dynamic:  ', timecalculation(5), 's', &
+                                           ' = ', 100*timecalculation(5)/timecalculation(2), '%'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_outputing_bins      ', timecalculation(6), 's', &
+                                           ' = ', 100*timecalculation(6)/timecalculation(2), '%'
         write(fout,'(a,f10.3,a)') 'The_time_of_H0_left:            ', timecalculation(8), 's'
         write(fout,'(a,f10.3,a)') 'The_time_of_H0_right:           ', timecalculation(9), 's'
         write(fout,'(a,f10.3,a)') 'The_time_of_HI_left:            ', timecalculation(10), 's'

@@ -11,7 +11,7 @@ subroutine dqmc_left_forward_prop(this, nf, gmat)
   integer, intent(in) :: nf
 #IFDEF TIMING
   real(dp) :: starttime, endtime
-#ENDIF 
+#ENDIF
   type(gfunc) :: gmat
   integer :: n2
 ! case 1, use trotter

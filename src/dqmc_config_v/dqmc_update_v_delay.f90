@@ -50,7 +50,7 @@ subroutine dqmc_update_v(this, gmat, ntau, nf)
       do m = 0, ik-2, 2
           gpart(1,1) = gpart(1,1) + avec(i1,1+m)*bvec(i1,1+m) + avec(i1,2+m)*bvec(i1,2+m)
           gpart(1,2) = gpart(1,2) + avec(i1,1+m)*bvec(i2,1+m) + avec(i1,2+m)*bvec(i2,2+m)
-          gpart(2,1) = gpart(1,2) + avec(i2,1+m)*bvec(i1,1+m) + avec(i2,2+m)*bvec(i1,2+m)
+          gpart(2,1) = gpart(2,1) + avec(i2,1+m)*bvec(i1,1+m) + avec(i2,2+m)*bvec(i1,2+m)
           gpart(2,2) = gpart(2,2) + avec(i2,1+m)*bvec(i2,1+m) + avec(i2,2+m)*bvec(i2,2+m)
       end do
       vukmat(1,1) = (cone - gpart(1,1))*this%delta_bmat_v_p_orb1(iflip, is) + cone

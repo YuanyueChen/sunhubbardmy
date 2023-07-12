@@ -76,7 +76,7 @@
           end if
           ! updatev
           if( lwrapv ) then
-            do  nf = latt%nn_nf,1,-1 
+            do  nf = latt%nn_nf,1,-1
                 nflag = 2
                 call v0conf%right_forward_prop(UL,nt,nf,nflag)
                 call v0conf%left_backward_prop(UR,nt,nf,nflag)
@@ -84,7 +84,7 @@
                 nflag = 1
                 call v0conf%right_forward_prop(UL,nt,nf,nflag)
                 call v0conf%left_backward_prop(UR,nt,nf,nflag)
-            end do    
+            end do
           end if
           ! updateplqu
           if( lwrapplqu ) then

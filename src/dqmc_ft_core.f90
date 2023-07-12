@@ -97,7 +97,7 @@ module dqmc_ft_core
          
           if( lwrapv ) then
                 do nf = 1, latt%nn_nf
-                    do nflag = 2, 1, -1 
+                    do nflag = 2, 1, -1
                       call v0conf%left_forward_prop(bmat,nt,nf,nflag)
                     end do
                 end do
@@ -208,7 +208,7 @@ module dqmc_ft_core
                       call v0conf%right_forward_prop(bmat,nt,nf,nflag)
                     end do
                 end do
-          end if 
+          end if
 
           if( lwrapplqu ) then
               !call mmuul( bmat_up, ity, nf, nt, nflag )
@@ -263,11 +263,11 @@ module dqmc_ft_core
           
           if( lwrapv ) then
                 do nf = 1, latt%nn_nf
-                    do nflag = 2,1,-1 
+                    do nflag = 2, 1, -1
                       call v0conf%right_backward_prop(bmat,nt,nf,nflag)
                     end do
                 end do
-          end if 
+          end if
 
           if( lwrapu ) then
               call u0conf%right_backward_prop(bmat,nt)

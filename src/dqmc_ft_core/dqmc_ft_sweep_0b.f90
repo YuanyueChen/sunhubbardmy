@@ -94,16 +94,16 @@
           
           ! updatev
           if( lwrapv ) then
-            do  nf = 1, latt%nn_nf
-                nflag = 2
-                call v0conf%left_forward_prop(gf,nt,nf,nflag)
-                call v0conf%right_backward_prop(gf,nt,nf,nflag)
-                if(lupdate .and. lupdatev) call v0conf%update_v(gf,nt,nf)
-                nflag = 1
-                call v0conf%left_forward_prop(gf,nt,nf,nflag)
-                call v0conf%right_backward_prop(gf,nt,nf,nflag)
+            do nf = 1, latt%nn_nf
+                 nflag = 2
+                 call v0conf%left_forward_prop(gf,nt,nf,nflag)
+                 call v0conf%right_backward_prop(gf,nt,nf,nflag)
+                 if(lupdate .and. lupdatev) call v0conf%update_v(gf,nt,nf)
+                 nflag = 1
+                 call v0conf%left_forward_prop(gf,nt,nf,nflag)
+                 call v0conf%right_backward_prop(gf,nt,nf,nflag)
             end do
-          end if 
+          end if
 
           ! updateu
           if( lwrapu ) then

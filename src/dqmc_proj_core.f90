@@ -91,13 +91,13 @@ module dqmc_proj_core
                   call hconf%left_forward_prop(bmat,i,nt)
               end do
           end if
-          
+         
           if( lwrapv ) then
-              do nf = 1, latt%nn_nf
-                do nflag = 2, 1, -1
-                  call v0conf%left_forward_prop(bmat,nt,nf,nflag)
+                do nf = 1, latt%nn_nf
+                    do nflag = 2, 1, -1
+                      call v0conf%left_forward_prop(bmat,nt,nf,nflag)
+                    end do
                 end do
-              end do
           end if
 
           if( lwrapu ) then
@@ -145,7 +145,7 @@ module dqmc_proj_core
           end if
           
           if( lwrapv ) then
-                do nf = 1, latt%nn_nf
+                do nf = latt%nn_nf, 1, -1
                     do nflag = 2, 1, -1
                       call v0conf%left_forward_prop_hc(bmat,nt,nf,nflag)
                     end do
@@ -200,7 +200,7 @@ module dqmc_proj_core
           end if
           
           if( lwrapv ) then
-                do nf = 1, latt%nn_nf
+                do nf = latt%nn_nf, 1, -1
                     do nflag = 2, 1, -1
                       call v0conf%right_forward_prop(bmat,nt,nf,nflag)
                     end do
@@ -265,7 +265,7 @@ module dqmc_proj_core
                     end do
                 end do
           end if
-          
+
           if( lwrapu ) then
               call u0conf%right_backward_prop(bmat,nt)
           end if

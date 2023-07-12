@@ -20,7 +20,7 @@
     else
         this%lcomp = 4
     end if
-    this%alpha_u = dsqrt( dtau*u*0.5d0 )
+    this%alpha_u = dsqrt( dtau*dabs(u)*0.5d0 )
     allocate( this%bmat_u_orb1(this%lcomp) )
     allocate( this%bmat_u_orb1_inv(this%lcomp) )
     allocate( this%delta_bmat_u_orb1(this%lcomp-1,this%lcomp) )
@@ -33,9 +33,15 @@
           this%bmat_u_orb1(is) = exp( dcmplx(0.d0, pi*dble(2*is)/dble(this%lcomp)) )
           this%bmat_u_orb1_inv(is) = exp( dcmplx(0.d0,-pi*dble(2*is)/dble(this%lcomp)) )
       else
-          this%phase(is) = exp( dcmplx(0.d0, this%alpha_u*(-etal(is))*0.5d0*(dble(nflr)+nu)) )
-          this%bmat_u_orb1(is) =      exp( dcmplx(0.d0, this%alpha_u*etal(is)) )
-          this%bmat_u_orb1_inv(is) =  exp( dcmplx(0.d0,-this%alpha_u*etal(is)) )
+          if( u .ge. 0.d0 ) then
+              this%phase(is) = exp( dcmplx(0.d0, this%alpha_u*(-etal(is))*0.5d0*(dble(nflr)+nu)) )
+              this%bmat_u_orb1(is) =      exp( dcmplx(0.d0, this%alpha_u*etal(is)) )
+              this%bmat_u_orb1_inv(is) =  exp( dcmplx(0.d0,-this%alpha_u*etal(is)) )
+          else
+              this%phase(is) = exp( dcmplx(this%alpha_u*(-etal(is))*0.5d0*(dble(nflr)+nu), 0.d0) )
+              this%bmat_u_orb1(is) =      exp( dcmplx( this%alpha_u*etal(is), 0.d0) )
+              this%bmat_u_orb1_inv(is) =  exp( dcmplx(-this%alpha_u*etal(is), 0.d0) )
+          end if
       end if
 #IFDEF PLEVEL2
       if( irank == 0 ) then
@@ -56,8 +62,13 @@
           this%phase_ratio(iflip,is) = exp( dcmplx( 0.d0, pi*dble(2*is-2*isp)*0.5d0*(dble(nflr)+nu)/dble(this%lcomp) ) )
           this%delta_bmat_u_orb1(iflip,is) = exp( dcmplx(0.d0, pi*dble(2*isp-2*is)/dble(this%lcomp)) ) - cone
       else
-          this%phase_ratio(iflip,is) = exp( dcmplx(0.d0, this%alpha_u*(etal(is)-etal(isp))*0.5d0*(dble(nflr)+nu)) )
-          this%delta_bmat_u_orb1(iflip,is) = exp( dcmplx(0.d0, this%alpha_u*(etal(isp)-etal(is))) ) - cone
+          if( u .ge. 0.d0 ) then
+              this%phase_ratio(iflip,is) = exp( dcmplx(0.d0, this%alpha_u*(etal(is)-etal(isp))*0.5d0*(dble(nflr)+nu)) )
+              this%delta_bmat_u_orb1(iflip,is) = exp( dcmplx(0.d0, this%alpha_u*(etal(isp)-etal(is))) ) - cone
+          else
+              this%phase_ratio(iflip,is) = exp( dcmplx(this%alpha_u*(etal(is)-etal(isp))*0.5d0*(dble(nflr)+nu),0.d0) )
+              this%delta_bmat_u_orb1(iflip,is) = exp( dcmplx(this%alpha_u*(etal(isp)-etal(is)),0.d0) ) - cone
+          end if
       end if
 #IFDEF PLEVEL2
       if( irank == 0 ) then

@@ -26,8 +26,8 @@ subroutine dqmc_left_forward_prop_hc(this, gmat, ntau)
 !$OMP DO
   do isite = 1, this%nsites
       is = this%conf_u(isite,ntau)
-      do i = 1, n2 ! exp(iV)^H = exp(-iV)
-          gmat%orb1(isite, i) = gmat%orb1(isite, i)*this%bmat_u_orb1_inv(is)
+      do i = 1, n2 ! exp(V)^H
+          gmat%orb1(isite, i) = gmat%orb1(isite, i)*dconjg(this%bmat_u_orb1(is))
       end do
   end do
 !$OMP END DO

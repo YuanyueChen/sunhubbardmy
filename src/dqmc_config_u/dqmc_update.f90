@@ -1,4 +1,4 @@
-subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
+subroutine dqmc_update(this, gmat, ntau )
 
   use spring
   use model_para
@@ -7,18 +7,17 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
   USE OMP_LIB
 #ENDIF
   implicit none
-
   !arguments
   class(uconf), intent(inout) :: this
   integer,intent(in) :: ntau
-  type(gfunc) :: ul, ur, ulrinv
+  type(gfunc) :: gmat
 
   !local
   complex(dp) ::  ratio1, ratiotot
   integer :: iflip, is, i0, k, isp, isite, i1, i2
   real(dp) :: accm, ratio_re, ratio_re_abs, random, weight
 
-  type(zvfunc) :: ukmat, vkmat, vuvkmat, lrukmat, vkmat_tmp
+  type(zvfunc) :: ukmat, vkmat
   type(zfunc) :: sscl
 #IFDEF TIMING
   real(dp) :: starttime, endtime
@@ -27,37 +26,22 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
   call cpu_time_now(starttime)
 #ENDIF
 
-  call allocate_zvfunc( ukmat, ne)
-  call allocate_zvfunc( vkmat, ne)
-  call allocate_zvfunc( vuvkmat, ne)
-  call allocate_zvfunc( lrukmat, ne )
-  call allocate_zvfunc( vkmat_tmp, ne)
+  call allocate_zvfunc( ukmat, ndim)
+  call allocate_zvfunc( vkmat, ndim)
 
   accm  = 0.d0
   do isite = 1, latt%nsites
-      is = this%conf_u(isite,ntau)
+      is = this%conf(isite,ntau)
       iflip = ceiling( spring_sfmt_stream() * (this%lcomp-1) )
       isp = mod(is+iflip-1,this%lcomp) + 1
 
-      vuvkmat%orb1(:) = ur%orb1(isite,:)
-      ukmat%orb1(:) = ul%orb1(:,isite)
-
-      vkmat_tmp%orb1(:) = this%delta_bmat_u_orb1(iflip,is)*vuvkmat%orb1(:)
-
+      ukmat%orb1 = czero
       vkmat%orb1 = czero
-      do i1 = 1, ne
-          do i2 = 1, ne
-              vkmat%orb1(i1) = vkmat%orb1(i1) + vkmat_tmp%orb1(i2)*ulrinv%orb1(i2,i1)
-          end do
-      end do
+      vkmat%orb1(:) =      - gmat%orb1(isite, :)
+      vkmat%orb1(isite) = cone - gmat%orb1(isite, isite)
 
-      ratio1 = cone
-      do i1 = 1, ne
-          ratio1 = ratio1 + vkmat%orb1(i1)*ukmat%orb1(i1)
-      end do
-
-      sscl%orb1 = cone / ratio1
-
+      ratio1 = vkmat%orb1(isite)*this%delta_bmat%orb1(iflip, is) + cone
+      sscl%orb1 = this%delta_bmat%orb1(iflip,is)/ratio1
 
       ratiotot = ratio1**nflr
       if( lproju ) then
@@ -88,33 +72,21 @@ subroutine dqmc_proj_update_u(this, ntau, ul, ur, ulrinv)
          write(fout, '(a,2e16.8)') ' in update_u, phase = ', phase
 #ENDIF
 
-         ! update ur
-         ur%orb1(isite,:) = ur%orb1(isite,:) + vkmat_tmp%orb1(:)
-
-         ! update urlinv
-         vuvkmat%orb1(:) = sscl%orb1*vkmat%orb1(:)
-         lrukmat%orb1 = czero
-         do i2 = 1, ne
-             do i1 = 1, ne
-                 lrukmat%orb1(i1) = lrukmat%orb1(i1) + ulrinv%orb1(i1,i2)*ukmat%orb1(i2)
-             end do
+         ! update gmat
+         ukmat%orb1(:) = gmat%orb1(:,isite)
+         do i2 = 1, ndim
+         do i1 = 1, ndim
+             gmat%orb1(i1,i2) = gmat%orb1(i1,i2) - sscl%orb1*ukmat%orb1(i1)*vkmat%orb1(i2)
          end do
-
-         do i1 = 1, ne
-             do i2 = 1, ne
-                 ulrinv%orb1(i1,i2) = ulrinv%orb1(i1,i2) - lrukmat%orb1(i1)*vuvkmat%orb1(i2)
-             end do
          end do
-
 
          ! flip
-         this%conf_u(isite,ntau) =  isp
-     end if
-  end do
-  main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
+         this%conf(isite,ntau) =  isp
+      endif
+   end do
+   main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
 #IFDEF TIMING
   call cpu_time_now(endtime)
-  timecalculation(14)=timecalculation(14)+endtime-starttime
-#ENDIF 
-
-end subroutine dqmc_proj_update_u
+  timecalculation(12)=timecalculation(12)+endtime-starttime
+#ENDIF
+end subroutine dqmc_update

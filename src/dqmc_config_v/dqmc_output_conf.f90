@@ -1,4 +1,4 @@
-  subroutine dqmc_output_vconf(this)
+  subroutine dqmc_output_conf(this)
      use model_para
      implicit none
   
@@ -21,7 +21,7 @@
     endif
   
   	if ( irank.ne.0 )  then
-  	   call mpi_send(this%conf_v, this%nsites*this%nn_nf*this%ltrot,mpi_integer, 0, irank+1536,mpi_comm_world,ierr)
+  	   call mpi_send(this%conf, this%nsites*this%nn_nf*this%ltrot,mpi_integer, 0, irank+1536,mpi_comm_world,ierr)
   	endif
   
   	if (irank.eq.0)  then
@@ -29,7 +29,7 @@
   	     do nt = 1,this%ltrot
              do i  = 1,this%nsites
                do nf  = 1, this%nn_nf
-                  write(35,'(i4)') this%conf_v(i,nf,nt)
+                  write(35,'(i4)') this%conf(i,nf,nt)
                enddo
              enddo
          enddo
@@ -48,4 +48,4 @@
        close(35)
     endif
     deallocate(itmpv)
-  end subroutine dqmc_output_vconf
+  end subroutine dqmc_output_conf

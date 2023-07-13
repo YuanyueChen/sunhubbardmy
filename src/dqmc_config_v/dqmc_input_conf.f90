@@ -1,4 +1,4 @@
-  subroutine dqmc_input_vconf( this )
+  subroutine dqmc_input_conf( this )
     use spring
     implicit none
   
@@ -16,7 +16,7 @@
   
     allocate (itmpv(this%nsites,this%nn_nf,this%ltrot) )
   
-    allocate( this%conf_v(this%nsites,this%nn_nf,this%ltrot) )
+    allocate( this%conf(this%nsites,this%nn_nf,this%ltrot) )
   
     if (irank .eq. 0 ) then
          inquire (file = 'conf_v.in', exist = exists)
@@ -44,23 +44,23 @@
                  do i  = 1, this%nsites
                     do nf  = 1, this%nn_nf
                         if( lprojv ) then
-                           this%conf_v(i,nf,nt) = ceiling( spring_sfmt_stream() * this%lcomp )
+                           this%conf(i,nf,nt) = ceiling( spring_sfmt_stream() * this%lcomp )
                         else
-                           this%conf_v(i,nf,nt) = ceiling( spring_sfmt_stream() * this%lcomp )
+                           this%conf(i,nf,nt) = ceiling( spring_sfmt_stream() * this%lcomp )
                         end if
                     end do
                  end do
              end do
-  	         call mpi_send(this%conf_v, this%nsites*this%nn_nf*this%ltrot,mpi_integer, n, n+1536,mpi_comm_world,ierr)
+  	         call mpi_send(this%conf, this%nsites*this%nn_nf*this%ltrot,mpi_integer, n, n+1536,mpi_comm_world,ierr)
   	      end do
             !	set node zero.
   	      do nt = 1,this%ltrot
               do i  = 1,this%nsites
                 do nf  = 1, this%nn_nf
                     if( lprojv ) then
-                        this%conf_v(i,nf,nt) = ceiling( spring_sfmt_stream() * this%lcomp )
+                        this%conf(i,nf,nt) = ceiling( spring_sfmt_stream() * this%lcomp )
                     else
-                        this%conf_v(i,nf,nt) = ceiling( spring_sfmt_stream() * this%lcomp )
+                        this%conf(i,nf,nt) = ceiling( spring_sfmt_stream() * this%lcomp )
                     end if
                 end do
   		      end do
@@ -73,7 +73,7 @@
             do nt = 1,this%ltrot
               do i  = 1,this%nsites
                 do nf  = 1, this%nn_nf
-                  read(30,*,IOSTAT=eof) this%conf_v(i,nf,nt)
+                  read(30,*,IOSTAT=eof) this%conf(i,nf,nt)
                   if(eof.lt.0) exit 
                 end do
                 if(eof.lt.0) exit 
@@ -101,14 +101,14 @@
             write(fout, '(a)') '----------------------------------------------------------------------------------------------------------------!'
             do n_re = n, isize-1
                 write(fout, '(a,i4,a)') ' In inconfc, irank = ', n_re, ' are copying configurations ... '
-                itmpv = this%conf_v
+                itmpv = this%conf
                 call mpi_send(itmpv, this%nsites*this%nn_nf*this%ltrot,mpi_integer, n_re, n_re+1536,mpi_comm_world,ierr)
             end do
             end if
             write(fout, '(a)') ' '
   	   endif
   	else
-  	   call mpi_recv(this%conf_v, this%nsites*this%nn_nf*this%ltrot, mpi_integer,0,  irank + 1536, mpi_comm_world,status,ierr)
+  	   call mpi_recv(this%conf, this%nsites*this%nn_nf*this%ltrot, mpi_integer,0,  irank + 1536, mpi_comm_world,status,ierr)
   	endif
   
       if (irank .eq. 0 ) then
@@ -117,4 +117,4 @@
   
       deallocate(itmpv)
   
-  end subroutine dqmc_input_vconf
+  end subroutine dqmc_input_conf

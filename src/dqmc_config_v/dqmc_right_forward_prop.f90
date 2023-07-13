@@ -50,10 +50,10 @@ subroutine dqmc_right_forward_prop(this, gmat, ntau, nf, nflag)
      do i = 1,latt%nn_lf
         i1 = latt%nnlf_list(i)
         i2 = latt%nnlist(i1,nf) 
-        is = this%conf_v(i,nf,ntau)
+        is = this%conf(i,nf,ntau)
         do j = 1,n1
-           gmat%orb1(j,i1) = this%bmat_v_p_orb1(is)*gmat%orb1(j,i1)
-           gmat%orb1(j,i2) = this%bmat_v_m_orb1(is)*gmat%orb1(j,i2)
+           gmat%orb1(j,i1) = this%bmat_p%orb1(is)*gmat%orb1(j,i1)
+           gmat%orb1(j,i2) = this%bmat_m%orb1(is)*gmat%orb1(j,i2)
         enddo
         do j = 1,n1
            v1(j) = gmat%orb1(j,i1) * this%ut(1,1) +  gmat%orb1(j,i2) * this%ut(2,1)

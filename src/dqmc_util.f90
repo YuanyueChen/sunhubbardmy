@@ -172,13 +172,13 @@ module dqmc_util
     if( n_outconf_pace .lt. nbin/3 ) then
         if( mod(nbc,n_outconf_pace) .eq. 0 ) then
             if(lwrapplqu) call hconf%output_plqconf
-            if(lwrapv)    call v0conf%output_vconf
-            if(lwrapu)    call u0conf%output_uconf
+            if(lwrapv)    call v0conf%output_conf
+            if(lwrapu)    call u0conf%output_conf
         end if
     else if( mod( nbc, max(nbin/3,1) ) .eq. 0 ) then
         if(lwrapplqu) call hconf%output_plqconf
-        if(lwrapv)    call v0conf%output_vconf
-        if(lwrapu)    call u0conf%output_uconf
+        if(lwrapv)    call v0conf%output_conf
+        if(lwrapu)    call u0conf%output_conf
     end if
 
     if( irank.eq.0 .and. mod(nbc,max(nbin/10,1) ).eq.0 ) then
@@ -264,8 +264,8 @@ module dqmc_util
     implicit none
     include 'mpif.h'
     if(lwrapplqu) call hconf%output_plqconf
-    if(lwrapv)    call v0conf%output_vconf
-    if(lwrapu)    call u0conf%output_uconf
+    if(lwrapv)    call v0conf%output_conf
+    if(lwrapu)    call u0conf%output_conf
 
     call mpi_reduce(main_obs, mpi_main_obs, size(main_obs), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
     if(irank.eq.0) then

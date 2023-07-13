@@ -1,4 +1,4 @@
-subroutine dqmc_update_u(this, gmat, ntau )
+subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 
   use spring
   use model_para
@@ -10,7 +10,7 @@ subroutine dqmc_update_u(this, gmat, ntau )
   !arguments
   class(uconf), intent(inout) :: this
   integer,intent(in) :: ntau
-  type(gfunc) :: gmat
+  type(gfunc) :: ul, ur, ulrinv
 
   !local
   complex(dp) ::  ratio1, ratiotot
@@ -22,6 +22,7 @@ subroutine dqmc_update_u(this, gmat, ntau )
   complex(dp), allocatable, dimension(:) :: diagg_dn
   complex(dp), allocatable, dimension(:,:) :: avec_up, bvec_up
   complex(dp), allocatable, dimension(:,:) :: avec_dn, bvec_dn
+  type(gfunc) :: gmmat, ulrinvul, urrecord
   integer :: i, ik, m
 #IFDEF TIMING
   real(dp) :: starttime, endtime
@@ -32,12 +33,22 @@ subroutine dqmc_update_u(this, gmat, ntau )
   allocate( diagg_up(ndim) )
   allocate( avec_up(ndim,nublock) )
   allocate( bvec_up(ndim,nublock) )
+  call allocate_gfunc(gmmat, ndim, ndim)
+  call allocate_gfunc(ulrinvul, ne, ndim)
+  call allocate_gfunc(urrecord, ndim, ne)
+  
+  ulrinvul%orb1 = czero
+  gmmat%orb1 = Imat
+  urrecord%orb1 = ur%orb1
+  !calculate the G function
+  call zgemm('N', 'N', ne, ndim, ne, cone, ulrinv%orb1, ne, ul%orb1, ne, czero, ulrinvul%orb1, ne)
+  call zgemm('N', 'N', ndim, ndim, ne, -cone, ur%orb1, ndim, ulrinvul%orb1, ne, cone, gmmat%orb1, ndim)
 
   accm  = 0.d0
   ik = 0
   ! initial diag G
   do isite = 1, latt%nsites
-      diagg_up(isite) = gmat%orb1(isite,isite)
+      diagg_up(isite) = gmmat%orb1(isite,isite)
   end do
   ! intial avec, bvec
   avec_up = czero
@@ -45,12 +56,12 @@ subroutine dqmc_update_u(this, gmat, ntau )
   do isite = 1, latt%nsites
       ! delay update: after nublock steps of local update, perform a whole update of Green function
       ! calculate weight ratio, fermion part
-      is = this%conf_u(isite,ntau)
+      is = this%conf(isite,ntau)
       iflip = ceiling( spring_sfmt_stream() * (this%lcomp-1) )
       isp = mod(is+iflip-1,this%lcomp) + 1
 
-      ratio1 = (cone - diagg_up(isite))*this%delta_bmat_u_orb1(iflip, is) + cone
-      sscl%orb1 = this%delta_bmat_u_orb1(iflip,is)/ratio1
+      ratio1 = (cone - diagg_up(isite))*this%delta_bmat%orb1(iflip, is) + cone
+      sscl%orb1 = this%delta_bmat%orb1(iflip,is)/ratio1
 
       ratiotot = ratio1**nflr
       if( lproju ) then
@@ -83,8 +94,8 @@ subroutine dqmc_update_u(this, gmat, ntau )
 
          ik = ik + 1
          ! store avec(:,ik) and bvec(:,ik)
-         avec_up(:,ik) = gmat%orb1(:,isite)
-         bvec_up(:,ik) = gmat%orb1(isite,:)
+         avec_up(:,ik) = gmmat%orb1(:,isite)
+         bvec_up(:,ik) = gmmat%orb1(isite,:)
          do m = 1, ik-1
              avec_up(:,ik) = avec_up(:,ik) + bvec_up(isite,m)*avec_up(:,m)
              bvec_up(:,ik) = bvec_up(:,ik) + avec_up(isite,m)*bvec_up(:,m)
@@ -95,32 +106,38 @@ subroutine dqmc_update_u(this, gmat, ntau )
          do i = 1, ndim
              diagg_up(i) = diagg_up(i) + avec_up(i,ik)*bvec_up(i,ik)
          end do
-
+         urrecord%orb1(isite,:) = urrecord%orb1(isite,:) + this%delta_bmat%orb1(iflip,is)*urrecord%orb1(isite,:)
          ! flip
-         this%conf_u(isite,ntau) =  isp
+         this%conf(isite,ntau) =  isp
      end if
-
-      if( (ik.eq.nublock) .or. (isite.eq.latt%nsites) ) then
+      
+     if( (ik.eq.nublock) .and. (isite.lt.latt%nsites) ) then
           ik = 0
           ! delay update: update the whole Green function
-          call  zgemm('N', 'T', ndim, ndim, nublock, cone, avec_up, ndim, bvec_up, ndim, cone, gmat%orb1, ndim)
-          if( isite.lt.latt%nsites) then
-              ! initial diag G
-              do i = 1, ndim
-              diagg_up(i) = gmat%orb1(i,i)
-              end do
-              ! intial avec, bvec
-              avec_up = czero
-              bvec_up = czero
-          end if
+          call  zgemm('N', 'T', ndim, ndim, nublock, cone, avec_up, ndim, bvec_up, ndim, cone, gmmat%orb1, ndim)
+          ! initial diag G
+          do i = 1, ndim
+              diagg_up(i) = gmmat%orb1(i,i)
+          end do
+          ! intial avec, bvec
+          avec_up = czero
+          bvec_up = czero
       end if
-   end do
-   main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
+
+     if(  isite.eq.latt%nsites ) then
+          ik = 0
+          ! delay update: update the R and the (LR)^-1
+          ur = urrecord
+          call zgemm('N', 'N', ne, ne, ndim, cone, ul%orb1, ne, ur%orb1, ndim, czero, ulrinv%orb1, ne)
+          call s_invlu_z(ne, ulrinv%orb1) 
+      end if
+  end do
+  main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
   deallocate( bvec_up )
   deallocate( avec_up )
   deallocate( diagg_up )
 #IFDEF TIMING
   call cpu_time_now(endtime)
-  timecalculation(13)=timecalculation(13)+endtime-starttime
+  timecalculation(15)=timecalculation(15)+endtime-starttime
 #ENDIF
-end subroutine dqmc_update_u
+end subroutine dqmc_proj_update

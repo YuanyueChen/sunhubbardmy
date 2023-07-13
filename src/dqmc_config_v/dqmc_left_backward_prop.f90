@@ -50,10 +50,10 @@ subroutine dqmc_left_backward_prop(this, gmat, ntau, nf, nflag)
      do i = 1,latt%nn_lf
         i1 = latt%nnlf_list(i)
         i2 = latt%nnlist(i1,nf)
-        is = this%conf_v(i,nf,ntau)
+        is = this%conf(i,nf,ntau)
         do j = 1,n2
-           gmat%orb1(i1,j) =  this%bmat_v_p_orb1_inv(is) * gmat%orb1(i1,j)  
-           gmat%orb1(i2,j) =  this%bmat_v_m_orb1_inv(is) * gmat%orb1(i2,j) 
+           gmat%orb1(i1,j) =  this%bmat_p_inv%orb1(is) * gmat%orb1(i1,j)  
+           gmat%orb1(i2,j) =  this%bmat_m_inv%orb1(is) * gmat%orb1(i2,j) 
         enddo
         do j = 1,n2
            v1(j)   =  this%u(1,1) * gmat%orb1(i1,j) +  this%u(1,2) * gmat%orb1(i2,j) 

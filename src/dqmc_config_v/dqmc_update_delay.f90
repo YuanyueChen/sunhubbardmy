@@ -1,4 +1,4 @@
-subroutine dqmc_update_v(this, gmat, ntau, nf)
+subroutine dqmc_update(this, gmat, ntau, nf)
 
   use spring
   use model_para
@@ -39,7 +39,7 @@ subroutine dqmc_update_v(this, gmat, ntau, nf)
   do i = 1, latt%nn_lf
       i1 = latt%nnlf_list(i)
       i2 = latt%nnlist(i1,nf)
-      is = this%conf_v(i, nf, ntau)
+      is = this%conf(i, nf, ntau)
       iflip = ceiling( spring_sfmt_stream() * (this%lcomp-1) )
       isp = mod(is+iflip-1,this%lcomp) + 1
 
@@ -53,13 +53,13 @@ subroutine dqmc_update_v(this, gmat, ntau, nf)
           gpart(2,1) = gpart(2,1) + avec(i2,1+m)*bvec(i1,1+m) + avec(i2,2+m)*bvec(i1,2+m)
           gpart(2,2) = gpart(2,2) + avec(i2,1+m)*bvec(i2,1+m) + avec(i2,2+m)*bvec(i2,2+m)
       end do
-      vukmat(1,1) = (cone - gpart(1,1))*this%delta_bmat_v_p_orb1(iflip, is) + cone
-      vukmat(1,2) =       - gpart(1,2) *this%delta_bmat_v_m_orb1(iflip, is)
-      vukmat(2,1) =       - gpart(2,1) *this%delta_bmat_v_p_orb1(iflip, is)
-      vukmat(2,2) = (cone - gpart(2,2))*this%delta_bmat_v_m_orb1(iflip, is) + cone
+      vukmat(1,1) = (cone - gpart(1,1))*this%delta_bmat_p%orb1(iflip, is) + cone
+      vukmat(1,2) =       - gpart(1,2) *this%delta_bmat_m%orb1(iflip, is)
+      vukmat(2,1) =       - gpart(2,1) *this%delta_bmat_p%orb1(iflip, is)
+      vukmat(2,2) = (cone - gpart(2,2))*this%delta_bmat_m%orb1(iflip, is) + cone
       call s_inv_det_qr_z(2, vukmat, ratio1) ! cal det(I+vukmat) and (I+vukmat)^-1
-      smat(1,:) = this%delta_bmat_v_p_orb1(iflip, is) * vukmat(1,:)
-      smat(2,:) = this%delta_bmat_v_m_orb1(iflip, is) * vukmat(2,:)
+      smat(1,:) = this%delta_bmat_p%orb1(iflip, is) * vukmat(1,:)
+      smat(2,:) = this%delta_bmat_m%orb1(iflip, is) * vukmat(2,:)
 
       ratiotot = ratio1
 	  ratio_re = dble( ratiotot * phase )/dble( phase )
@@ -99,7 +99,7 @@ subroutine dqmc_update_v(this, gmat, ntau, nf)
           avec(:,1+ik) = grow(:,1)*smat(1,1) + grow(:,2)*smat(2,1)
           avec(:,2+ik) = grow(:,1)*smat(1,2) + grow(:,2)*smat(2,2)
          ! flip
-         this%conf_v(i,nf,ntau) =  isp
+         this%conf(i,nf,ntau) =  isp
          ik = ik + 2
       end if
 
@@ -123,4 +123,4 @@ subroutine dqmc_update_v(this, gmat, ntau, nf)
   call cpu_time_now(endtime)
   timecalculation(13)=timecalculation(13)+endtime-starttime
 #ENDIF
-end subroutine dqmc_update_v
+end subroutine dqmc_update

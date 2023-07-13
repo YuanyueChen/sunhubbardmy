@@ -25,9 +25,9 @@ subroutine dqmc_left_backward_prop(this, gmat, ntau )
 !$OMP PRIVATE ( isite, is, i )
 !$OMP DO
   do isite = 1, this%nsites
-      is = this%conf_u(isite,ntau)
+      is = this%conf(isite,ntau)
       do i = 1, n2
-          gmat%orb1(isite, i) = this%bmat_u_orb1_inv(is)*gmat%orb1(isite, i)
+          gmat%orb1(isite, i) = this%bmat_inv%orb1(is)*gmat%orb1(isite, i)
       end do
   end do
 !$OMP END DO

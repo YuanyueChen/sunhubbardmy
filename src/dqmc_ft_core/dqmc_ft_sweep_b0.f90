@@ -70,7 +70,7 @@
           !! update
           ! updateu
           if( lwrapu ) then
-            if(lupdate .and. lupdateu) call u0conf%update_u(gf,nt)
+            if(lupdate .and. lupdateu) call u0conf%update(gf,nt)
             call u0conf%right_forward_prop(gf,nt)
             call u0conf%left_backward_prop(gf,nt)
           end if
@@ -81,7 +81,7 @@
                 nflag = 2
                 call v0conf%right_forward_prop(gf,nt,nf,nflag)
                 call v0conf%left_backward_prop(gf,nt,nf,nflag)
-                if(lupdate .and. lupdatev) call v0conf%update_v(gf,nt,nf)
+                if(lupdate .and. lupdatev) call v0conf%update(gf,nt,nf)
                 nflag = 1
                 call v0conf%right_forward_prop(gf,nt,nf,nflag)
                 call v0conf%left_backward_prop(gf,nt,nf,nflag)

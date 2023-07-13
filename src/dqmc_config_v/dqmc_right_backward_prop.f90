@@ -38,10 +38,10 @@ subroutine dqmc_right_backward_prop(this,gmat,ntau,nf, nflag)
            v2(j)   =  gmat%orb1(j,i1) * this%u(1,2) + gmat%orb1(j,i2) * this%u(2,2) 
         enddo
         !kenitic
-        is = this%conf_v(i,nf,ntau)   
+        is = this%conf(i,nf,ntau)   
         do j = 1,n1
-              gmat%orb1(j,i1) = this%bmat_v_p_orb1_inv(is) * v1(j) 
-              gmat%orb1(j,i2) = this%bmat_v_m_orb1_inv(is) * v2(j)
+              gmat%orb1(j,i1) = this%bmat_p_inv%orb1(is) * v1(j) 
+              gmat%orb1(j,i2) = this%bmat_m_inv%orb1(is) * v2(j)
         enddo   
      enddo
 !$OMP END DO

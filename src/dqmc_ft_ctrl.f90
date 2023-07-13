@@ -24,14 +24,14 @@ module dqmc_ctrl
 
     ! on-site interaction
     if(lwrapu) then
-        call u0conf%set_uconf(lq, ltrot, nu, lproju, alpha, theta, rhub, dtau )
-        call u0conf%input_uconf
+        call u0conf%set_conf(lq, ltrot, nu, lproju, alpha, theta, rhub, dtau )
+        call u0conf%input_conf
     end if
 
     ! nearest neighbor interaction
     if(lwrapv) then
-        call v0conf%set_vconf(lq, ltrot, nu, lprojv, alpha, theta, rv, dtau )
-        call v0conf%input_vconf
+        call v0conf%set_conf(lq, ltrot, nu, lprojv, alpha, theta, rv, dtau )
+        call v0conf%input_conf
     end if
 
     call allocate_core

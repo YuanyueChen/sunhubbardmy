@@ -1,4 +1,4 @@
-subroutine dqmc_proj_update_v(this, ntau, nf, ul, ur, ulrinv)
+subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 
   use spring
   use model_para
@@ -38,7 +38,7 @@ subroutine dqmc_proj_update_v(this, ntau, nf, ul, ur, ulrinv)
   do i = 1, latt%nn_lf
       i1 = latt%nnlf_list(i)
       i2 = latt%nnlist(i1,nf)
-      is = this%conf_v(i, nf, ntau)
+      is = this%conf(i, nf, ntau)
       iflip = ceiling( spring_sfmt_stream() * (this%lcomp-1) )
       isp = mod(is+iflip-1,this%lcomp) + 1
       vuvkmat%orb1(1,:) = ur%orb1(i1,:)
@@ -46,8 +46,8 @@ subroutine dqmc_proj_update_v(this, ntau, nf, ul, ur, ulrinv)
       ukmat%orb1(:,1) = ul%orb1(:,i1)
       ukmat%orb1(:,2) = ul%orb1(:,i2)
       Dmat%orb1 = czero
-      Dmat%orb1(1,1) = this%delta_bmat_v_p_orb1(iflip, is)
-      Dmat%orb1(2,2) = this%delta_bmat_v_m_orb1(iflip, is)
+      Dmat%orb1(1,1) = this%delta_bmat_p%orb1(iflip, is)
+      Dmat%orb1(2,2) = this%delta_bmat_m%orb1(iflip, is)
       call zgemm('n','n',2,ne,2,cone,Dmat%orb1,2,vuvkmat%orb1,2,czero,vkmat_tmp%orb1,2)  ! vkmat_tmp = D*vuvkmat
       call zgemm('n','n',2,ne,ne,cone,vkmat_tmp%orb1,2,ulrinv%orb1,ne,czero,vkmat%orb1,2)  ! vkmat = vkmat_tmp*ulrinv
 
@@ -92,7 +92,7 @@ subroutine dqmc_proj_update_v(this, ntau, nf, ul, ur, ulrinv)
 
 
          ! flip
-         this%conf_v(i,nf,ntau) =  isp
+         this%conf(i,nf,ntau) =  isp
      end if
   end do
   main_obs(4) = main_obs(4) + dcmplx( accm, dble(latt%nn_lf) )
@@ -101,4 +101,4 @@ subroutine dqmc_proj_update_v(this, ntau, nf, ul, ur, ulrinv)
   call cpu_time_now(endtime)
   timecalculation(14)=timecalculation(14)+endtime-starttime
 #ENDIF
-end subroutine dqmc_proj_update_v
+end subroutine dqmc_proj_update

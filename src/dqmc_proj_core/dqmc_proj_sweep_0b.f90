@@ -70,7 +70,7 @@
                  nflag = 2
                  call v0conf%left_forward_prop(UR,nt,nf,nflag)
                  call v0conf%right_backward_prop(UL,nt,nf,nflag)
-                 if(lupdate .and. lupdatev) call v0conf%proj_update_v(nt,nf,UL,UR,ULRINV )
+                 if(lupdate .and. lupdatev) call v0conf%proj_update(nt,nf,UL,UR,ULRINV )
                  nflag = 1
                  call v0conf%left_forward_prop(UR,nt,nf,nflag)
                  call v0conf%right_backward_prop(UL,nt,nf,nflag)
@@ -80,7 +80,7 @@
           if( lwrapu ) then
             call u0conf%left_forward_prop(UR,nt)
             call u0conf%right_backward_prop(UL,nt)
-            if(lupdate .and. lupdateu) call u0conf%proj_update_u(nt,UL,UR,ULRINV)
+            if(lupdate .and. lupdateu) call u0conf%proj_update(nt,UL,UR,ULRINV)
           end if
 
           ! wrap H0/2

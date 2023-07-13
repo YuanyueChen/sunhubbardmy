@@ -37,10 +37,10 @@ subroutine dqmc_left_forward_prop(this, gmat, ntau, nf, nflag)
            v1(j) = this%ut(1,1) * gmat%orb1(i1,j) + this%ut(1,2) * gmat%orb1(i2,j)
            v2(j) = this%ut(2,1) * gmat%orb1(i1,j) + this%ut(2,2) * gmat%orb1(i2,j) 
         enddo
-        is = this%conf_v(i,nf,ntau)
+        is = this%conf(i,nf,ntau)
         do j = 1, n2
-           gmat%orb1(i1,j) = this%bmat_v_p_orb1(is)*v1(j)
-           gmat%orb1(i2,j) = this%bmat_v_m_orb1(is)*v2(j)
+           gmat%orb1(i1,j) = this%bmat_p%orb1(is)*v1(j)
+           gmat%orb1(i2,j) = this%bmat_m%orb1(is)*v2(j)
         enddo
      enddo
 !$OMP END DO

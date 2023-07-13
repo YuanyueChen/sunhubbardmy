@@ -16,7 +16,7 @@ subroutine set_phase( logweight, w_phase )
   if( lwrapu ) then
       do nt = 1, ltrot
           do i = 1, latt%nsites
-              w_phase = w_phase*u0conf%phase( u0conf%conf_u(i,nt) )
+              w_phase = w_phase*u0conf%phase( u0conf%conf(i,nt) )
           end do
       end do
   end if

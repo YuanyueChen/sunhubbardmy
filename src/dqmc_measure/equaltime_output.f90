@@ -22,7 +22,7 @@ subroutine equaltime_output
   call mpi_reduce( pair_onsite_orb1_bin, pair_onsite_orb1, size(pair_onsite_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( pair_nn_orb1_bin, pair_nn_orb1, size(pair_nn_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( pair_sn_orb1_bin, pair_sn_orb1, size(pair_sn_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-  call mpi_reduce( energy_bin, energy_bin_recv, size(energy_bin_recv), mpi_real8, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( energy_bin, energy_bin_recv, size(energy_bin_recv), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
 
   energy_bin(:) = energy_bin_recv(:)
 

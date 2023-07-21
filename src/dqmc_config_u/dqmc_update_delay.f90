@@ -37,7 +37,7 @@ subroutine dqmc_update(this, gmat, ntau )
   ik = 0
   ! initial diag G
   do isite = 1, latt%nsites
-      diagg_up(isite) = gmat%orb1(isite,isite)
+      diagg_up(isite) = gmat%blk1(isite,isite)
   end do
   ! intial avec, bvec
   avec_up = czero
@@ -49,8 +49,8 @@ subroutine dqmc_update(this, gmat, ntau )
       iflip = ceiling( spring_sfmt_stream() * (this%lcomp-1) )
       isp = mod(is+iflip-1,this%lcomp) + 1
 
-      ratio1 = (cone - diagg_up(isite))*this%delta_bmat%orb1(iflip, is) + cone
-      sscl%orb1 = this%delta_bmat%orb1(iflip,is)/ratio1
+      ratio1 = (cone - diagg_up(isite))*this%delta_bmat%blk1(iflip, is) + cone
+      sscl%blk1 = this%delta_bmat%blk1(iflip,is)/ratio1
 
       ratiotot = ratio1**nflr
       if( lproju ) then
@@ -83,13 +83,13 @@ subroutine dqmc_update(this, gmat, ntau )
 
          ik = ik + 1
          ! store avec(:,ik) and bvec(:,ik)
-         avec_up(:,ik) = gmat%orb1(:,isite)
-         bvec_up(:,ik) = gmat%orb1(isite,:)
+         avec_up(:,ik) = gmat%blk1(:,isite)
+         bvec_up(:,ik) = gmat%blk1(isite,:)
          do m = 1, ik-1
              avec_up(:,ik) = avec_up(:,ik) + bvec_up(isite,m)*avec_up(:,m)
              bvec_up(:,ik) = bvec_up(:,ik) + avec_up(isite,m)*bvec_up(:,m)
          end do
-         avec_up(:,ik) =avec_up(:,ik)*sscl%orb1
+         avec_up(:,ik) =avec_up(:,ik)*sscl%blk1
          bvec_up(isite,ik)=bvec_up(isite,ik) - cone
          ! update diag G
          do i = 1, ndim
@@ -103,11 +103,11 @@ subroutine dqmc_update(this, gmat, ntau )
       if( (ik.eq.nublock) .or. (isite.eq.latt%nsites) ) then
           ik = 0
           ! delay update: update the whole Green function
-          call  zgemm('N', 'T', ndim, ndim, nublock, cone, avec_up, ndim, bvec_up, ndim, cone, gmat%orb1, ndim)
+          call  zgemm('N', 'T', ndim, ndim, nublock, cone, avec_up, ndim, bvec_up, ndim, cone, gmat%blk1, ndim)
           if( isite.lt.latt%nsites) then
               ! initial diag G
               do i = 1, ndim
-              diagg_up(i) = gmat%orb1(i,i)
+              diagg_up(i) = gmat%blk1(i,i)
               end do
               ! intial avec, bvec
               avec_up = czero

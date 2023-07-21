@@ -35,13 +35,13 @@ subroutine dqmc_update(this, gmat, ntau )
       iflip = ceiling( spring_sfmt_stream() * (this%lcomp-1) )
       isp = mod(is+iflip-1,this%lcomp) + 1
 
-      ukmat%orb1 = czero
-      vkmat%orb1 = czero
-      vkmat%orb1(:) =      - gmat%orb1(isite, :)
-      vkmat%orb1(isite) = cone - gmat%orb1(isite, isite)
+      ukmat%blk1 = czero
+      vkmat%blk1 = czero
+      vkmat%blk1(:) =      - gmat%blk1(isite, :)
+      vkmat%blk1(isite) = cone - gmat%blk1(isite, isite)
 
-      ratio1 = vkmat%orb1(isite)*this%delta_bmat%orb1(iflip, is) + cone
-      sscl%orb1 = this%delta_bmat%orb1(iflip,is)/ratio1
+      ratio1 = vkmat%blk1(isite)*this%delta_bmat%blk1(iflip, is) + cone
+      sscl%blk1 = this%delta_bmat%blk1(iflip,is)/ratio1
 
       ratiotot = ratio1**nflr
       if( lproju ) then
@@ -73,10 +73,10 @@ subroutine dqmc_update(this, gmat, ntau )
 #ENDIF
 
          ! update gmat
-         ukmat%orb1(:) = gmat%orb1(:,isite)
+         ukmat%blk1(:) = gmat%blk1(:,isite)
          do i2 = 1, ndim
          do i1 = 1, ndim
-             gmat%orb1(i1,i2) = gmat%orb1(i1,i2) - sscl%orb1*ukmat%orb1(i1)*vkmat%orb1(i2)
+             gmat%blk1(i1,i2) = gmat%blk1(i1,i2) - sscl%blk1*ukmat%blk1(i1)*vkmat%blk1(i2)
          end do
          end do
 

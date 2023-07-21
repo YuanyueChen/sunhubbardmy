@@ -138,11 +138,11 @@
               logdetQL = logdetQst(n)
 
               !if( .not. ltau ) then
-                  call green_equaltime( n, ndim, UR%orb1, DRvec%orb1, VR%orb1, VL%orb1, DLvec%orb1, UL%orb1, gf_tmp%orb1, logdetQR%orb1, logdetQL%orb1, logweightf_tmp%orb1, info )
+                  call green_equaltime( n, ndim, UR%blk1, DRvec%blk1, VR%blk1, VL%blk1, DLvec%blk1, UL%blk1, gf_tmp%blk1, logdetQR%blk1, logdetQL%blk1, logweightf_tmp%blk1, info )
               !else
               !    call green_tau(n, ndim, UR_up, DRvec_up, VR_up, VL_up, DLvec_up, UL_up, g00up, gt0up, g0tup, grtmp, info )
               !end if
-              call s_compare_max_z( ndim, gf_tmp%orb1, gf%orb1, max_wrap_error_tmp )
+              call s_compare_max_z( ndim, gf_tmp%blk1, gf%blk1, max_wrap_error_tmp )
               if( max_wrap_error_tmp .gt. max_wrap_error ) max_wrap_error = max_wrap_error_tmp
 
               call set_phase(logweightf_tmp, phase_tmp)
@@ -158,24 +158,24 @@
 #ENDIF
 #IFDEF TEST_LEVEL3
               write(fout,*)
-              write(fout, '(a,i5,a)') 'nt = ', nt, ' progating gf%orb1(:,:) = '
+              write(fout, '(a,i5,a)') 'nt = ', nt, ' progating gf%blk1(:,:) = '
               do i = 1, ndim
-                  write(fout,'(18(2e12.4))') gf%orb1(i,:)
+                  write(fout,'(18(2e12.4))') gf%blk1(i,:)
               end do
 
               write(fout,*)
-              write(fout, '(a,i5,a)') 'nt = ', nt, ' scratch gf_tmp%orb1(:,:) = '
+              write(fout, '(a,i5,a)') 'nt = ', nt, ' scratch gf_tmp%blk1(:,:) = '
               do i = 1, ndim
-                  write(fout,'(18(2e12.4))') gf_tmp%orb1(i,:)
+                  write(fout,'(18(2e12.4))') gf_tmp%blk1(i,:)
               end do
 
               write(fout,*)
-              write(fout, '(a,i4,a)') ' Dst(', n, ' )%orb1(:) before wrap = '
-              write(fout,'(18(e16.8))') DRvec%orb1(:)
+              write(fout, '(a,i4,a)') ' Dst(', n, ' )%blk1(:) before wrap = '
+              write(fout,'(18(e16.8))') DRvec%blk1(:)
 
               write(fout,*)
-              write(fout, '(a,i4,a)') ' Dst(', n, ' )%orb1(:) after wrap = '
-              write(fout,'(18(e16.8))') Dst(n)%orb1(:)
+              write(fout, '(a,i4,a)') ' Dst(', n, ' )%blk1(:) after wrap = '
+              write(fout,'(18(e16.8))') Dst(n)%blk1(:)
 
 #ENDIF
 

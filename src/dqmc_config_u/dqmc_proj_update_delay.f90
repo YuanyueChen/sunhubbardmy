@@ -37,18 +37,18 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
   call allocate_gfunc(ulrinvul, ne, ndim)
   call allocate_gfunc(urrecord, ndim, ne)
   
-  ulrinvul%orb1 = czero
-  gmmat%orb1 = Imat
-  urrecord%orb1 = ur%orb1
+  ulrinvul%blk1 = czero
+  gmmat%blk1 = Imat
+  urrecord%blk1 = ur%blk1
   !calculate the G function
-  call zgemm('N', 'N', ne, ndim, ne, cone, ulrinv%orb1, ne, ul%orb1, ne, czero, ulrinvul%orb1, ne)
-  call zgemm('N', 'N', ndim, ndim, ne, -cone, ur%orb1, ndim, ulrinvul%orb1, ne, cone, gmmat%orb1, ndim)
+  call zgemm('N', 'N', ne, ndim, ne, cone, ulrinv%blk1, ne, ul%blk1, ne, czero, ulrinvul%blk1, ne)
+  call zgemm('N', 'N', ndim, ndim, ne, -cone, ur%blk1, ndim, ulrinvul%blk1, ne, cone, gmmat%blk1, ndim)
 
   accm  = 0.d0
   ik = 0
   ! initial diag G
   do isite = 1, latt%nsites
-      diagg_up(isite) = gmmat%orb1(isite,isite)
+      diagg_up(isite) = gmmat%blk1(isite,isite)
   end do
   ! intial avec, bvec
   avec_up = czero
@@ -60,8 +60,8 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
       iflip = ceiling( spring_sfmt_stream() * (this%lcomp-1) )
       isp = mod(is+iflip-1,this%lcomp) + 1
 
-      ratio1 = (cone - diagg_up(isite))*this%delta_bmat%orb1(iflip, is) + cone
-      sscl%orb1 = this%delta_bmat%orb1(iflip,is)/ratio1
+      ratio1 = (cone - diagg_up(isite))*this%delta_bmat%blk1(iflip, is) + cone
+      sscl%blk1 = this%delta_bmat%blk1(iflip,is)/ratio1
 
       ratiotot = ratio1**nflr
       if( lproju ) then
@@ -94,19 +94,19 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 
          ik = ik + 1
          ! store avec(:,ik) and bvec(:,ik)
-         avec_up(:,ik) = gmmat%orb1(:,isite)
-         bvec_up(:,ik) = gmmat%orb1(isite,:)
+         avec_up(:,ik) = gmmat%blk1(:,isite)
+         bvec_up(:,ik) = gmmat%blk1(isite,:)
          do m = 1, ik-1
              avec_up(:,ik) = avec_up(:,ik) + bvec_up(isite,m)*avec_up(:,m)
              bvec_up(:,ik) = bvec_up(:,ik) + avec_up(isite,m)*bvec_up(:,m)
          end do
-         avec_up(:,ik) =avec_up(:,ik)*sscl%orb1
+         avec_up(:,ik) =avec_up(:,ik)*sscl%blk1
          bvec_up(isite,ik)=bvec_up(isite,ik) - cone
          ! update diag G
          do i = 1, ndim
              diagg_up(i) = diagg_up(i) + avec_up(i,ik)*bvec_up(i,ik)
          end do
-         urrecord%orb1(isite,:) = urrecord%orb1(isite,:) + this%delta_bmat%orb1(iflip,is)*urrecord%orb1(isite,:)
+         urrecord%blk1(isite,:) = urrecord%blk1(isite,:) + this%delta_bmat%blk1(iflip,is)*urrecord%blk1(isite,:)
          ! flip
          this%conf(isite,ntau) =  isp
      end if
@@ -114,10 +114,10 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
      if( (ik.eq.nublock) .and. (isite.lt.latt%nsites) ) then
           ik = 0
           ! delay update: update the whole Green function
-          call  zgemm('N', 'T', ndim, ndim, nublock, cone, avec_up, ndim, bvec_up, ndim, cone, gmmat%orb1, ndim)
+          call  zgemm('N', 'T', ndim, ndim, nublock, cone, avec_up, ndim, bvec_up, ndim, cone, gmmat%blk1, ndim)
           ! initial diag G
           do i = 1, ndim
-              diagg_up(i) = gmmat%orb1(i,i)
+              diagg_up(i) = gmmat%blk1(i,i)
           end do
           ! intial avec, bvec
           avec_up = czero
@@ -128,8 +128,8 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
           ik = 0
           ! delay update: update the R and the (LR)^-1
           ur = urrecord
-          call zgemm('N', 'N', ne, ne, ndim, cone, ul%orb1, ne, ur%orb1, ndim, czero, ulrinv%orb1, ne)
-          call s_invlu_z(ne, ulrinv%orb1) 
+          call zgemm('N', 'N', ne, ne, ndim, cone, ul%blk1, ne, ur%blk1, ndim, czero, ulrinv%blk1, ne)
+          call s_invlu_z(ne, ulrinv%blk1) 
       end if
   end do
   main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )

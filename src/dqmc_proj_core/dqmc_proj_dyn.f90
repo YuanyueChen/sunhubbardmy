@@ -38,7 +38,7 @@ subroutine dqmc_proj_dyn(ust, ul, ur, xmax_dyn1)
         if (ntau.gt.0) then
            do nl = 1,ne
               do i = 1,ndim
-                  ul%orb1(nl,i) = ust(nt_st)%orb1(i,nl)
+                  ul%blk1(nl,i) = ust(nt_st)%blk1(i,nl)
               end do
            end do
         end if
@@ -50,15 +50,15 @@ subroutine dqmc_proj_dyn(ust, ul, ur, xmax_dyn1)
         !do i = 1, ndim
         !    write(fout,'(8(2e12.4,2x))') ur(i,:)
         !end do
-        call zgemm('n','n',ne,ne,ndim,cone,ul%orb1,ne,ur%orb1,ndim,czero,ulr%orb1,ne)  ! ulr = ul*ur
+        call zgemm('n','n',ne,ne,ndim,cone,ul%blk1,ne,ur%blk1,ndim,czero,ulr%blk1,ne)  ! ulr = ul*ur
         !write(fout, '(a)') 'ulr='
         !do i = 1, ne
         !    write(fout,'(8(2e12.4,2x))') ulr(i,:)
         !end do
         ulrinv = ulr
-        call s_invlu_z(ne,ulrinv%orb1)
+        call s_invlu_z(ne,ulrinv%blk1)
         ! compute green functions.
-        call green_equaltime(ul%orb1,ur%orb1,ulrinv%orb1,gftmp%orb1,temp%orb1)
+        call green_equaltime(ul%blk1,ur%blk1,ulrinv%blk1,gftmp%blk1,temp%blk1)
 
         !write(fout,*) 'computed green function at nt = ', nt
         !do i = 1, ndim
@@ -70,11 +70,11 @@ subroutine dqmc_proj_dyn(ust, ul, ur, xmax_dyn1)
            g00 = gftmp
            gtt = gftmp
            gt0 = gftmp
-           g0t%orb1 = -gftmpb%orb1
+           g0t%blk1 = -gftmpb%blk1
            call dyn_measure(ntau+1,gt0,g0t,gtt,g00)
         else
            xmax = 0.d0
-           call s_compare_max_z(ndim, gtt%orb1, gftmp%orb1, xmax)
+           call s_compare_max_z(ndim, gtt%blk1, gftmp%blk1, xmax)
            if (xmax.gt.xmax_dyn1) xmax_dyn1 = xmax
            logdyncount = logdyncount + 1.d0
            avglog10dynerror = avglog10dynerror + dlog10( xmax )
@@ -83,18 +83,18 @@ subroutine dqmc_proj_dyn(ust, ul, ur, xmax_dyn1)
            write(fout,*)
            write(fout, '(a,i5,a)') 'nt = ', nt, ' in dyn, gftmp(:,:) = '
            do i = 1, ndim
-               write(fout,'(36(2e12.4,2x))') gftmp%orb1(i,:)
+               write(fout,'(36(2e12.4,2x))') gftmp%blk1(i,:)
            end do
            write(fout,*)
            write(fout, '(a,i5,a)') 'nt = ', nt, ' in dyn, gtt(:,:) = '
            do i = 1, ndim
-               write(fout,'(36(2e12.4,2x))') gtt%orb1(i,:)
+               write(fout,'(36(2e12.4,2x))') gtt%blk1(i,:)
            end do
 #ENDIF
            gtt = gftmp
-           call zgemm('n','n',ndim,ndim,ndim,cone,gftmp%orb1,ndim,gt0%orb1,ndim,czero,temp%orb1,ndim)
+           call zgemm('n','n',ndim,ndim,ndim,cone,gftmp%blk1,ndim,gt0%blk1,ndim,czero,temp%blk1,ndim)
            gt0 = temp
-           call zgemm('n','n',ndim,ndim,ndim,cone,g0t%orb1,ndim,gftmpb%orb1,ndim,czero,temp%orb1,ndim)
+           call zgemm('n','n',ndim,ndim,ndim,cone,g0t%blk1,ndim,gftmpb%blk1,ndim,czero,temp%blk1,ndim)
            g0t = temp
         endif
      endif ! ortho.

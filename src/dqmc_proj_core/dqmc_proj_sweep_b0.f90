@@ -23,8 +23,8 @@
       ! UL at tau = beta
       do nl = 1, ne
           do i = 1, ndim
-              UL%orb1(nl,i) = dconjg(proj%orb1(i,nl))
-              Ust(0)%orb1(i,nl) = proj%orb1(i,nl)
+              UL%blk1(nl,i) = dconjg(proj%blk1(i,nl))
+              Ust(0)%blk1(i,nl) = proj%blk1(i,nl)
           end do
       end do
 
@@ -41,10 +41,10 @@
 #ENDIF
           ! obser
           if( lmeasure_equaltime .and. nt > (ltrot/2 - (obs_eqt_mid_len+1)/2) .and. nt <= (ltrot/2 + obs_eqt_mid_len/2) ) then
-              call zgemm('n','n',ne,ne,ndim,cone,UL%orb1,ne,UR%orb1,ndim,czero,ULR%orb1,ne)  ! ULR = UL*UR
+              call zgemm('n','n',ne,ne,ndim,cone,UL%blk1,ne,UR%blk1,ndim,czero,ULR%blk1,ne)  ! ULR = UL*UR
               ULRINV = ULR
-              call s_invlu_z(ne,ULRINV%orb1)
-              call green_equaltime(UL%orb1,UR%orb1,ULRINV%orb1,gf%orb1,gfc%orb1)
+              call s_invlu_z(ne,ULRINV%blk1)
+              call green_equaltime(UL%blk1,UR%blk1,ULRINV%blk1,gf%blk1,gfc%blk1)
               call equaltime_measure(nt,gf,gfc)
           end if
 #IFDEF TIMING
@@ -138,23 +138,23 @@
                   logwDV(n+1) = logwDV(n+2) + logwtmp
               end if
 
-              call zgemm('n','n',ne,ne,ndim,cone,UL%orb1,ne,UR%orb1,ndim,czero,ULR%orb1,ne)  ! ULR = UL*UR
+              call zgemm('n','n',ne,ne,ndim,cone,UL%blk1,ne,UR%blk1,ndim,czero,ULR%blk1,ne)  ! ULR = UL*UR
               ULRINV = ULR
               !call s_inv_z(ne,ULRINV)
-              call s_inv_logdet_lu_z(ne,ULRINV%orb1,zlogwtmp%orb1)
+              call s_inv_logdet_lu_z(ne,ULRINV%blk1,zlogwtmp%blk1)
               if( n == 0 ) then
-                  logweightf_tmp%orb1 = dcmplx(logwDV(n+1)%orb1,0.d0) + zlogwtmp%orb1
+                  logweightf_tmp%blk1 = dcmplx(logwDV(n+1)%blk1,0.d0) + zlogwtmp%blk1
               else
-                  logweightf_tmp%orb1 = dcmplx(logwDV(n+1)%orb1+logwDV(n)%orb1,0.d0) + zlogwtmp%orb1
+                  logweightf_tmp%blk1 = dcmplx(logwDV(n+1)%blk1+logwDV(n)%blk1,0.d0) + zlogwtmp%blk1
               end if
               call set_phase(logweightf_tmp, phase_tmp)
-              call green_equaltime(UL%orb1,UR%orb1,ULRINV%orb1,gf%orb1,gfc%orb1)
+              call green_equaltime(UL%blk1,UR%blk1,ULRINV%blk1,gf%blk1,gfc%blk1)
 #IFDEF WRAPERROR
-              call zgemm('n','n',ne,ne,ndim,cone,ultmp%orb1,ne,urtmp%orb1,ndim,czero,ULRtmp%orb1,ne)  ! ULRtmp = ultmp*urtmp
+              call zgemm('n','n',ne,ne,ndim,cone,ultmp%blk1,ne,urtmp%blk1,ndim,czero,ULRtmp%blk1,ne)  ! ULRtmp = ultmp*urtmp
               ULRINVtmp = ULRtmp
-              call s_invlu_z(ne,ULRINVtmp%orb1)
-              call green_equaltime(ultmp%orb1,urtmp%orb1,ULRINVtmp%orb1,gftmp%orb1,gfctmp%orb1)
-              call s_compare_max_z(ndim,gftmp%orb1,gf%orb1,max_wrap_error_tmp)
+              call s_invlu_z(ne,ULRINVtmp%blk1)
+              call green_equaltime(ultmp%blk1,urtmp%blk1,ULRINVtmp%blk1,gftmp%blk1,gfctmp%blk1)
+              call s_compare_max_z(ndim,gftmp%blk1,gf%blk1,max_wrap_error_tmp)
               if( max_wrap_error_tmp .gt. max_wrap_error ) max_wrap_error = max_wrap_error_tmp
               max_phasediff_tmp = abs( phase - phase_tmp )
               if( max_phasediff_tmp .gt. max_phasediff ) max_phasediff = max_phasediff_tmp
@@ -165,8 +165,8 @@
 #IFDEF TEST
               write(fout,'(a,2e16.8)') 'progating phase = ', phase
               write(fout,'(a,2e16.8)') 'scratch phase = ', phase_tmp
-              !write(fout,'(a,2e24.12)') 'progating logweightf = ', logweightf%orb1
-              write(fout,'(a,2e24.12)') 'scratch   logweightf = ', logweightf_tmp%orb1
+              !write(fout,'(a,2e24.12)') 'progating logweightf = ', logweightf%blk1
+              write(fout,'(a,2e24.12)') 'scratch   logweightf = ', logweightf_tmp%blk1
 #ENDIF
               phase = phase_tmp
               logweightf = logweightf_tmp
@@ -174,13 +174,13 @@
               write(fout,*)
               write(fout, '(a,i5,a)') 'nt = ', nt, ' progating grup(:,:) = '
               do i = 1, ndim
-                  write(fout,'(36(2f7.4))') gftmp%orb1(i,:)
+                  write(fout,'(36(2f7.4))') gftmp%blk1(i,:)
               end do
 
               write(fout,*)
               write(fout, '(a,i5,a)') 'nt = ', nt, ' scratch grup(:,:) = '
               do i = 1, ndim
-                  write(fout,'(36(2f7.4))') gf%orb1(i,:)
+                  write(fout,'(36(2f7.4))') gf%blk1(i,:)
               end do
 #ENDIF
 
@@ -191,7 +191,7 @@
               ! store UL
               do nl = 1, ne
                  do i = 1, ndim
-                    Ust(n)%orb1(i,nl) = UL%orb1(nl,i)
+                    Ust(n)%blk1(i,nl) = UL%blk1(nl,i)
                  end do
               end do
           end if

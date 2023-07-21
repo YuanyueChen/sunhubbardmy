@@ -21,7 +21,7 @@ subroutine dqmc_right_forward_prop(this, nf, gmat)
 #IFDEF TIMING
   call cpu_time_now(starttime)
 #ENDIF
-  n1 = size(gmat%orb1,1)
+  n1 = size(gmat%blk1,1)
   allocate( v1(n1), v2(n1) )
   if (rt.gt.zero) then
 !$OMP PARALLEL &
@@ -32,12 +32,12 @@ subroutine dqmc_right_forward_prop(this, nf, gmat)
          i1 = latt%nnlf_list(i) ! A site
          i2 = latt%nnlist(i1,nf)
          do j = 1, n1
-            v1(j) = gmat%orb1(j,i1)*this%urt(ist,1,1) + gmat%orb1(j,i2)*this%urt(ist,2,1)
-            v2(j) = gmat%orb1(j,i1)*this%urt(ist,1,2) + gmat%orb1(j,i2)*this%urt(ist,2,2) 
+            v1(j) = gmat%blk1(j,i1)*this%urt(ist,1,1) + gmat%blk1(j,i2)*this%urt(ist,2,1)
+            v2(j) = gmat%blk1(j,i1)*this%urt(ist,1,2) + gmat%blk1(j,i2)*this%urt(ist,2,2) 
          enddo
          do j = 1, n1
-            gmat%orb1(j,i1) = v1(j)
-            gmat%orb1(j,i2) = v2(j)
+            gmat%blk1(j,i1) = v1(j)
+            gmat%blk1(j,i2) = v2(j)
          enddo
       enddo
 !$OMP END DO
@@ -60,7 +60,7 @@ subroutine dqmc_right_forward_prop(this, nf, gmat)
 #IFDEF TIMING 
   call cpu_time_now(starttime)
 #ENDIF
-  n1 = size(gmat%orb1,1)
+  n1 = size(gmat%blk1,1)
   dimm(:) = (/latt%l1,latt%l2/)
   Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 2, dimm)
   allocate( fftmp(lq*n1) )
@@ -69,7 +69,7 @@ subroutine dqmc_right_forward_prop(this, nf, gmat)
   ! and perform fft transforms along 1st dimension of gmat^+
   ! namely to calcualte G B = G U D U^+, we calculate ( G B )^+ = B^+ G^+ = U D^+ U^+ G^+
   allocate( gtmpC(lq,n1) )
-  gtmpC = dconjg( transpose( gmat%orb1 ) )
+  gtmpC = dconjg( transpose( gmat%blk1 ) )
 
   ! perform n1 two-dimensional transforms along 1st dimension of gmat^+
   ! U^+ G^+
@@ -99,7 +99,7 @@ subroutine dqmc_right_forward_prop(this, nf, gmat)
   Status = DftiFreeDescriptor( Desc_Handle_Dim1 )
 
   gtmpC = reshape( fftmp, (/lq,n1/) )
-  gmat%orb1 = dconjg( transpose( gtmpC ) )
+  gmat%blk1 = dconjg( transpose( gtmpC ) )
 
   deallocate( fftmp )
   deallocate( gtmpC )
@@ -108,7 +108,7 @@ subroutine dqmc_right_forward_prop(this, nf, gmat)
 #IFDEF TIMING 
   call cpu_time_now(starttime)
 #ENDIF
-  n1 = size(gmat%orb1,1)
+  n1 = size(gmat%blk1,1)
   dimm(:) = (/latt%l1,latt%l2,latt%l3/)
   Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 3, dimm)
   allocate( fftmp(lq*n1) )
@@ -116,7 +116,7 @@ subroutine dqmc_right_forward_prop(this, nf, gmat)
   ! to perform fft transforms along 2nd dimension of gmat, we can first hermitian conjugate it
   ! and perform fft transforms along 1st dimension of gmat^+
   allocate( gtmpC(lq,n1) )
-  gtmpC = dconjg( transpose( gmat%orb1 ) )
+  gtmpC = dconjg( transpose( gmat%blk1 ) )
 
   ! perform n1 three-dimensional transforms along 1st dimension of gmat^+
   fftmp = reshape( gtmpC, (/lq*n1/) )
@@ -143,7 +143,7 @@ subroutine dqmc_right_forward_prop(this, nf, gmat)
   Status = DftiFreeDescriptor( Desc_Handle_Dim1 )
 
   gtmpC = reshape( fftmp, (/lq,n1/) )
-  gmat%orb1 = dconjg( transpose( gtmpC ) )
+  gmat%blk1 = dconjg( transpose( gtmpC ) )
 
   deallocate( fftmp )
   deallocate( gtmpC )
@@ -151,7 +151,7 @@ subroutine dqmc_right_forward_prop(this, nf, gmat)
   integer :: i1, i2, dimm(2)
   complex(dp), dimension(:,:), allocatable :: gtmp
   complex(dp), dimension(:), allocatable :: v1, v2
-  n1 = size(gmat%orb1,1)
+  n1 = size(gmat%blk1,1)
 #IFDEF TIMING 
   call cpu_time_now(starttime)
 #ENDIF
@@ -163,8 +163,8 @@ subroutine dqmc_right_forward_prop(this, nf, gmat)
   ! all sites of sublattice A, all sites of sublattice B
   allocate( gtmp(n1,lq*2) )
   do i = 1, 2*lq, 2
-      gtmp(:, (i+1)/2   ) = gmat%orb1(:, i  )
-      gtmp(:, (i+1)/2+lq) = gmat%orb1(:, i+1)
+      gtmp(:, (i+1)/2   ) = gmat%blk1(:, i  )
+      gtmp(:, (i+1)/2+lq) = gmat%blk1(:, i+1)
   end do
 
   ! to perform fft transforms along 2nd dimension of gmat, we can first hermitian conjugate it
@@ -205,8 +205,8 @@ subroutine dqmc_right_forward_prop(this, nf, gmat)
 
   ! reshape back to gmat
   do i = 1, 2*lq, 2
-      gmat%orb1(:, i  ) = gtmp(:, (i+1)/2   )
-      gmat%orb1(:, i+1) = gtmp(:, (i+1)/2+lq)
+      gmat%blk1(:, i  ) = gtmp(:, (i+1)/2   )
+      gmat%blk1(:, i+1) = gtmp(:, (i+1)/2+lq)
   end do
 
   deallocate( fftmp )
@@ -221,10 +221,10 @@ subroutine dqmc_right_forward_prop(this, nf, gmat)
 #IFDEF TIMING
   call cpu_time_now(starttime)
 #ENDIF
-  n1 = size(gmat%orb1,1)
+  n1 = size(gmat%blk1,1)
   call allocate_gfunc( Atmp, n1, ndim )
   if (rt.gt.zero) then
-      call zgemm('n','n',n1,ndim,ndim,cone,gmat%orb1,n1,this%urt,ndim,czero,Atmp%orb1,n1)
+      call zgemm('n','n',n1,ndim,ndim,cone,gmat%blk1,n1,this%urt,ndim,czero,Atmp%blk1,n1)
       gmat = Atmp
   endif
 #ENDIF

@@ -20,21 +20,21 @@ subroutine dqmc_right_forward_prop(this, gmat, jsite, ntau)
   call cpu_time_now(starttime)
 #ENDIF
 
-  n1 = size(gmat%orb1,1)
+  n1 = size(gmat%blk1,1)
   call allocate_gfunc(ukmat, n1, latt%z_plq)
   call allocate_gfunc(ukmat_tmp, n1, latt%z_plq)
   do i0 = 1, latt%z_plq
     i1 = latt%plq_cord(i0, jsite)
     do i = 1, n1
-      ukmat%orb1(i, i0) = gmat%orb1(i, i1)
+      ukmat%blk1(i, i0) = gmat%blk1(i, i1)
     end do
   end do
   is = this%conf_plqu(jsite,ntau)
-  call zgemm('n','n',n1,latt%z_plq,latt%z_plq,cone,ukmat%orb1,n1,this%bmat_plqu_orb1(:,:,is),latt%z_plq,czero,ukmat_tmp%orb1,n1)
+  call zgemm('n','n',n1,latt%z_plq,latt%z_plq,cone,ukmat%blk1,n1,this%bmat_plqu_blk1(:,:,is),latt%z_plq,czero,ukmat_tmp%blk1,n1)
   do i0 = 1, latt%z_plq
     i1 = latt%plq_cord(i0, jsite)
     do i = 1, n1
-      gmat%orb1(i, i1) = ukmat_tmp%orb1(i, i0)
+      gmat%blk1(i, i1) = ukmat_tmp%blk1(i, i0)
     end do
   end do
 #IFDEF TIMING

@@ -39,24 +39,24 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
       iflip = ceiling( spring_sfmt_stream() * (this%lcomp-1) )
       isp = mod(is+iflip-1,this%lcomp) + 1
 
-      vuvkmat%orb1(:) = ur%orb1(isite,:)
-      ukmat%orb1(:) = ul%orb1(:,isite)
+      vuvkmat%blk1(:) = ur%blk1(isite,:)
+      ukmat%blk1(:) = ul%blk1(:,isite)
 
-      vkmat_tmp%orb1(:) = this%delta_bmat%orb1(iflip,is)*vuvkmat%orb1(:)
+      vkmat_tmp%blk1(:) = this%delta_bmat%blk1(iflip,is)*vuvkmat%blk1(:)
 
-      vkmat%orb1 = czero
+      vkmat%blk1 = czero
       do i1 = 1, ne
           do i2 = 1, ne
-              vkmat%orb1(i1) = vkmat%orb1(i1) + vkmat_tmp%orb1(i2)*ulrinv%orb1(i2,i1)
+              vkmat%blk1(i1) = vkmat%blk1(i1) + vkmat_tmp%blk1(i2)*ulrinv%blk1(i2,i1)
           end do
       end do
 
       ratio1 = cone
       do i1 = 1, ne
-          ratio1 = ratio1 + vkmat%orb1(i1)*ukmat%orb1(i1)
+          ratio1 = ratio1 + vkmat%blk1(i1)*ukmat%blk1(i1)
       end do
 
-      sscl%orb1 = cone / ratio1
+      sscl%blk1 = cone / ratio1
 
 
       ratiotot = ratio1**nflr
@@ -89,20 +89,20 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 #ENDIF
 
          ! update ur
-         ur%orb1(isite,:) = ur%orb1(isite,:) + vkmat_tmp%orb1(:)
+         ur%blk1(isite,:) = ur%blk1(isite,:) + vkmat_tmp%blk1(:)
 
          ! update urlinv
-         vuvkmat%orb1(:) = sscl%orb1*vkmat%orb1(:)
-         lrukmat%orb1 = czero
+         vuvkmat%blk1(:) = sscl%blk1*vkmat%blk1(:)
+         lrukmat%blk1 = czero
          do i2 = 1, ne
              do i1 = 1, ne
-                 lrukmat%orb1(i1) = lrukmat%orb1(i1) + ulrinv%orb1(i1,i2)*ukmat%orb1(i2)
+                 lrukmat%blk1(i1) = lrukmat%blk1(i1) + ulrinv%blk1(i1,i2)*ukmat%blk1(i2)
              end do
          end do
 
          do i1 = 1, ne
              do i2 = 1, ne
-                 ulrinv%orb1(i1,i2) = ulrinv%orb1(i1,i2) - lrukmat%orb1(i1)*vuvkmat%orb1(i2)
+                 ulrinv%blk1(i1,i2) = ulrinv%blk1(i1,i2) - lrukmat%blk1(i1)*vuvkmat%blk1(i2)
              end do
          end do
 

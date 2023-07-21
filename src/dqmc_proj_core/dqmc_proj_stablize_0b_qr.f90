@@ -11,20 +11,20 @@
 
       call allocate_gfunc(Utmp, ndim, ne)
       call allocate_gfunc(Vtmp, ne, ndim)
-      call s_zgeQR_pqmc(ndim, ne, ure%orb1, Utmp%orb1, Vtmp%orb1, logwtmp%orb1 )
+      call s_zgeQR_pqmc(ndim, ne, ure%blk1, Utmp%blk1, Vtmp%blk1, logwtmp%blk1 )
       ure = Utmp
 #IFDEF TEST_LEVEL3
       write(fout,*)
       write(fout,'(a)') ' in qr 0->beta, ure(:,:) = '
       do i = 1, ndim
-          write(fout,'(18(2f7.4))') ure%orb1(i,:)
+          write(fout,'(18(2f7.4))') ure%blk1(i,:)
       end do
       write(fout,*)
       write(fout,'(a)') ' Vtmp(:) = '
       do i = 1, ne
-          write(fout,'(18(2f7.4))') Vtmp%orb1(i,:)
+          write(fout,'(18(2f7.4))') Vtmp%blk1(i,:)
       end do
-      write(fout,'(a,e24.12)') ' logwtmp%orb1 = ', logwtmp%orb1
+      write(fout,'(a,e24.12)') ' logwtmp%blk1 = ', logwtmp%blk1
 #ENDIF
       call deallocate_gfunc( Utmp )
       call deallocate_gfunc( Vtmp )

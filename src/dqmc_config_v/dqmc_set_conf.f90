@@ -26,29 +26,29 @@
 
     do is = 1, this%lcomp
       if (lprojv ) then
-          this%bmat_p%orb1(is)     = exp( dcmplx(0.d0, pi*dble(2*is)/dble(this%lcomp)) )
-          this%bmat_p_inv%orb1(is) = exp( dcmplx(0.d0,-pi*dble(2*is)/dble(this%lcomp)) )
-          this%bmat_m%orb1(is)     = exp( dcmplx(0.d0, pi*dble(2*is)/dble(this%lcomp)) )
-          this%bmat_m_inv%orb1(is) = exp( dcmplx(0.d0,-pi*dble(2*is)/dble(this%lcomp)) )
+          this%bmat_p%blk1(is)     = exp( dcmplx(0.d0, pi*dble(2*is)/dble(this%lcomp)) )
+          this%bmat_p_inv%blk1(is) = exp( dcmplx(0.d0,-pi*dble(2*is)/dble(this%lcomp)) )
+          this%bmat_m%blk1(is)     = exp( dcmplx(0.d0, pi*dble(2*is)/dble(this%lcomp)) )
+          this%bmat_m_inv%blk1(is) = exp( dcmplx(0.d0,-pi*dble(2*is)/dble(this%lcomp)) )
       else
-          this%bmat_p%orb1(is)     =  exp(  this%alpha*etal(is) )
-          this%bmat_p_inv%orb1(is) =  exp( -this%alpha*etal(is) )
-          this%bmat_m%orb1(is)     =  exp( -this%alpha*etal(is) ) 
-          this%bmat_m_inv%orb1(is) =  exp(  this%alpha*etal(is) )
+          this%bmat_p%blk1(is)     =  exp(  this%alpha*etal(is) )
+          this%bmat_p_inv%blk1(is) =  exp( -this%alpha*etal(is) )
+          this%bmat_m%blk1(is)     =  exp( -this%alpha*etal(is) ) 
+          this%bmat_m_inv%blk1(is) =  exp(  this%alpha*etal(is) )
       end if
       if( irank == 0 ) then
           write(fout,'(a)') " in vconf%set_conf "
-          write(fout,'(a,i3,a)') "bmat_p%orb1(",is," ) = "
-          write(fout,'(2f9.5)') this%bmat_p%orb1(is)
+          write(fout,'(a,i3,a)') "bmat_p%blk1(",is," ) = "
+          write(fout,'(2f9.5)') this%bmat_p%blk1(is)
           write(fout,'(a)') " "
-          write(fout,'(a,i3,a)') "bmat_p_inv%orb1(",is," ) = "
-          write(fout,'(2f9.5)') this%bmat_p_inv%orb1(is)
+          write(fout,'(a,i3,a)') "bmat_p_inv%blk1(",is," ) = "
+          write(fout,'(2f9.5)') this%bmat_p_inv%blk1(is)
           write(fout,'(a)') " "
-          write(fout,'(a,i3,a)') "bmat_m%orb1(",is," ) = "
-          write(fout,'(2f9.5)') this%bmat_m%orb1(is)
+          write(fout,'(a,i3,a)') "bmat_m%blk1(",is," ) = "
+          write(fout,'(2f9.5)') this%bmat_m%blk1(is)
           write(fout,'(a)') " "
-          write(fout,'(a,i3,a)') "bmat_m_inv1%orb1(",is," ) = "
-          write(fout,'(2f9.5)') this%bmat_m_inv%orb1(is)
+          write(fout,'(a,i3,a)') "bmat_m_inv1%blk1(",is," ) = "
+          write(fout,'(2f9.5)') this%bmat_m_inv%blk1(is)
           write(fout,'(a)') " "
 
       end if
@@ -58,19 +58,19 @@
       isp = mod(is+iflip-1,this%lcomp) + 1
       if(lprojv) then
           this%phase_ratio(iflip,is) = exp( dcmplx( 0.d0, pi*dble(2*is-2*isp)*0.5d0*(dble(nflr)+nu)/dble(this%lcomp) ) )
-          this%delta_bmat_p%orb1(iflip,is) = exp( dcmplx(0.d0, pi*dble(2*isp-2*is)/dble(this%lcomp)) ) - cone
-          this%delta_bmat_m%orb1(iflip,is) = exp( this%alpha*(etal(isp)-etal(is)) ) - cone
+          this%delta_bmat_p%blk1(iflip,is) = exp( dcmplx(0.d0, pi*dble(2*isp-2*is)/dble(this%lcomp)) ) - cone
+          this%delta_bmat_m%blk1(iflip,is) = exp( this%alpha*(etal(isp)-etal(is)) ) - cone
       else
           this%phase_ratio(iflip,is) = exp( dcmplx(0.d0, this%alpha*(etal(is)-etal(isp))*(dble(nflr)+nu)) )
-          this%delta_bmat_p%orb1(iflip,is) = exp(  this%alpha*(etal(isp)-etal(is)) ) - cone
-          this%delta_bmat_m%orb1(iflip,is) = exp( -this%alpha*(etal(isp)-etal(is)) ) - cone
+          this%delta_bmat_p%blk1(iflip,is) = exp(  this%alpha*(etal(isp)-etal(is)) ) - cone
+          this%delta_bmat_m%blk1(iflip,is) = exp( -this%alpha*(etal(isp)-etal(is)) ) - cone
       end if
       if( irank == 0 ) then
           write(fout,'(a)') " "
-          write(fout,'(a,i3,a,i3,a)') "delta_bmat_p%orb1(",iflip," ,",is," ) = "
-          write(fout,'(2f9.5)') this%delta_bmat_p%orb1(iflip,is)
-          write(fout,'(a,i3,a,i3,a)') "delta_bmat_m%orb1(",iflip," ,",is," ) = "
-          write(fout,'(2f9.5)') this%delta_bmat_m%orb1(iflip,is)
+          write(fout,'(a,i3,a,i3,a)') "delta_bmat_p%blk1(",iflip," ,",is," ) = "
+          write(fout,'(2f9.5)') this%delta_bmat_p%blk1(iflip,is)
+          write(fout,'(a,i3,a,i3,a)') "delta_bmat_m%blk1(",iflip," ,",is," ) = "
+          write(fout,'(2f9.5)') this%delta_bmat_m%blk1(iflip,is)
           write(fout,'(a)') " "
           write(fout,'(a,i3,a,i3,a,2f16.8)') "phase_ratio(",iflip," ,",is," ) = ", this%phase_ratio(iflip,is)
       end if

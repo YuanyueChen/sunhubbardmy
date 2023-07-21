@@ -8,8 +8,8 @@
       ! UR at tau = 0
       do nl = 1, ne
          do i = 1,ndim
-            UR%orb1(i,nl) = proj%orb1(i,nl)
-            Ust(nst)%orb1(i,nl) = dconjg(proj%orb1(i,nl))
+            UR%blk1(i,nl) = proj%blk1(i,nl)
+            Ust(nst)%blk1(i,nl) = dconjg(proj%blk1(i,nl))
          end do
       end do
 
@@ -28,17 +28,17 @@
       ! UL at tau = beta
       do nl = 1, ne
           do i = 1, ndim
-              UL%orb1(nl,i) = dconjg(proj%orb1(i,nl))
+              UL%blk1(nl,i) = dconjg(proj%blk1(i,nl))
           end do
       end do
 
       ! calculate ULRINV for calculating green function
-      call zgemm('n','n',ne,ne,ndim,cone,UL%orb1,ne,UR%orb1,ndim,czero,ULR%orb1,ne)  ! ULR = UL*UR
+      call zgemm('n','n',ne,ne,ndim,cone,UL%blk1,ne,UR%blk1,ndim,czero,ULR%blk1,ne)  ! ULR = UL*UR
       ULRINV = ULR
       !call s_inv_z(ne,ULRINV)
-      call s_inv_logdet_lu_z(ne,ULRINV%orb1,zlogwtmp%orb1)
+      call s_inv_logdet_lu_z(ne,ULRINV%blk1,zlogwtmp%blk1)
       call set_phase(zlogwtmp, phase )
-      logweightf%orb1 = dcmplx(logwDV(nst)%orb1,0.d0) + zlogwtmp%orb1 ! the true weight of fermion determinant
+      logweightf%blk1 = dcmplx(logwDV(nst)%blk1,0.d0) + zlogwtmp%blk1 ! the true weight of fermion determinant
 !#IFDEF TEST
       if( irank == 0 ) then
           write(fout,'(a,2e16.8)') 'in dqmc_proj_sweep_start_0b, phase = ', phase

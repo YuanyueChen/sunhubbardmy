@@ -20,7 +20,7 @@ subroutine dqmc_left_forward_prop(this, gmat, ntau, nf, nflag)
   call cpu_time_now(starttime)
 #ENDIF
 
-  n2 = size(gmat%orb1,2)
+  n2 = size(gmat%blk1,2)
   allocate( v1(n2), v2(n2) )
 
   ! B = U D U^+
@@ -34,13 +34,13 @@ subroutine dqmc_left_forward_prop(this, gmat, ntau, nf, nflag)
         i1 = latt%nnlf_list(i)
         i2 = latt%nnlist(i1,nf)
         do j = 1, n2
-           v1(j) = this%ut(1,1) * gmat%orb1(i1,j) + this%ut(1,2) * gmat%orb1(i2,j)
-           v2(j) = this%ut(2,1) * gmat%orb1(i1,j) + this%ut(2,2) * gmat%orb1(i2,j) 
+           v1(j) = this%ut(1,1) * gmat%blk1(i1,j) + this%ut(1,2) * gmat%blk1(i2,j)
+           v2(j) = this%ut(2,1) * gmat%blk1(i1,j) + this%ut(2,2) * gmat%blk1(i2,j) 
         enddo
         is = this%conf(i,nf,ntau)
         do j = 1, n2
-           gmat%orb1(i1,j) = this%bmat_p%orb1(is)*v1(j)
-           gmat%orb1(i2,j) = this%bmat_m%orb1(is)*v2(j)
+           gmat%blk1(i1,j) = this%bmat_p%blk1(is)*v1(j)
+           gmat%blk1(i2,j) = this%bmat_m%blk1(is)*v2(j)
         enddo
      enddo
 !$OMP END DO
@@ -56,12 +56,12 @@ subroutine dqmc_left_forward_prop(this, gmat, ntau, nf, nflag)
         i1 = latt%nnlf_list(i)
         i2 = latt%nnlist(i1,nf)
         do j = 1, n2
-           v1(j) = this%u(1,1) * gmat%orb1(i1,j) +  this%u(1,2) * gmat%orb1(i2,j)
-           v2(j) = this%u(2,1) * gmat%orb1(i1,j) +  this%u(2,2) * gmat%orb1(i2,j)
+           v1(j) = this%u(1,1) * gmat%blk1(i1,j) +  this%u(1,2) * gmat%blk1(i2,j)
+           v2(j) = this%u(2,1) * gmat%blk1(i1,j) +  this%u(2,2) * gmat%blk1(i2,j)
         enddo
         do j = 1, n2
-           gmat%orb1(i1,j) = v1(j)
-           gmat%orb1(i2,j) = v2(j)
+           gmat%blk1(i1,j) = v1(j)
+           gmat%blk1(i2,j) = v2(j)
         enddo
      enddo
 !$OMP END DO

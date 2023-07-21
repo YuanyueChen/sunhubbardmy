@@ -32,16 +32,16 @@ subroutine dqmc_proj_update_plqu(this, isite, ntau, ul, ur, ulrinv)
 
       do i0 = 1, latt%z_plq
           k = latt%plq_cord(i0,isite)
-          vuvkmat%orb1(i0,:) = ur%orb1(k,:)
-          ukmat%orb1(:,i0) = ul%orb1(:,k)
+          vuvkmat%blk1(i0,:) = ur%blk1(k,:)
+          ukmat%blk1(:,i0) = ul%blk1(:,k)
       end do
-      call zgemm('n','n',latt%z_plq,ne,latt%z_plq,cone,this%delta_bmat_plqu_orb1(:,:,iflip,is),latt%z_plq,vuvkmat%orb1,latt%z_plq,czero,vkmat_tmp%orb1,latt%z_plq)  ! vkmat_tmp = D*vuvkmat
-      call zgemm('n','n',latt%z_plq,ne,ne,cone,vkmat_tmp%orb1,latt%z_plq,ulrinv%orb1,ne,czero,vkmat%orb1,latt%z_plq)  ! vkmat = vkmat_tmp*ulrinv
+      call zgemm('n','n',latt%z_plq,ne,latt%z_plq,cone,this%delta_bmat_plqu_blk1(:,:,iflip,is),latt%z_plq,vuvkmat%blk1,latt%z_plq,czero,vkmat_tmp%blk1,latt%z_plq)  ! vkmat_tmp = D*vuvkmat
+      call zgemm('n','n',latt%z_plq,ne,ne,cone,vkmat_tmp%blk1,latt%z_plq,ulrinv%blk1,ne,czero,vkmat%blk1,latt%z_plq)  ! vkmat = vkmat_tmp*ulrinv
 
-      vukmat%orb1 = Imat_plq
-      call zgemm('n','n',latt%z_plq,latt%z_plq,ne,cone,vkmat%orb1,latt%z_plq,ukmat%orb1,ne,cone,vukmat%orb1,latt%z_plq)  ! vukmat = I + vkmat*ukmat
+      vukmat%blk1 = Imat_plq
+      call zgemm('n','n',latt%z_plq,latt%z_plq,ne,cone,vkmat%blk1,latt%z_plq,ukmat%blk1,ne,cone,vukmat%blk1,latt%z_plq)  ! vukmat = I + vkmat*ukmat
 
-      call s_inv_det_qr_z(latt%z_plq, vukmat%orb1, ratio1) ! cal det(vukmat) and vukmat^-1
+      call s_inv_det_qr_z(latt%z_plq, vukmat%blk1, ratio1) ! cal det(vukmat) and vukmat^-1
 
       ratiotot = ratio1**nflr
       if( lprojplqu ) then
@@ -75,13 +75,13 @@ subroutine dqmc_proj_update_plqu(this, isite, ntau, ul, ur, ulrinv)
          ! update ur
          do i0 = 1, latt%z_plq
              k = latt%plq_cord(i0,isite)
-             ur%orb1(k, :) = ur%orb1(k, :) + vkmat_tmp%orb1(i0, :)
+             ur%blk1(k, :) = ur%blk1(k, :) + vkmat_tmp%blk1(i0, :)
          end do
 
          ! update urlinv
-         call zgemm('n','n',latt%z_plq,ne,latt%z_plq,cone,vukmat%orb1,latt%z_plq,vkmat%orb1,latt%z_plq,czero,vuvkmat%orb1,latt%z_plq)  ! vuvkmat = vukmat*vkmat
-         call zgemm('n','n',ne,latt%z_plq,ne,cone,ulrinv%orb1,ne,ukmat%orb1,ne,czero,lrukmat%orb1,ne)  ! lrukmat = ulrinv*ukmat
-         call zgemm('n','n',ne,ne,latt%z_plq,-cone,lrukmat%orb1,ne,vuvkmat%orb1,latt%z_plq,cone,ulrinv%orb1,ne)  ! ulrinv - lrukmat*vuvkmat
+         call zgemm('n','n',latt%z_plq,ne,latt%z_plq,cone,vukmat%blk1,latt%z_plq,vkmat%blk1,latt%z_plq,czero,vuvkmat%blk1,latt%z_plq)  ! vuvkmat = vukmat*vkmat
+         call zgemm('n','n',ne,latt%z_plq,ne,cone,ulrinv%blk1,ne,ukmat%blk1,ne,czero,lrukmat%blk1,ne)  ! lrukmat = ulrinv*ukmat
+         call zgemm('n','n',ne,ne,latt%z_plq,-cone,lrukmat%blk1,ne,vuvkmat%blk1,latt%z_plq,cone,ulrinv%blk1,ne)  ! ulrinv - lrukmat*vuvkmat
 
          ! flip
          this%conf_plqu(isite,ntau) =  isp

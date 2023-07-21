@@ -31,9 +31,9 @@
         this%lcomp = 4
     end if
     this%alpha_plqu = dsqrt( dtau*plqu )
-    allocate( this%bmat_plqu_orb1(latt%z_plq,latt%z_plq,this%lcomp) )
-    allocate( this%bmat_plqu_orb1_inv(latt%z_plq,latt%z_plq,this%lcomp) )
-    allocate( this%delta_bmat_plqu_orb1(latt%z_plq,latt%z_plq,this%lcomp-1,this%lcomp) )
+    allocate( this%bmat_plqu_blk1(latt%z_plq,latt%z_plq,this%lcomp) )
+    allocate( this%bmat_plqu_blk1_inv(latt%z_plq,latt%z_plq,this%lcomp) )
+    allocate( this%delta_bmat_plqu_blk1(latt%z_plq,latt%z_plq,this%lcomp-1,this%lcomp) )
     allocate( this%phase(this%lcomp) )
     allocate( this%phase_ratio(this%lcomp-1, this%lcomp) )
 
@@ -102,8 +102,8 @@
                  z3 = z3 +  dconjg(umat_tmp(i,m)) * exp( dcmplx(0.d0,-eig_tmp(m)*this%alpha_plqu*etal(is)) ) *        umat_tmp(j,m)
                end if
             enddo
-            this%bmat_plqu_orb1(i,j,is) = z0
-            this%bmat_plqu_orb1_inv(i,j,is) = z2
+            this%bmat_plqu_blk1(i,j,is) = z0
+            this%bmat_plqu_blk1_inv(i,j,is) = z2
          enddo
       enddo
       if(lprojplq) then
@@ -126,14 +126,14 @@
 #IFDEF PLEVEL2
       if( irank == 0 ) then
           write(fout,'(a)') " "
-          write(fout,'(a,i3,a)') "bmat_plqu_orb1(:,:,",is," ) = "
+          write(fout,'(a,i3,a)') "bmat_plqu_blk1(:,:,",is," ) = "
           do i = 1, latt%z_plq
-                write(fout,'(6(2f9.5,2x))') this%bmat_plqu_orb1(i,:,is)
+                write(fout,'(6(2f9.5,2x))') this%bmat_plqu_blk1(i,:,is)
           end do
           write(fout,'(a)') " "
-          write(fout,'(a,i3,a)') "bmat_plqu_orb1_inv(:,:,",is," ) = "
+          write(fout,'(a,i3,a)') "bmat_plqu_blk1_inv(:,:,",is," ) = "
           do i = 1, latt%z_plq
-                write(fout,'(6(2f9.5,2x))') this%bmat_plqu_orb1_inv(i,:,is)
+                write(fout,'(6(2f9.5,2x))') this%bmat_plqu_blk1_inv(i,:,is)
           end do
           write(fout,'(a)') " "
           write(fout,'(a,i3,a,2f16.8)') "phase(",is," ) = ", this%phase(is)
@@ -157,9 +157,9 @@
                end if
             enddo
             if( i .ne. j ) then
-                this%delta_bmat_plqu_orb1(i,j,iflip,is) = z0
+                this%delta_bmat_plqu_blk1(i,j,iflip,is) = z0
             else
-                this%delta_bmat_plqu_orb1(i,j,iflip,is) = z0 - cone
+                this%delta_bmat_plqu_blk1(i,j,iflip,is) = z0 - cone
             end if
          enddo
       enddo
@@ -183,9 +183,9 @@
 #IFDEF PLEVEL2
       if( irank == 0 ) then
           write(fout,'(a)') " "
-          write(fout,'(a,i3,a,i3,a)') "delta_bmat_plqu_orb1(:,:,",iflip," ,",is," ) = "
+          write(fout,'(a,i3,a,i3,a)') "delta_bmat_plqu_blk1(:,:,",iflip," ,",is," ) = "
           do i = 1, latt%z_plq
-                write(fout,'(6(2f9.5,2x))') this%delta_bmat_plqu_orb1(i,:,iflip,is)
+                write(fout,'(6(2f9.5,2x))') this%delta_bmat_plqu_blk1(i,:,iflip,is)
           end do
           write(fout,'(a)') " "
           write(fout,'(a,i3,a,i3,a,2f16.8)') "phase_ratio(",iflip," ,",is," ) = ", this%phase_ratio(iflip,is)

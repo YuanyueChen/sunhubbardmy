@@ -7,9 +7,9 @@ module dqmc_config_plqu
       integer :: lq, ltrot, lcomp
       real(dp) :: alpha_plqu
       integer, allocatable:: conf_plqu(:,:)
-      complex(dp), allocatable :: bmat_plqu_orb1(:,:,:)
-      complex(dp), allocatable :: bmat_plqu_orb1_inv(:,:,:)
-      complex(dp), allocatable :: delta_bmat_plqu_orb1(:,:,:,:)
+      complex(dp), allocatable :: bmat_plqu_blk1(:,:,:)
+      complex(dp), allocatable :: bmat_plqu_blk1_inv(:,:,:)
+      complex(dp), allocatable :: delta_bmat_plqu_blk1(:,:,:,:)
       complex(dp), allocatable :: phase(:)
       complex(dp), allocatable :: phase_ratio(:,:)
       contains
@@ -64,9 +64,9 @@ module dqmc_config_plqu
     implicit none
     type(plqconf) :: this
     deallocate( this%conf_plqu )
-    deallocate( this%bmat_plqu_orb1 )
-    deallocate( this%bmat_plqu_orb1_inv )
-    deallocate( this%delta_bmat_plqu_orb1 )
+    deallocate( this%bmat_plqu_blk1 )
+    deallocate( this%bmat_plqu_blk1_inv )
+    deallocate( this%delta_bmat_plqu_blk1 )
     deallocate( this%phase )
     deallocate( this%phase_ratio )
   end subroutine deallocate_plqconf

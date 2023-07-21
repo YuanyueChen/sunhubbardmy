@@ -24,9 +24,9 @@ module dqmc_ft_core
       implicit none
       integer :: i
       call allocate_gfunc(Ifmat,ndim,ndim)
-      Ifmat%orb1 = Imat
+      Ifmat%blk1 = Imat
       call allocate_dfunc(Ifvec,ndim)
-      Ifvec%orb1 = Ivec
+      Ifvec%blk1 = Ivec
       call allocate_gfunc(gf,ndim,ndim)
       call allocate_gfunc(gfc,ndim,ndim)
       allocate( Ust(0:nst), Ust_tmp(0:nst) )

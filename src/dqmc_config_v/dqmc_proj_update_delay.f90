@@ -40,10 +40,10 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 
   ulrinvul = czero
   gmmat = Imat
-  urrecord = ur%orb1
+  urrecord = ur%blk1
   !calculate the G function
-  call zgemm('N', 'N', ne, ndim, ne, cone, ulrinv%orb1, ne, ul%orb1, ne, czero, ulrinvul, ne)
-  call zgemm('N', 'N', ndim, ndim, ne, -cone, ur%orb1, ndim, ulrinvul,ne, cone, gmmat, ndim)
+  call zgemm('N', 'N', ne, ndim, ne, cone, ulrinv%blk1, ne, ul%blk1, ne, czero, ulrinvul, ne)
+  call zgemm('N', 'N', ndim, ndim, ne, -cone, ur%blk1, ndim, ulrinvul,ne, cone, gmmat, ndim)
 
   accm  = 0.d0
   ik = 0
@@ -65,13 +65,13 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
           gpart(2,1) = gpart(2,1) + avec(i2,1+m)*bvec(i1,1+m) + avec(i2,2+m)*bvec(i1,2+m)
           gpart(2,2) = gpart(2,2) + avec(i2,1+m)*bvec(i2,1+m) + avec(i2,2+m)*bvec(i2,2+m)
       end do
-      vukmat(1,1) = (cone - gpart(1,1))*this%delta_bmat_p%orb1(iflip, is) + cone
-      vukmat(1,2) =       - gpart(1,2) *this%delta_bmat_m%orb1(iflip, is)
-      vukmat(2,1) =       - gpart(2,1) *this%delta_bmat_p%orb1(iflip, is)
-      vukmat(2,2) = (cone - gpart(2,2))*this%delta_bmat_m%orb1(iflip, is) + cone
+      vukmat(1,1) = (cone - gpart(1,1))*this%delta_bmat_p%blk1(iflip, is) + cone
+      vukmat(1,2) =       - gpart(1,2) *this%delta_bmat_m%blk1(iflip, is)
+      vukmat(2,1) =       - gpart(2,1) *this%delta_bmat_p%blk1(iflip, is)
+      vukmat(2,2) = (cone - gpart(2,2))*this%delta_bmat_m%blk1(iflip, is) + cone
       call s_inv_det_qr_z(2, vukmat, ratio1) ! cal det(I+vukmat) and (I+vukmat)^-1
-      smat(1,:) = this%delta_bmat_p%orb1(iflip, is) * vukmat(1,:)
-      smat(2,:) = this%delta_bmat_m%orb1(iflip, is) * vukmat(2,:)
+      smat(1,:) = this%delta_bmat_p%blk1(iflip, is) * vukmat(1,:)
+      smat(2,:) = this%delta_bmat_m%blk1(iflip, is) * vukmat(2,:)
 
       ratiotot = ratio1
 	  ratio_re = dble( ratiotot * phase )/dble( phase )
@@ -111,8 +111,8 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
           avec(:,1+ik) = grow(:,1)*smat(1,1) + grow(:,2)*smat(2,1)
           avec(:,2+ik) = grow(:,1)*smat(1,2) + grow(:,2)*smat(2,2)
 
-          urrecord(i1,:) = urrecord(i1,:) + this%delta_bmat_p%orb1(iflip,is)*urrecord(i1,:)
-          urrecord(i2,:) = urrecord(i2,:) + this%delta_bmat_m%orb1(iflip,is)*urrecord(i2,:)
+          urrecord(i1,:) = urrecord(i1,:) + this%delta_bmat_p%blk1(iflip,is)*urrecord(i1,:)
+          urrecord(i2,:) = urrecord(i2,:) + this%delta_bmat_m%blk1(iflip,is)*urrecord(i2,:)
 
          ! flip
          this%conf(i,nf,ntau) =  isp
@@ -131,9 +131,9 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
       if( i.eq.latt%nn_lf ) then
           ik = 0
           ! delay update: update the R and the (LR)^-1
-          ur%orb1 = urrecord
-          call zgemm('N', 'N', ne, ne, ndim, cone, ul%orb1, ne, ur%orb1, ndim, czero, ulrinv%orb1, ne)
-          call s_invlu_z(ne, ulrinv%orb1)
+          ur%blk1 = urrecord
+          call zgemm('N', 'N', ne, ne, ndim, cone, ul%blk1, ne, ur%blk1, ndim, czero, ulrinv%blk1, ne)
+          call s_invlu_z(ne, ulrinv%blk1)
       end if
    end do
    main_obs(4) = main_obs(4) + dcmplx( accm, latt%nn_lf )

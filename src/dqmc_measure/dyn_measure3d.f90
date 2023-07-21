@@ -56,10 +56,10 @@
             nu_i = latt%list(i,1)
             no_i = latt%list(i,2)
             imj  = latt%imj(nu_i,nu_j)
-            gtau0(imj,nt) = gtau0(imj,nt) + gt0up%orb1(i,j)
-            zspsm_tau(imj,nt) = zspsm_tau(imj,nt) - g0tup%orb1(j,i)*gt0up%orb1(i,j)*dcmplx(1.d0-1.d0/dble(nflr*nflr), 0.d0)
-            znn_tau(imj,nt) = znn_tau(imj,nt) + dcmplx( (0.5d0-dble(gttup%orb1(i,i)))*(0.5d0-dble(g00up%orb1(j,j))) ) &
-                               - dcmplx(1.d0/dble(nflr),0.d0)*g0tup%orb1(j,i)*gt0up%orb1(i,j)
+            gtau0(imj,nt) = gtau0(imj,nt) + gt0up%blk1(i,j)
+            zspsm_tau(imj,nt) = zspsm_tau(imj,nt) - g0tup%blk1(j,i)*gt0up%blk1(i,j)*dcmplx(1.d0-1.d0/dble(nflr*nflr), 0.d0)
+            znn_tau(imj,nt) = znn_tau(imj,nt) + dcmplx( (0.5d0-dble(gttup%blk1(i,i)))*(0.5d0-dble(g00up%blk1(j,j))) ) &
+                               - dcmplx(1.d0/dble(nflr),0.d0)*g0tup%blk1(j,i)*gt0up%blk1(i,j)
         end do
     end do
     gtau0_bin = gtau0_bin + gtau0*zphi

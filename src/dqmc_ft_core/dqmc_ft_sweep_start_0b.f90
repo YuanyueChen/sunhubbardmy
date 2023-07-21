@@ -22,8 +22,8 @@
           ! at tau = n * tau1
           call dqmc_ft_stablize_0b_qr(n)
 #IFDEF TEST
-          write(fout, '(a,i4,a)') ' in dqmc_ft_sweep_start_0b, Dst(', n, ')%orb1(:) = '
-          write(fout,'(4(e16.8))') Dst(n)%orb1(:)
+          write(fout, '(a,i4,a)') ' in dqmc_ft_sweep_start_0b, Dst(', n, ')%blk1(:) = '
+          write(fout,'(4(e16.8))') Dst(n)%blk1(:)
 #ENDIF
       end do
   
@@ -32,7 +32,7 @@
       DRvec = Dst(nst)
       VR    = Vst(nst)
       logdetQR = logdetQst(nst)
-      call green_equaltimebb( nst, ndim, UR%orb1, DRvec%orb1, VR%orb1, gf%orb1, logdetQR%orb1, logweightf%orb1, info )
+      call green_equaltimebb( nst, ndim, UR%blk1, DRvec%blk1, VR%blk1, gf%blk1, logdetQR%blk1, logweightf%blk1, info )
 
       call set_phase( logweightf, phase )
 !#IFDEF TEST
@@ -47,9 +47,9 @@
       end if
 
 #IFDEF TEST_LEVEL3
-      write(fout, '(a)') ' After sweep_start_0b, gf%orb1(:,:) = '
+      write(fout, '(a)') ' After sweep_start_0b, gf%blk1(:,:) = '
       do i = 1, ndim
-          write(fout,'(18(f8.4))') dble(gf%orb1(i,:))
+          write(fout,'(18(f8.4))') dble(gf%blk1(i,:))
       end do
 #ENDIF
 
@@ -58,9 +58,9 @@
       gf = Ifmat
       call Bmat_left_forward( ltrot, 1, gf)
       do  i = 1, ndim
-          gf%orb1(i,i) = gf%orb1(i,i) + cone
+          gf%blk1(i,i) = gf%blk1(i,i) + cone
       end do
-      call s_invlu_z( ndim, gf%orb1 )
+      call s_invlu_z( ndim, gf%blk1 )
 
       END IF
 

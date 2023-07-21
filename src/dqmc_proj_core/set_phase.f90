@@ -5,7 +5,7 @@ subroutine set_phase( logweight, w_phase )
   
   ! local 
   integer :: i, nt
-  w_phase = exp( dcmplx(0.0_dp, dble(nflr)*aimag(logweight%orb1) ) )
+  w_phase = exp( dcmplx(0.0_dp, dble(nflr)*aimag(logweight%blk1) ) )
   if( lwrapplqu ) then
       do nt = 1, ltrot
           do i = 1, latt%ncell

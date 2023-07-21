@@ -19,7 +19,7 @@ subroutine dqmc_left_forward_prop(this, gmat, ntau)
   call cpu_time_now(starttime)
 #ENDIF
 
-  n2 = size(gmat%orb1,2)
+  n2 = size(gmat%blk1,2)
 
 !$OMP PARALLEL &
 !$OMP PRIVATE ( isite, is, i )
@@ -27,7 +27,7 @@ subroutine dqmc_left_forward_prop(this, gmat, ntau)
   do isite = 1, this%nsites
       is = this%conf(isite,ntau)
       do i = 1, n2
-          gmat%orb1(isite, i) = this%bmat%orb1(is)*gmat%orb1(isite, i)
+          gmat%blk1(isite, i) = this%bmat%blk1(is)*gmat%blk1(isite, i)
       end do
   end do
 !$OMP END DO

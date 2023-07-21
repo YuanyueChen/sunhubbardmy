@@ -8,7 +8,7 @@
 
       call allocate_gfunc( Utmp, ne, ndim )
       call allocate_gfunc( Vtmp, ne, ne )
-      call s_zgeQR_pqmc(ne, ndim, ule%orb1, Utmp%orb1, Vtmp%orb1, logwtmp%orb1 )
+      call s_zgeQR_pqmc(ne, ndim, ule%blk1, Utmp%blk1, Vtmp%blk1, logwtmp%blk1 )
       ule = Utmp
       call deallocate_gfunc( Vtmp )
       call deallocate_gfunc( Utmp )

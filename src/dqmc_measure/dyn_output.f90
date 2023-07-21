@@ -19,43 +19,43 @@ subroutine dyn_output
      end if
   endif
 
-!  call mpi_reduce( gtau0_orb1_tau_bin, gtau0_orb1_tau, size(gtau0_orb1_tau), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-!  call mpi_reduce( zspsm_orb1_tau_bin, zspsm_orb1_tau, size(zspsm_orb1_tau), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-  call mpi_reduce( znn_orb1_tau_bin, znn_orb1_tau, size(znn_orb1_tau), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-!  call mpi_reduce( zbb_orb1_tau_bin, zbb_orb1_tau, size(zbb_orb1_tau), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-!  call mpi_reduce( zb_orb1_tau_bin, zb_orb1_tau, size(zb_orb1_tau), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+!  call mpi_reduce( gtau0_tau_bin, gtau0_tau, size(gtau0_tau), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+!  call mpi_reduce( zspsm_tau_bin, zspsm_tau, size(zspsm_tau), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( znn_tau_bin, znn_tau, size(znn_tau), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+!  call mpi_reduce( zbb_tau_bin, zbb_tau, size(zbb_tau), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+!  call mpi_reduce( zb_tau_bin, zb_tau, size(zb_tau), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
 
   if( irank .eq. 0 ) then
-!      zspsm_orb1_tau = zspsm_orb1_tau * znorm
+!      zspsm_tau = zspsm_tau * znorm
 !      ftag = "spsm"
-!      call fourier_trans_tau_22(zspsm_orb1_tau, ftag)
+!      call fourier_trans_tau_22(zspsm_tau, ftag)
 
-      znn_orb1_tau = znn_orb1_tau * znorm
+      znn_tau = znn_tau * znorm
       ftag = "nn"
-      call fourier_trans_tau_22(znn_orb1_tau, ftag)
+      call fourier_trans_tau_22(znn_tau, ftag)
 
-!      gtau0_orb1_tau = gtau0_orb1_tau * znorm
+!      gtau0_tau = gtau0_tau * znorm
 !      ftag = "gf"
-!      call fourier_trans_tau_22(gtau0_orb1_tau, ftag)
+!      call fourier_trans_tau_22(gtau0_tau, ftag)
 
-!      zbb_orb1_tau = zbb_orb1_tau * znorm
+!      zbb_tau = zbb_tau * znorm
 !      ftag = "bb"
-!      call fourier_trans_tau(zbb_orb1_tau, ftag)
+!      call fourier_trans_tau(zbb_tau, ftag)
 
-!      zb_orb1_tau = zb_orb1_tau * znorm
+!      zb_tau = zb_tau * znorm
 !      ftag = "b"
-!      call fourier_trans_tau(zb_orb1_tau, ftag)
+!      call fourier_trans_tau(zb_tau, ftag)
 
 !      do nt = 1, ntdm+1
 !          do j = 1, lq
 !              do i = 1, lq
 !                  imj = latt%imj(i,j)
-!                  zbb_orb1_tau(imj,nt) = zbb_orb1_tau(imj,nt) - zb_orb1_tau(i,nt)*zb_orb1_tau(j,1)
+!                  zbb_tau(imj,nt) = zbb_tau(imj,nt) - zb_tau(i,nt)*zb_tau(j,1)
 !              end do
 !          end do
 !      end do
 !      ftag = "bbdbg"
-!      call fourier_trans_tau(zbb_orb1_tau, ftag)
+!      call fourier_trans_tau(zbb_tau, ftag)
   end if
 
 end subroutine dyn_output

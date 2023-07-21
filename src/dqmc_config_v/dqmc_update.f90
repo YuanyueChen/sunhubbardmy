@@ -40,23 +40,23 @@ subroutine dqmc_update(this, gmat, ntau, nf)
       iflip = ceiling( spring_sfmt_stream() * (this%lcomp-1) )
       isp = mod(is+iflip-1,this%lcomp) + 1
 
-      ukmat%orb1 = czero
-      vkmat%orb1 = czero
-      vukmat%orb1 = czero
-      Dmat%orb1 = czero
-      Dmat%orb1(1,1) = this%delta_bmat_p%orb1(iflip, is)
-      Dmat%orb1(2,2) = this%delta_bmat_m%orb1(iflip, is)
-      ukmat%orb1(i1, 1) = this%delta_bmat_p%orb1(iflip, is)
-      ukmat%orb1(i2, 2) = this%delta_bmat_m%orb1(iflip, is)
-      vkmat%orb1(1, :) =      - gmat%orb1(i1, :)
-      vkmat%orb1(1, i1) = cone - gmat%orb1(i1, i1)
-      vkmat%orb1(2, :) =      - gmat%orb1(i2, :)
-      vkmat%orb1(2, i2) = cone - gmat%orb1(i2, i2)
-      vukmat%orb1(1,1) = cone 
-      vukmat%orb1(2,2) = cone
-      call zgemm('n','n',2,2,ndim,cone,vkmat%orb1,2,ukmat%orb1,ndim,cone,vukmat%orb1,2)
-      call s_inv_det_qr_z(2, vukmat%orb1, ratio1) ! cal det(I+vukmat) and (I+vukmat)^-1
-      call zgemm('n','n',2,2,2,cone,Dmat%orb1, 2, vukmat%orb1, 2, czero, smat%orb1, 2)
+      ukmat%blk1 = czero
+      vkmat%blk1 = czero
+      vukmat%blk1 = czero
+      Dmat%blk1 = czero
+      Dmat%blk1(1,1) = this%delta_bmat_p%blk1(iflip, is)
+      Dmat%blk1(2,2) = this%delta_bmat_m%blk1(iflip, is)
+      ukmat%blk1(i1, 1) = this%delta_bmat_p%blk1(iflip, is)
+      ukmat%blk1(i2, 2) = this%delta_bmat_m%blk1(iflip, is)
+      vkmat%blk1(1, :) =      - gmat%blk1(i1, :)
+      vkmat%blk1(1, i1) = cone - gmat%blk1(i1, i1)
+      vkmat%blk1(2, :) =      - gmat%blk1(i2, :)
+      vkmat%blk1(2, i2) = cone - gmat%blk1(i2, i2)
+      vukmat%blk1(1,1) = cone 
+      vukmat%blk1(2,2) = cone
+      call zgemm('n','n',2,2,ndim,cone,vkmat%blk1,2,ukmat%blk1,ndim,cone,vukmat%blk1,2)
+      call s_inv_det_qr_z(2, vukmat%blk1, ratio1) ! cal det(I+vukmat) and (I+vukmat)^-1
+      call zgemm('n','n',2,2,2,cone,Dmat%blk1, 2, vukmat%blk1, 2, czero, smat%blk1, 2)
 
       ratiotot = ratio1
 
@@ -82,11 +82,11 @@ subroutine dqmc_update(this, gmat, ntau, nf)
 #ENDIF
 
          ! update gmat
-         ukmat%orb1(:,1) = gmat%orb1(:,i1)
-         ukmat%orb1(:,2) = gmat%orb1(:,i2)
+         ukmat%blk1(:,1) = gmat%blk1(:,i1)
+         ukmat%blk1(:,2) = gmat%blk1(:,i2)
 
-         call zgemm('n','n',2,ndim,2,-cone,smat%orb1,2,vkmat%orb1,2,czero,svkmat%orb1,2)  ! svkmat = -smat*vkmat
-         call zgemm('n','n',ndim,ndim,2,cone,ukmat%orb1,ndim,svkmat%orb1,2,cone,gmat%orb1,ndim)  ! gmat + ukmat*svkmat
+         call zgemm('n','n',2,ndim,2,-cone,smat%blk1,2,vkmat%blk1,2,czero,svkmat%blk1,2)  ! svkmat = -smat*vkmat
+         call zgemm('n','n',ndim,ndim,2,cone,ukmat%blk1,ndim,svkmat%blk1,2,cone,gmat%blk1,ndim)  ! gmat + ukmat*svkmat
 
          ! flip
          this%conf(i,nf,ntau) =  isp

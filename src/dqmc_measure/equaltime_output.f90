@@ -11,17 +11,17 @@ subroutine equaltime_output
   complex(dp) :: znorm
   character(40) :: ftag
 
-  call mpi_reduce( zcpcm_orb1_bin, zcpcm_orb1, size(zcpcm_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-  call mpi_reduce( zspsm_orb1_bin, zspsm_orb1, size(zspsm_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-  call mpi_reduce( znn_orb1_bin, znn_orb1, size(znn_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-  call mpi_reduce( zn_orb1_bin, zn_orb1, size(zn_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-  call mpi_reduce( zjj_orb1_bin, zjj_orb1, size(zjj_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-  call mpi_reduce( zj_orb1_bin, zj_orb1, 1, mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-  call mpi_reduce( zbb_orb1_bin, zbb_orb1, size(zbb_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-  call mpi_reduce( zb_orb1_bin, zb_orb1, 1, mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-  call mpi_reduce( pair_onsite_orb1_bin, pair_onsite_orb1, size(pair_onsite_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-  call mpi_reduce( pair_nn_orb1_bin, pair_nn_orb1, size(pair_nn_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-  call mpi_reduce( pair_sn_orb1_bin, pair_sn_orb1, size(pair_sn_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( zcpcm_bin, zcpcm, size(zcpcm), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( zspsm_bin, zspsm, size(zspsm), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( znn_bin, znn, size(znn), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( zn_bin, zn, size(zn), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( zjj_bin, zjj, size(zjj), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( zj_bin, zj, 1, mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( zbb_bin, zbb, size(zbb), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( zb_bin, zb, 1, mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( pair_onsite_bin, pair_onsite, size(pair_onsite), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( pair_nn_bin, pair_nn, size(pair_nn), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( pair_sn_bin, pair_sn, size(pair_sn), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( energy_bin, energy_bin_recv, size(energy_bin_recv), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
 
   energy_bin(:) = energy_bin_recv(:)
@@ -30,37 +30,37 @@ subroutine equaltime_output
       rnorm = dble( isize*nobs )
       znorm = dcmplx( rnorm, 0.d0 )
 
-      zcpcm_orb1 = zcpcm_orb1 / znorm
-      ftag = "cpcm_orb1"
-      call fourier_trans_eqt_22(zcpcm_orb1, ftag)
+      zcpcm = zcpcm / znorm
+      ftag = "cpcm"
+      call fourier_trans_eqt_22(zcpcm, ftag)
 
-      zspsm_orb1 = zspsm_orb1 / znorm
-      ftag = "spsm_orb1"
-      call fourier_trans_eqt_22(zspsm_orb1, ftag)
+      zspsm = zspsm / znorm
+      ftag = "spsm"
+      call fourier_trans_eqt_22(zspsm, ftag)
 
-      znn_orb1 = znn_orb1 / znorm
-      ftag = "nn_orb1"
-      call fourier_trans_eqt_22(znn_orb1, ftag)
+      znn = znn / znorm
+      ftag = "nn"
+      call fourier_trans_eqt_22(znn, ftag)
 
-      zjj_orb1 = zjj_orb1 / znorm
-      ftag = "jj_orb1"
-      call fourier_trans_eqt(zjj_orb1, ftag)
+      zjj = zjj / znorm
+      ftag = "jj"
+      call fourier_trans_eqt(zjj, ftag)
 
-      zbb_orb1 = zbb_orb1 / znorm
-      ftag = "bb_orb1"
-      call fourier_trans_eqt(zbb_orb1, ftag)
+      zbb = zbb / znorm
+      ftag = "bb"
+      call fourier_trans_eqt(zbb, ftag)
 
-      pair_onsite_orb1 = pair_onsite_orb1 / znorm
-      ftag = "pair_onsite_orb1"
-      call fourier_trans_eqt_22(pair_onsite_orb1, ftag)
+      pair_onsite = pair_onsite / znorm
+      ftag = "pair_onsite"
+      call fourier_trans_eqt_22(pair_onsite, ftag)
 
-      pair_nn_orb1 = pair_nn_orb1 / znorm
-      ftag = "pair_nn_orb1"
-      call fourier_trans_eqt(pair_nn_orb1, ftag)
+      pair_nn = pair_nn / znorm
+      ftag = "pair_nn"
+      call fourier_trans_eqt(pair_nn, ftag)
 
-      pair_sn_orb1 = pair_sn_orb1 / znorm
-      ftag = "pair_sn_orb1"
-      call fourier_trans_eqt(pair_sn_orb1, ftag)
+      pair_sn = pair_sn / znorm
+      ftag = "pair_sn"
+      call fourier_trans_eqt(pair_sn, ftag)
 
       ! calculate energy_bin
       energy_bin(:) = energy_bin(:) / rnorm
@@ -68,17 +68,17 @@ subroutine equaltime_output
       write(90, '(16e16.8)') energy_bin(1:8)
       close(90)
 
-      zn_orb1 = zn_orb1 / znorm
-      zj_orb1 = zj_orb1 / znorm
-      zb_orb1 = zb_orb1 / znorm
+      zn = zn / znorm
+      zj = zj / znorm
+      zb = zb / znorm
       open (unit=90,file='n.bin',status='unknown', action="write", position="append")
-      write(90, '(4e16.8)') zn_orb1
+      write(90, '(4e16.8)') zn
       close(90)
       open (unit=90,file='j.bin',status='unknown', action="write", position="append")
-      write(90, '(2e16.8)') zj_orb1
+      write(90, '(2e16.8)') zj
       close(90)
       open (unit=90,file='b.bin',status='unknown', action="write", position="append")
-      write(90, '(2e16.8)') zb_orb1
+      write(90, '(2e16.8)') zb
       close(90)
 
   end if

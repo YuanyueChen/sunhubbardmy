@@ -158,7 +158,7 @@
               logdetQR = logdetQst(n)
 
               if( .not. ltau .or. .not. lmeasure_dyn ) then
-                  call green_equaltime( n, ndim, UR%orb1, DRvec%orb1, VR%orb1, VL%orb1, DLvec%orb1, UL%orb1, gf_tmp%orb1, logdetQR%orb1, logdetQL%orb1, logweightf_tmp%orb1, info )
+                  call green_equaltime( n, ndim, UR%blk1, DRvec%blk1, VR%blk1, VL%blk1, DLvec%blk1, UL%blk1, gf_tmp%blk1, logdetQR%blk1, logdetQL%blk1, logweightf_tmp%blk1, info )
               else
               ! only when we need measure dynamical quantities, we will call green_tau
 #IFDEF DYNERROR
@@ -172,24 +172,24 @@
                   call Bmat_right_backward( nt1, nt2, g0t )
 #ENDIF
 
-                  call  green_tau(n, ndim, UR%orb1, DRvec%orb1, VR%orb1, VL%orb1, DLvec%orb1, UL%orb1, g00%orb1, gt0_tmp%orb1,  g0t_tmp%orb1, gf_tmp%orb1, logdetQR%orb1, logdetQL%orb1, logweightf_tmp%orb1, info )
+                  call  green_tau(n, ndim, UR%blk1, DRvec%blk1, VR%blk1, VL%blk1, DLvec%blk1, UL%blk1, g00%blk1, gt0_tmp%blk1,  g0t_tmp%blk1, gf_tmp%blk1, logdetQR%blk1, logdetQL%blk1, logweightf_tmp%blk1, info )
 #IFDEF TEST_LEVEL3
                   write(fout,*)
-                  write(fout, '(a,i5,a)') 'nt = ', nt, ' progating gt0%orb1(:,:) = '
+                  write(fout, '(a,i5,a)') 'nt = ', nt, ' progating gt0%blk1(:,:) = '
                   do i = 1, ndim
-                      write(fout,'(18(2e12.4))') gt0%orb1(i,:)
+                      write(fout,'(18(2e12.4))') gt0%blk1(i,:)
                   end do
 
                   write(fout,*)
-                  write(fout, '(a,i5,a)') 'nt = ', nt, ' scratch gt0_tmp%orb1(:,:) = '
+                  write(fout, '(a,i5,a)') 'nt = ', nt, ' scratch gt0_tmp%blk1(:,:) = '
                   do i = 1, ndim
-                      write(fout,'(18(2e12.4))') gt0_tmp%orb1(i,:)
+                      write(fout,'(18(2e12.4))') gt0_tmp%blk1(i,:)
                   end do
 
 #ENDIF
 
 #IFDEF DYNERROR
-                  call s_compare_max_z( ndim, gt0%orb1, gt0_tmp%orb1, xmax_dyn_tmp )
+                  call s_compare_max_z( ndim, gt0%blk1, gt0_tmp%blk1, xmax_dyn_tmp )
                   if( xmax_dyn_tmp .gt. xmax_dyn ) xmax_dyn = xmax_dyn_tmp
                   logdyncount = logdyncount + 1.d0
                   avglog10dynerror = avglog10dynerror + dlog10( xmax_dyn_tmp )
@@ -199,7 +199,7 @@
                   write(fout, '(a,e16.8)') 'gt0up, xmax_dyn_tmp = ',  xmax_dyn_tmp
 #ENDIF
 #IFDEF DYNERROR
-                  call s_compare_max_z( ndim, g0t%orb1, g0t_tmp%orb1, xmax_dyn_tmp )
+                  call s_compare_max_z( ndim, g0t%blk1, g0t_tmp%blk1, xmax_dyn_tmp )
                   if( xmax_dyn_tmp .gt. xmax_dyn ) xmax_dyn = xmax_dyn_tmp
                   logdyncount = logdyncount + 1.d0
                   avglog10dynerror = avglog10dynerror + dlog10( xmax_dyn_tmp )
@@ -209,7 +209,7 @@
                   write(fout, '(a,e16.8)') 'g0tup, xmax_dyn_tmp = ',  xmax_dyn_tmp
 #ENDIF
               end if
-              call s_compare_max_z( ndim, gf_tmp%orb1, gf%orb1, max_wrap_error_tmp )
+              call s_compare_max_z( ndim, gf_tmp%blk1, gf%blk1, max_wrap_error_tmp )
               if( max_wrap_error_tmp .gt. max_wrap_error ) max_wrap_error = max_wrap_error_tmp
 
               call set_phase(logweightf_tmp, phase_tmp)
@@ -226,24 +226,24 @@
 #ENDIF
 #IFDEF TEST_LEVEL3
               write(fout,*)
-              write(fout, '(a,i5,a)') 'nt = ', nt, ' progating gf%orb1(:,:) = '
+              write(fout, '(a,i5,a)') 'nt = ', nt, ' progating gf%blk1(:,:) = '
               do i = 1, ndim
-                  write(fout,'(18(2e12.4))') gf%orb1(i,:)
+                  write(fout,'(18(2e12.4))') gf%blk1(i,:)
               end do
 
               write(fout,*)
-              write(fout, '(a,i5,a)') 'nt = ', nt, ' scratch gf_tmp%orb1(:,:) = '
+              write(fout, '(a,i5,a)') 'nt = ', nt, ' scratch gf_tmp%blk1(:,:) = '
               do i = 1, ndim
-                  write(fout,'(18(2e12.4))') gf_tmp%orb1(i,:)
+                  write(fout,'(18(2e12.4))') gf_tmp%blk1(i,:)
               end do
 
               write(fout,*)
-              write(fout, '(a,i4,a)') ' Dst(', n, ' )%orb1(:) before wrap = '
-              write(fout,'(18(e16.8))') DLvec%orb1(:)
+              write(fout, '(a,i4,a)') ' Dst(', n, ' )%blk1(:) before wrap = '
+              write(fout,'(18(e16.8))') DLvec%blk1(:)
 
               write(fout,*)
-              write(fout, '(a,i4,a)') ' Dst(', n, ' )%orb1(:) after wrap = '
-              write(fout,'(18(e16.8))') Dst(n)%orb1(:)
+              write(fout, '(a,i4,a)') ' Dst(', n, ' )%blk1(:) after wrap = '
+              write(fout,'(18(e16.8))') Dst(n)%blk1(:)
 
 #ENDIF
 

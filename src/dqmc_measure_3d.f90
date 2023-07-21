@@ -10,14 +10,14 @@ module dqmc_measure
 
 
 
-  complex(dp), allocatable, dimension(:), save :: zcpcm_orb1, zcpcm_orb1_bin
-  complex(dp), allocatable, dimension(:), save :: zspsm_orb1, zspsm_orb1_bin
-  complex(dp), allocatable, dimension(:), save :: znn_orb1_bin, znn_orb1
-  complex(dp), allocatable, dimension(:), save :: zbb_orb1_bin, zbb_orb1
+  complex(dp), allocatable, dimension(:), save :: zcpcm, zcpcm_bin
+  complex(dp), allocatable, dimension(:), save :: zspsm, zspsm_bin
+  complex(dp), allocatable, dimension(:), save :: znn_bin, znn
+  complex(dp), allocatable, dimension(:), save :: zbb_bin, zbb
 
   complex(dp), save :: energy_bin(10), energy_bin_recv(10)
-  complex(dp), save :: zn_orb1_bin, zn_orb1
-  complex(dp), save :: zb_orb1_bin, zb_orb1
+  complex(dp), save :: zn_bin, zn
+  complex(dp), save :: zb_bin, zb
 
   complex(dp), allocatable, dimension(:,:), save :: zspsm_tau, zspsm_tau_bin 
   complex(dp), allocatable, dimension(:,:), save :: znn_tau, znn_tau_bin 
@@ -31,10 +31,10 @@ module dqmc_measure
 
   subroutine allocate_obs
     implicit none
-    allocate( zcpcm_orb1_bin(lq) )
-    allocate( zcpcm_orb1(lq) )
-    allocate( zspsm_orb1_bin(lq) )
-    allocate( zspsm_orb1(lq) )
+    allocate( zcpcm_bin(lq) )
+    allocate( zcpcm(lq) )
+    allocate( zspsm_bin(lq) )
+    allocate( zspsm(lq) )
     if(ltau) then
         allocate( gtau0(lq,ntdm+1))
         allocate( gtau0_bin(lq,ntdm+1))
@@ -44,28 +44,28 @@ module dqmc_measure
         allocate( znn_tau_bin(lq,ntdm+1))
     end if
 
-    allocate( znn_orb1_bin(lq) )
-    allocate( zbb_orb1_bin(lq) )
-    allocate( znn_orb1(lq) )
-    allocate( zbb_orb1(lq) )
+    allocate( znn_bin(lq) )
+    allocate( zbb_bin(lq) )
+    allocate( znn(lq) )
+    allocate( zbb(lq) )
   end subroutine allocate_obs
 
   subroutine deallocate_obs
     implicit none
-    deallocate( zcpcm_orb1_bin )
-    deallocate( zcpcm_orb1 )
-    deallocate( zspsm_orb1_bin )
-    deallocate( zspsm_orb1 )
+    deallocate( zcpcm_bin )
+    deallocate( zcpcm )
+    deallocate( zspsm_bin )
+    deallocate( zspsm )
     if(allocated(znn_tau))      deallocate(znn_tau)
     if(allocated(znn_tau_bin))  deallocate(znn_tau_bin)
     if(allocated(zspsm_tau))      deallocate(zspsm_tau)
     if(allocated(zspsm_tau_bin))  deallocate(zspsm_tau_bin)
     if(allocated(gtau0))      deallocate(gtau0)
     if(allocated(gtau0_bin))  deallocate(gtau0_bin)
-    deallocate( znn_orb1_bin )
-    deallocate( zbb_orb1_bin )
-    deallocate( znn_orb1 )
-    deallocate( zbb_orb1 )
+    deallocate( znn_bin )
+    deallocate( zbb_bin )
+    deallocate( znn )
+    deallocate( zbb )
   end subroutine deallocate_obs
 
   subroutine obser_init
@@ -73,12 +73,12 @@ module dqmc_measure
     nobs = 0
     nobst = 0
     energy_bin = czero
-    zspsm_orb1_bin = czero
-    zcpcm_orb1_bin = czero
-    znn_orb1_bin = czero
-    zn_orb1_bin = czero
-    zbb_orb1_bin = czero
-    zb_orb1_bin = czero
+    zspsm_bin = czero
+    zcpcm_bin = czero
+    znn_bin = czero
+    zn_bin = czero
+    zbb_bin = czero
+    zb_bin = czero
     if(ltau) then
         gtau0_bin = czero
         zspsm_tau_bin = czero

@@ -29,12 +29,12 @@ subroutine dqmc_set_proj
   end do
 #ENDIF
 
-  call s_eig_he(ndim,ndim,tmp,wc,proj%orb1)
+  call s_eig_he(ndim,ndim,tmp,wc,proj%blk1)
 #IFDEF TEST
   write(fout,*)
   write(fout,'(a)') ' proj(:,:) = '
   do i = 1, ndim
-      write(fout,'(36(2f7.4))') proj%orb1(i,:)
+      write(fout,'(36(2f7.4))') proj%blk1(i,:)
   end do
   write(fout,*)
   write(fout,'(a)') ' wc(:) = '
@@ -44,7 +44,7 @@ subroutine dqmc_set_proj
 #ENDIF
 
 #IFDEF TEST
-  tmp = proj%orb1
+  tmp = proj%blk1
   call s_invlu_z(ndim,tmp)
   write(fout,*)
   write(fout,'(a)') ' inv(proj)(:,:) = '

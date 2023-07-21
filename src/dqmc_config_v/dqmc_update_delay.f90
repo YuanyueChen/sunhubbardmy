@@ -43,23 +43,23 @@ subroutine dqmc_update(this, gmat, ntau, nf)
       iflip = ceiling( spring_sfmt_stream() * (this%lcomp-1) )
       isp = mod(is+iflip-1,this%lcomp) + 1
 
-      gpart(1,1) = gmat%orb1(i1,i1)
-      gpart(1,2) = gmat%orb1(i1,i2)
-      gpart(2,1) = gmat%orb1(i2,i1)
-      gpart(2,2) = gmat%orb1(i2,i2)
+      gpart(1,1) = gmat%blk1(i1,i1)
+      gpart(1,2) = gmat%blk1(i1,i2)
+      gpart(2,1) = gmat%blk1(i2,i1)
+      gpart(2,2) = gmat%blk1(i2,i2)
       do m = 0, ik-2, 2
           gpart(1,1) = gpart(1,1) + avec(i1,1+m)*bvec(i1,1+m) + avec(i1,2+m)*bvec(i1,2+m)
           gpart(1,2) = gpart(1,2) + avec(i1,1+m)*bvec(i2,1+m) + avec(i1,2+m)*bvec(i2,2+m)
           gpart(2,1) = gpart(2,1) + avec(i2,1+m)*bvec(i1,1+m) + avec(i2,2+m)*bvec(i1,2+m)
           gpart(2,2) = gpart(2,2) + avec(i2,1+m)*bvec(i2,1+m) + avec(i2,2+m)*bvec(i2,2+m)
       end do
-      vukmat(1,1) = (cone - gpart(1,1))*this%delta_bmat_p%orb1(iflip, is) + cone
-      vukmat(1,2) =       - gpart(1,2) *this%delta_bmat_m%orb1(iflip, is)
-      vukmat(2,1) =       - gpart(2,1) *this%delta_bmat_p%orb1(iflip, is)
-      vukmat(2,2) = (cone - gpart(2,2))*this%delta_bmat_m%orb1(iflip, is) + cone
+      vukmat(1,1) = (cone - gpart(1,1))*this%delta_bmat_p%blk1(iflip, is) + cone
+      vukmat(1,2) =       - gpart(1,2) *this%delta_bmat_m%blk1(iflip, is)
+      vukmat(2,1) =       - gpart(2,1) *this%delta_bmat_p%blk1(iflip, is)
+      vukmat(2,2) = (cone - gpart(2,2))*this%delta_bmat_m%blk1(iflip, is) + cone
       call s_inv_det_qr_z(2, vukmat, ratio1) ! cal det(I+vukmat) and (I+vukmat)^-1
-      smat(1,:) = this%delta_bmat_p%orb1(iflip, is) * vukmat(1,:)
-      smat(2,:) = this%delta_bmat_m%orb1(iflip, is) * vukmat(2,:)
+      smat(1,:) = this%delta_bmat_p%blk1(iflip, is) * vukmat(1,:)
+      smat(2,:) = this%delta_bmat_m%blk1(iflip, is) * vukmat(2,:)
 
       ratiotot = ratio1
 	  ratio_re = dble( ratiotot * phase )/dble( phase )
@@ -82,12 +82,12 @@ subroutine dqmc_update(this, gmat, ntau, nf)
          write(fout, '(a,2e16.8)') ' in update_v, phase = ', phase
 #ENDIF
 
-          grow(:,1) = gmat%orb1(:,i1)
-          grow(:,2) = gmat%orb1(:,i2)
-          bvec(:,1+ik) = gmat%orb1(i1,:)
-          bvec(:,2+ik) = gmat%orb1(i2,:)
-          bvec(i1,1+ik) = gmat%orb1(i1,i1) - cone
-          bvec(i2,2+ik) = gmat%orb1(i2,i2) - cone
+          grow(:,1) = gmat%blk1(:,i1)
+          grow(:,2) = gmat%blk1(:,i2)
+          bvec(:,1+ik) = gmat%blk1(i1,:)
+          bvec(:,2+ik) = gmat%blk1(i2,:)
+          bvec(i1,1+ik) = gmat%blk1(i1,i1) - cone
+          bvec(i2,2+ik) = gmat%blk1(i2,i2) - cone
           if ( ratio_re_abs.gt.random ) then
               do m = 0, ik-2, 2
                   grow(:,1) = grow(:,1) + avec(:,1+m)*bvec(i1,1+m) + avec(:,2+m)*bvec(i1,2+m)
@@ -106,7 +106,7 @@ subroutine dqmc_update(this, gmat, ntau, nf)
       if( (ik.eq.nublock) .or. (i.eq.latt%nn_lf) ) then
           ik = 0
           ! delay update: update the whole Green function
-          call  zgemm('N', 'T', ndim, ndim, nublock, cone, avec, ndim, bvec, ndim, cone, gmat%orb1, ndim)
+          call  zgemm('N', 'T', ndim, ndim, nublock, cone, avec, ndim, bvec, ndim, cone, gmat%blk1, ndim)
           if( i.lt.latt%nn_lf) then
               ! intial avec, bvec
               avec = czero

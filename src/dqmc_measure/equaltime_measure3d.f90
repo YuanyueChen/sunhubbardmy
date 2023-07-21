@@ -25,7 +25,7 @@
     ! get grupc
     do i = 1, ndim
         do j = 1, ndim
-            gfc%orb1(j,i) = Imat(i,j) - gf%orb1(i,j)
+            gfc%blk1(j,i) = Imat(i,j) - gf%blk1(i,j)
         end do
     end do
 
@@ -35,21 +35,21 @@
     ! zne
     zne = czero
     do i = 1, ndim
-        zne = zne + gfc%orb1(i,i)
+        zne = zne + gfc%blk1(i,i)
     end do
     energy_bin(2) = energy_bin(2) + zne*zphi/dcmplx(dble(lq),0.d0)
     energy_bin(3) = energy_bin(3) + zkint(gf,gfc)*zphi
     energy_bin(4) = energy_bin(4) + zint_u(gf,gfc)*zphi
     call measure_cpcm(gf,gfc)
-    zcpcm_orb1_bin = zcpcm_orb1_bin + zcpcm_orb1*zphi
+    zcpcm_bin = zcpcm_bin + zcpcm*zphi
     call measure_spsm(gf,gfc)
-    zspsm_orb1_bin = zspsm_orb1_bin + zspsm_orb1*zphi
+    zspsm_bin = zspsm_bin + zspsm*zphi
     call measure_nn(gf,gfc)
-    znn_orb1_bin = znn_orb1_bin + znn_orb1*zphi
-    zn_orb1_bin = zn_orb1_bin + zn_orb1*zphi
+    znn_bin = znn_bin + znn*zphi
+    zn_bin = zn_bin + zn*zphi
     call measure_bondcorr(gf,gfc)
-    zbb_orb1_bin = zbb_orb1_bin + zbb_orb1*zphi
-    zb_orb1_bin = zb_orb1_bin + zb_orb1*zphi
+    zbb_bin = zbb_bin + zbb*zphi
+    zb_bin = zb_bin + zb*zphi
 
   end subroutine equaltime_measure
 
@@ -64,7 +64,7 @@
           i_0 = latt%nnlf_list(i)
           do nf = 1, latt%nn_nf
               i_n = latt%nnlist(i_0,nf)
-              zkint = zkint + dcmplx(-2.d0*dble( gfc%orb1(i_0,i_n)*expar(i_0,nf,xmag,flux_x,flux_y,dimer) ), 0.d0 )
+              zkint = zkint + dcmplx(-2.d0*dble( gfc%blk1(i_0,i_n)*expar(i_0,nf,xmag,flux_x,flux_y,dimer) ), 0.d0 )
           end do
       end do
     end function zkint
@@ -77,7 +77,7 @@
       integer :: i
       zint_u = czero
       do i = 1,  latt%nsites
-          zint_u = zint_u + gfc%orb1(i,i)*gfc%orb1(i,i)
+          zint_u = zint_u + gfc%blk1(i,i)*gfc%blk1(i,i)
       end do
     end function zint_u
 
@@ -86,7 +86,7 @@
       implicit none
       type(gfunc), intent(in) :: gf, gfc
       integer :: j, nu_j, no_j, i, nu_i, no_i, imj
-      zcpcm_orb1 = czero
+      zcpcm = czero
       do j = 1, latt%nsites
           nu_j = latt%list(j,1)
           no_j = latt%list(j,2)
@@ -94,17 +94,17 @@
               nu_i = latt%list(i,1)
               no_i = latt%list(i,2)
               imj  = latt%imj(nu_i,nu_j)
-              zcpcm_orb1(imj) = zcpcm_orb1(imj) + gfc%orb1(i,j)
+              zcpcm(imj) = zcpcm(imj) + gfc%blk1(i,j)
           end do
       end do
     end subroutine measure_cpcm
 
     subroutine measure_spsm(gf,gfc)
-      ! <S+ S-> for orb1
+      ! <S+ S->
       implicit none
       type(gfunc), intent(in) :: gf, gfc
       integer :: j, nu_j, no_j, i, nu_i, no_i, imj
-      zspsm_orb1 = czero
+      zspsm = czero
       do j = 1, latt%nsites
           nu_j = latt%list(j,1)
           no_j = latt%list(j,2)
@@ -112,7 +112,7 @@
               nu_i = latt%list(i,1)
               no_i = latt%list(i,2)
               imj  = latt%imj(nu_i,nu_j)
-              zspsm_orb1(imj) = zspsm_orb1(imj) + gfc%orb1(i,j)*gf%orb1(i,j)*dcmplx(1.d0-1.d0/dble(nflr*nflr), 0.d0)
+              zspsm(imj) = zspsm(imj) + gfc%blk1(i,j)*gf%blk1(i,j)*dcmplx(1.d0-1.d0/dble(nflr*nflr), 0.d0)
           end do
       end do
     end subroutine measure_spsm
@@ -121,17 +121,17 @@
       implicit none
       type(gfunc), intent(in) :: gf, gfc
       integer :: j, nu_j, no_j, i, nu_i, no_i, imj
-      znn_orb1 = czero
-      zn_orb1 = czero
+      znn = czero
+      zn = czero
       do j = 1, latt%nsites
           nu_j = latt%list(j,1)
           no_j = latt%list(j,2)
-          zn_orb1 = zn_orb1 + gfc%orb1(j,j)
+          zn = zn + gfc%blk1(j,j)
           do i = 1, latt%nsites
               nu_i = latt%list(i,1)
               no_i = latt%list(i,2)
               imj  = latt%imj(nu_i,nu_j)
-              znn_orb1(imj) = znn_orb1(imj) + gfc%orb1(i,i)*gfc%orb1(j,j) + dcmplx(1.d0/dble(nflr),0.d0)*gfc%orb1(i,j)*gf%orb1(i,j)
+              znn(imj) = znn(imj) + gfc%blk1(i,i)*gfc%blk1(j,j) + dcmplx(1.d0/dble(nflr),0.d0)*gfc%blk1(i,j)*gf%blk1(i,j)
           end do
       end do
     end subroutine measure_nn
@@ -142,8 +142,8 @@
       integer :: nu_j, j_0, j_n, nu_i, i_0, i_n, imj, nf, fid
       character(40) :: filek
       complex(dp) :: zi, zj, ztmp
-      zbb_orb1(:) = czero
-      zb_orb1 = czero
+      zbb(:) = czero
+      zb = czero
       do nu_j = 1, lq
 #IFDEF HONEYCOMB
           j_0 = 2*nu_j - 1 ! A site
@@ -156,7 +156,7 @@
           j_n = latt%nnlist(j_0,1) ! B site
 #ENDIF
           zj = expar(j_0,1,xmag,flux_x,flux_y,dimer)
-          zb_orb1 = zb_orb1 + zj*gfc%orb1(j_0,j_n) + dconjg(zj)*gfc%orb1(j_n,j_0)
+          zb = zb + zj*gfc%blk1(j_0,j_n) + dconjg(zj)*gfc%blk1(j_n,j_0)
           do nu_i = 1, lq
 #IFDEF HONEYCOMB
               i_0 = 2*nu_i - 1 ! A site
@@ -170,9 +170,9 @@
 #ENDIF
               zi = expar(i_0,1,xmag,flux_x,flux_y,dimer)
               imj = latt%imj(nu_i,nu_j)
-              zbb_orb1(imj) = zbb_orb1(imj) + (zj*gfc%orb1(j_0,j_n) + dconjg(zj)*gfc%orb1(j_n,j_0))*(zi*gfc%orb1(i_0,i_n) + dconjg(zi)*gfc%orb1(i_n,i_0)) &
-                                            + ( zi*zj*gfc%orb1(i_0,j_n)*gf%orb1(i_n,j_0) + dconjg(zi)*dconjg(zj)*gfc%orb1(i_n,j_0)*gf%orb1(i_0,j_n) &
-                                            +   zi*dconjg(zj)*gfc%orb1(i_0,j_0)*gf%orb1(i_n,j_n) + dconjg(zi)*zj*gfc%orb1(i_n,j_n)*gf%orb1(i_0,j_0) )*dcmplx(1.d0/dble(nflr),0.d0)
+              zbb(imj) = zbb(imj) + (zj*gfc%blk1(j_0,j_n) + dconjg(zj)*gfc%blk1(j_n,j_0))*(zi*gfc%blk1(i_0,i_n) + dconjg(zi)*gfc%blk1(i_n,i_0)) &
+                                            + ( zi*zj*gfc%blk1(i_0,j_n)*gf%blk1(i_n,j_0) + dconjg(zi)*dconjg(zj)*gfc%blk1(i_n,j_0)*gf%blk1(i_0,j_n) &
+                                            +   zi*dconjg(zj)*gfc%blk1(i_0,j_0)*gf%blk1(i_n,j_n) + dconjg(zi)*zj*gfc%blk1(i_n,j_n)*gf%blk1(i_0,j_0) )*dcmplx(1.d0/dble(nflr),0.d0)
           end do
       end do
 

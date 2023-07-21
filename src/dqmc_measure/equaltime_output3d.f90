@@ -17,7 +17,7 @@ subroutine equaltime_output
   call mpi_reduce( zn_orb1_bin, zn_orb1, 1, mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( zbb_orb1_bin, zbb_orb1, size(zbb_orb1), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( zb_orb1_bin, zb_orb1, 1, mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
-  call mpi_reduce( energy_bin, energy_bin_recv, size(energy_bin_recv), mpi_real8, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( energy_bin, energy_bin_recv, size(energy_bin_recv), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
 
   energy_bin(:) = energy_bin_recv(:)
 

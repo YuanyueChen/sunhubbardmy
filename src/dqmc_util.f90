@@ -310,6 +310,18 @@ module dqmc_util
         write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_proj_delay_update:  ', timecalculation(15), 's', &
                                            ' = ', 100*timecalculation(15)/timecalculation(2), '%'
         end if
+        if( timecalculation(16).ne.0.d0 ) then
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(16), 's', &
+                                           ' = ', 100*(timecalculation(3)-timecalculation(16))/timecalculation(2), '%'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_ft_submatrix_update:  ', timecalculation(16), 's', &
+                                           ' = ', 100*timecalculation(16)/timecalculation(2), '%'
+        end if
+        if( timecalculation(17).ne.0.d0 ) then
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(17), 's', &
+                                           ' = ', 100*(timecalculation(3)-timecalculation(17))/timecalculation(2), '%'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_proj_submatrix_update:  ', timecalculation(17), 's', &
+                                           ' = ', 100*timecalculation(17)/timecalculation(2), '%'
+        end if
         write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_stabilization:      ', timecalculation(7), 's', &
                                            ' = ', 100*timecalculation(7)/timecalculation(2), '%'
         write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_measuring_equaltime:', timecalculation(4), 's', &

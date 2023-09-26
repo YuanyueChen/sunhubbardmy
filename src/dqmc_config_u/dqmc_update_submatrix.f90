@@ -27,7 +27,7 @@ subroutine dqmc_update(this, gmat, ntau )
   integer, allocatable, dimension(:) :: pvec_up, pvec_dn
   integer :: i, ik, m
 #IFDEF TIMING
-  real(dp) :: starttime, endtime, starttime1, endtime1, starttime2, endtime2
+  real(dp) :: starttime, endtime, starttime11, endtime11, starttime12, endtime12
 #ENDIF
 #IFDEF TIMING
   call cpu_time_now(starttime)

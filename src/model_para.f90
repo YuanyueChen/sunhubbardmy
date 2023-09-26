@@ -66,7 +66,7 @@ module model_para
   integer, save :: ierr  ! mpi parameters, error tag
   complex(dp), dimension(10), save :: main_obs, main_obs_recv, mpi_main_obs ! global observables, monitoring running status
 #IFDEF TIMING
-  real(dp), dimension(20),save :: timecalculation  ! calculate the time spent in update, measure, sweep and etc.
+  real(dp), dimension(30),save :: timecalculation  ! calculate the time spent in update, measure, sweep and etc.
   real(dp)::starttime1,endtime1 !use these to do the time calculation
 #ENDIF
   ! dqmc relative

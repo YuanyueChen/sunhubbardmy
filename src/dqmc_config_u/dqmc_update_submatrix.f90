@@ -27,7 +27,7 @@ subroutine dqmc_update(this, gmat, ntau )
   integer, allocatable, dimension(:) :: pvec_up, pvec_dn
   integer :: i, ik, m
 #IFDEF TIMING
-  real(dp) :: starttime, endtime, starttime11, endtime11, starttime12, endtime12
+  real(dp) :: starttime, endtime, starttime11, endtime11
 #ENDIF
 #IFDEF TIMING
   call cpu_time_now(starttime)
@@ -132,6 +132,9 @@ subroutine dqmc_update(this, gmat, ntau )
 
       if( (ik.eq.nublock) .or. (isite.eq.latt%nsites) ) then
           ! submatrix update: update the whole Green function
+#IFDEF TIMING
+          call cpu_time_now(starttime11)
+#ENDIF
           Gtmp_up = czero
           do i = 1, ik
               Gtmp_up(i) = cone - Qmat_up(i)/(cone + Qmat_up(i))
@@ -179,6 +182,9 @@ subroutine dqmc_update(this, gmat, ntau )
           deallocate( Gmat1_up )
           deallocate( Gmat2_up )
           deallocate( gammainvtmp_up )
+#IFDEF TIMING
+          call cpu_time_now(endtime11)
+#ENDIF
       end if
    end do
    main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
@@ -194,5 +200,6 @@ subroutine dqmc_update(this, gmat, ntau )
 #IFDEF TIMING
   call cpu_time_now(endtime)
   timecalculation(16)=timecalculation(16)+endtime-starttime
+  timecalculation(18)=timecalculation(18)+endtime11-starttime11
 #ENDIF
 end subroutine dqmc_update

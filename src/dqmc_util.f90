@@ -297,6 +297,8 @@ module dqmc_util
                                            ' = ', 100*(timecalculation(3)-timecalculation(13))/timecalculation(2), '%'
         write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_ft_delay_update:    ', timecalculation(13), 's', &
                                            ' = ', 100*timecalculation(13)/timecalculation(2), '%'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_update_gfunc_ft_delay_update:  ', timecalculation(19), 's'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_update_ratio_ft_delay_update:  ', timecalculation(13)-timecalculation(19), 's'
         end if
         if( timecalculation(14).ne.0.d0 ) then
         write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(14), 's', &
@@ -315,6 +317,8 @@ module dqmc_util
                                            ' = ', 100*(timecalculation(3)-timecalculation(16))/timecalculation(2), '%'
         write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_ft_submatrix_update:  ', timecalculation(16), 's', &
                                            ' = ', 100*timecalculation(16)/timecalculation(2), '%'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_update_gfunc_ft_submatrix_update:  ', timecalculation(18), 's'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_update_ratio_ft_submatrix_update:  ', timecalculation(16)-timecalculation(18), 's'
         end if
         if( timecalculation(17).ne.0.d0 ) then
         write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_propagating:        ', timecalculation(3)-timecalculation(17), 's', &

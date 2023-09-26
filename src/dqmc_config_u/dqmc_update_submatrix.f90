@@ -18,11 +18,12 @@ subroutine dqmc_update_u(this, gmat, ntau )
   real(dp) :: accm, ratio_re, ratio_re_abs, random, weight
 
   type(zfunc) :: sscl
-  complex(dp), allocatable, dimension(:,:) ::   gammainv_up, Gtmp_up, Gcuta_up, gammainvtmp_up, gmattmp1_up, gmattmp2_up
-  complex(dp), allocatable, dimension(:,:) ::   gammainv_dn, Gtmp_dn, Gcuta_dn, gammainvtmp_dn, gmattmp1_dn, gmattmp2_dn
+  complex(dp), allocatable, dimension(:,:) ::   gammainv_up,  Gcuta_up, gammainvtmp_up, gmattmp1_up, gmattmp2_up
+  complex(dp), allocatable, dimension(:,:) ::   gammainv_dn,  Gcuta_dn, gammainvtmp_dn, gmattmp1_dn, gmattmp2_dn
   complex(dp), allocatable, dimension(:,:) ::   Gmat1_up, Gmat2_up
   complex(dp), allocatable, dimension(:,:) ::   Gmat1_dn, Gmat2_dn
   complex(dp), allocatable, dimension(:) ::  Qmat_up, Qmat_dn, v1, v4, cvec_up, cvec_dn, bvec_up, bvec_dn
+  complex(dp), allocatable, dimension(:) ::  Gtmp_up, Gtmp_dn
   integer, allocatable, dimension(:) :: pvec_up, pvec_dn
   integer :: i, ik, m
 #IFDEF TIMING
@@ -34,7 +35,7 @@ subroutine dqmc_update_u(this, gmat, ntau )
   allocate( pvec_up(nublock) )
   allocate( gammainv_up(nublock,nublock) )
   allocate( Qmat_up(nublock) )
-  allocate( Gtmp_up(ndim,ndim) )
+  allocate( Gtmp_up(nublock) )
   allocate( Gcuta_up(ndim,ndim) )
   allocate(cvec_up(nublock))
   allocate(bvec_up(nublock))
@@ -59,18 +60,18 @@ subroutine dqmc_update_u(this, gmat, ntau )
       cvec_up = czero
       bvec_up = czero
       do i = 1, ik
-      cvec_up(i) = gmat%orb1(isite,pvec_up(i))
-      bvec_up(i) = gmat%orb1(pvec_up(i),isite)
+        cvec_up(i) = gmat%orb1(isite,pvec_up(i))
+        bvec_up(i) = gmat%orb1(pvec_up(i),isite)
       end do
       v1 = czero
       do i = 1, ik
-      do m = 1, ik
+        do m = 1, ik
           v1(i) = v1(i) + cvec_up(m)*gammainv_up(m,i)
-      end do
+        end do
       end do
       v = czero
       do i = 1, ik
-      v = v + v1(i)*bvec_up(i)
+        v = v + v1(i)*bvec_up(i)
       end do
       v2 = v + gmat%orb1(isite,isite) - cone 
       ratio1 = -v2 *this%delta_bmat_u_orb1(iflip, is) + cone
@@ -111,18 +112,18 @@ subroutine dqmc_update_u(this, gmat, ntau )
          gammainv_up(ik,ik) = v3
          v4 = czero
           do i = 1, ik-1
-          do m = 1, ik-1
+            do m = 1, ik-1
               v4(i) = v4(i) + gammainv_up(i,m)*bvec_up(m)
-          end do
-          end do
-          do i = 1, ik-1
-              gammainv_up(ik,i) = v3*v1(i)
-              gammainv_up(i,ik) = v4(i)*v3
+            end do
           end do
           do i = 1, ik-1
-          do m = 1, ik-1
+            gammainv_up(ik,i) = v3*v1(i)
+            gammainv_up(i,ik) = v4(i)*v3
+          end do
+          do i = 1, ik-1
+            do m = 1, ik-1
               gammainv_up(i,m) = gammainv_up(i,m) + v4(i)*v3*v1(m)
-          end do
+            end do
           end do
          ! flip
          this%conf_u(isite,ntau) =  isp
@@ -132,29 +133,33 @@ subroutine dqmc_update_u(this, gmat, ntau )
           ! submatrix update: update the whole Green function
           Gtmp_up = czero
           do i = 1, ik
-              Gtmp_up(pvec_up(i),pvec_up(i)) = -Qmat_up(i)/(cone + Qmat_up(i))
-          end do
-          do i = 1, ndim
-              Gtmp_up(i,i) = Gtmp_up(i,i) + cone
+              Gtmp_up(i) = cone - Qmat_up(i)/(cone + Qmat_up(i))
           end do
           Gcuta_up = czero
-          call zgemm('N','N', ndim, ndim, ndim, cone, gmat%orb1, ndim, Gtmp_up, ndim, czero, Gcuta_up, ndim)   
+          do i = 1, ndim
+            do m = 1, ndim
+                Gcuta_up(i,m) = gmat%orb1(i,m)
+            end do
+          end do
+          do i = 1, ik
+            Gcuta_up(:,pvec_up(i)) = Gcuta_up(:,pvec_up(i))*Gtmp_up(i)
+          end do 
           allocate(gammainvtmp_up(ik,ik))
           gammainvtmp_up = czero
           do i = 1, ik
-          do m = 1, ik
+            do m = 1, ik
               gammainvtmp_up(i,m) = gammainv_up(i,m)
-          end do
+            end do
           end do
           allocate( gmattmp1_up(ndim,ik) )
           allocate( gmattmp2_up(ik,ndim) )
           gmattmp1_up = czero
           gmattmp2_up = czero
           do i = 1, ik
-          do m = 1, ndim
+            do m = 1, ndim
               gmattmp1_up(m,i) = gmat%orb1(m,pvec_up(i))
               gmattmp2_up(i,m) = Gcuta_up(pvec_up(i),m)
-          end do
+            end do
           end do
           allocate( Gmat1_up(ndim,ik) )
           Gmat1_up = czero
@@ -163,9 +168,9 @@ subroutine dqmc_update_u(this, gmat, ntau )
           Gmat2_up = czero
           call zgemm('N','N', ndim, ndim, ik, cone, Gmat1_up, ndim, gmattmp2_up, ik, czero, Gmat2_up, ndim)
           do m = 1, ndim
-          do i = 1, ndim
+            do i = 1, ndim
               gmat%orb1(i,m) = Gcuta_up(i,m) + Gmat2_up(i,m)
-          end do
+            end do
           end do
           ik = 0
           deallocate( gmattmp1_up )

@@ -1,4 +1,4 @@
-subroutine dqmc_update_u(this, gmat, ntau )
+subroutine dqmc_update(this, gmat, ntau )
 
   use spring
   use model_para
@@ -27,7 +27,7 @@ subroutine dqmc_update_u(this, gmat, ntau )
   integer, allocatable, dimension(:) :: pvec_up, pvec_dn
   integer :: i, ik, m
 #IFDEF TIMING
-  real(dp) :: starttime, endtime
+  real(dp) :: starttime, endtime, starttime1, endtime1, starttime2, endtime2
 #ENDIF
 #IFDEF TIMING
   call cpu_time_now(starttime)
@@ -53,15 +53,16 @@ subroutine dqmc_update_u(this, gmat, ntau )
   do isite = 1, latt%nsites
       ! submatrix update: after nublock steps of local update, perform a whole update of Green function
       ! calculate weight ratio, fermion part
-      is = this%conf_u(isite,ntau)
+
+      is = this%conf(isite,ntau)
       iflip = ceiling( spring_sfmt_stream() * (this%lcomp-1) )
       isp = mod(is+iflip-1,this%lcomp) + 1
       ! intial svec, wvec
       cvec_up = czero
       bvec_up = czero
       do i = 1, ik
-        cvec_up(i) = gmat%orb1(isite,pvec_up(i))
-        bvec_up(i) = gmat%orb1(pvec_up(i),isite)
+        cvec_up(i) = gmat%blk1(isite,pvec_up(i))
+        bvec_up(i) = gmat%blk1(pvec_up(i),isite)
       end do
       v1 = czero
       do i = 1, ik
@@ -73,8 +74,8 @@ subroutine dqmc_update_u(this, gmat, ntau )
       do i = 1, ik
         v = v + v1(i)*bvec_up(i)
       end do
-      v2 = v + gmat%orb1(isite,isite) - cone 
-      ratio1 = -v2 *this%delta_bmat_u_orb1(iflip, is) + cone
+      v2 = v + gmat%blk1(isite,isite) - cone 
+      ratio1 = -v2 *this%delta_bmat%blk1(iflip, is) + cone
       ratiotot = ratio1**nflr
       if( lproju ) then
           ratiotot = ratiotot*this%phase_ratio(iflip, is)
@@ -107,8 +108,8 @@ subroutine dqmc_update_u(this, gmat, ntau )
          ik = ik + 1
          ! store pvec, Qmat, gammainv
          pvec_up(ik) = isite
-         Qmat_up(ik) = this%delta_bmat_u_orb1(iflip, is)
-         v3 = cone/(-v + cone + cone/Qmat_up(ik)-gmat%orb1(isite,isite))
+         Qmat_up(ik) = this%delta_bmat%blk1(iflip, is)
+         v3 = cone/(-v + cone + cone/Qmat_up(ik)-gmat%blk1(isite,isite))
          gammainv_up(ik,ik) = v3
          v4 = czero
           do i = 1, ik-1
@@ -126,7 +127,7 @@ subroutine dqmc_update_u(this, gmat, ntau )
             end do
           end do
          ! flip
-         this%conf_u(isite,ntau) =  isp
+         this%conf(isite,ntau) =  isp
      end if
 
       if( (ik.eq.nublock) .or. (isite.eq.latt%nsites) ) then
@@ -138,7 +139,7 @@ subroutine dqmc_update_u(this, gmat, ntau )
           Gcuta_up = czero
           do i = 1, ndim
             do m = 1, ndim
-                Gcuta_up(i,m) = gmat%orb1(i,m)
+                Gcuta_up(i,m) = gmat%blk1(i,m)
             end do
           end do
           do i = 1, ik
@@ -157,7 +158,7 @@ subroutine dqmc_update_u(this, gmat, ntau )
           gmattmp2_up = czero
           do i = 1, ik
             do m = 1, ndim
-              gmattmp1_up(m,i) = gmat%orb1(m,pvec_up(i))
+              gmattmp1_up(m,i) = gmat%blk1(m,pvec_up(i))
               gmattmp2_up(i,m) = Gcuta_up(pvec_up(i),m)
             end do
           end do
@@ -169,7 +170,7 @@ subroutine dqmc_update_u(this, gmat, ntau )
           call zgemm('N','N', ndim, ndim, ik, cone, Gmat1_up, ndim, gmattmp2_up, ik, czero, Gmat2_up, ndim)
           do m = 1, ndim
             do i = 1, ndim
-              gmat%orb1(i,m) = Gcuta_up(i,m) + Gmat2_up(i,m)
+              gmat%blk1(i,m) = Gcuta_up(i,m) + Gmat2_up(i,m)
             end do
           end do
           ik = 0
@@ -194,4 +195,4 @@ subroutine dqmc_update_u(this, gmat, ntau )
   call cpu_time_now(endtime)
   timecalculation(16)=timecalculation(16)+endtime-starttime
 #ENDIF
-end subroutine dqmc_update_u
+end subroutine dqmc_update

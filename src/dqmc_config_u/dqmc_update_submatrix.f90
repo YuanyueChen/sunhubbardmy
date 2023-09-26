@@ -162,8 +162,8 @@ subroutine dqmc_update_u(this, gmat, ntau )
           allocate( Gmat2_up(ndim,ndim) )
           Gmat2_up = czero
           call zgemm('N','N', ndim, ndim, ik, cone, Gmat1_up, ndim, gmattmp2_up, ik, czero, Gmat2_up, ndim)
-          do i = 1, ndim
           do m = 1, ndim
+          do i = 1, ndim
               gmat%orb1(i,m) = Gcuta_up(i,m) + Gmat2_up(i,m)
           end do
           end do

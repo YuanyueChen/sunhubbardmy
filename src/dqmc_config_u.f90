@@ -58,17 +58,13 @@ module dqmc_config_u
 #include 'dqmc_config_u/dqmc_right_backward_prop.f90'
 #include 'dqmc_config_u/dqmc_right_forward_prop.f90'
 #if defined(DELAY) && defined(SUBMATRIX)
-  ! 如果同时定义了 DELAY 和 SUBMATRIX，则不包含任何文件
 #elif defined(DELAY)
-  ! 如果只定义了 DELAY，根据需要包含相关文件
 #include 'dqmc_config_u/dqmc_update_delay.f90'
 #include 'dqmc_config_u/dqmc_proj_update_delay.f90'
 #elif defined(SUBMATRIX)
-  ! 如果只定义了 SUBMATRIX，根据需要包含相关文件
 #include 'dqmc_config_u/dqmc_update_submatrix.f90'
 #include 'dqmc_config_u/dqmc_proj_update.f90'
 #else
- !  如果没有定义 DELAY 和 SUBMATRIX，包含默认文件
 #include 'dqmc_config_u/dqmc_update.f90'
 #include 'dqmc_config_u/dqmc_proj_update.f90'
 #endif

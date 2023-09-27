@@ -184,6 +184,7 @@ subroutine dqmc_update(this, gmat, ntau )
           deallocate( gammainvtmp_up )
 #IFDEF TIMING
           call cpu_time_now(endtime11)
+          timecalculation(18)=timecalculation(18)+endtime11-starttime11
 #ENDIF
       end if
    end do
@@ -200,6 +201,5 @@ subroutine dqmc_update(this, gmat, ntau )
 #IFDEF TIMING
   call cpu_time_now(endtime)
   timecalculation(16)=timecalculation(16)+endtime-starttime
-  timecalculation(18)=timecalculation(18)+endtime11-starttime11
 #ENDIF
 end subroutine dqmc_update

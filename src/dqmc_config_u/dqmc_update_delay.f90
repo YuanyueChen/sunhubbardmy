@@ -118,6 +118,7 @@ subroutine dqmc_update(this, gmat, ntau )
           end if
 #IFDEF TIMING
           call cpu_time_now(endtime11)
+          timecalculation(19)=timecalculation(19)+endtime11-starttime11
 #ENDIF
       end if
    end do
@@ -128,6 +129,5 @@ subroutine dqmc_update(this, gmat, ntau )
 #IFDEF TIMING
   call cpu_time_now(endtime)
   timecalculation(13)=timecalculation(13)+endtime-starttime
-  timecalculation(19)=timecalculation(19)+endtime11-starttime11
 #ENDIF
 end subroutine dqmc_update

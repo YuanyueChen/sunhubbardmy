@@ -21,8 +21,8 @@ subroutine dqmc_update(this, gmat, ntau, nf )
   complex(dp), allocatable, dimension(:,:) ::   gammainv_up,  Gcuta_up, gammainvtmp_up, gmattmp1_up, gmattmp2_up
   complex(dp), allocatable, dimension(:,:) ::   gammainv_dn,  Gcuta_dn, gammainvtmp_dn, gmattmp1_dn, gmattmp2_dn
   complex(dp), allocatable, dimension(:,:) ::   Gmat1_up, Gmat2_up,v,v2,v3
-  complex(dp), allocatable, dimension(:,:) ::   Gmat1_dn, Gmat2_dn,v1, v4
-  complex(dp), allocatable, dimension(:) ::  Qmat_up, Qmat_dn,  cvec_up, cvec_dn, bvec_up, bvec_dn
+  complex(dp), allocatable, dimension(:,:) ::   Gmat1_dn, Gmat2_dn,v1, v4,  cvec_up, cvec_dn, bvec_up, bvec_dn
+  complex(dp), allocatable, dimension(:) ::  Qmat_up, Qmat_dn
   complex(dp), allocatable, dimension(:) ::  Gtmp_up, Gtmp_dn
   integer, allocatable, dimension(:) :: pvec_up, pvec_dn
   integer :: i, ik, m
@@ -231,7 +231,7 @@ subroutine dqmc_update(this, gmat, ntau, nf )
   deallocate(v2)
   deallocate(v3)
   deallocate(gammainv_up)
-  
+
 #IFDEF TIMING
   call cpu_time_now(endtime)
   timecalculation(16)=timecalculation(16)+endtime-starttime

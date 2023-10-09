@@ -54,16 +54,18 @@ module dqmc_config_v
 #include 'dqmc_config_v/dqmc_left_forward_prop_hc.f90'
 #include 'dqmc_config_v/dqmc_right_backward_prop.f90'
 #include 'dqmc_config_v/dqmc_right_forward_prop.f90'
-#IFDEF DELAY
+#if defined(DELAY) && defined(SUBMATRIX)
+#elif defined(DELAY)
 #include 'dqmc_config_v/dqmc_update_delay.f90'
-#ELSE
-#include 'dqmc_config_v/dqmc_update.f90'
-#ENDIF
-#IFDEF DELAY
 #include 'dqmc_config_v/dqmc_proj_update_delay.f90'
-#ELSE
+#elif defined(SUBMATRIX)
+#include 'dqmc_config_v/dqmc_update_submatrix.f90'
 #include 'dqmc_config_v/dqmc_proj_update.f90'
-#ENDIF
+#else
+#include 'dqmc_config_v/dqmc_update.f90'
+#include 'dqmc_config_v/dqmc_proj_update.f90'
+#endif
+
   subroutine deallocate_conf( this )
     implicit none
     type(vconf) :: this

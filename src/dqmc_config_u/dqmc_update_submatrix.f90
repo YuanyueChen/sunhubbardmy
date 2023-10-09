@@ -197,6 +197,7 @@ subroutine dqmc_update(this, gmat, ntau )
   deallocate(bvec_up)
   deallocate(v1)
   deallocate(v4)
+  deallocate( gammainv_up )
 
 #IFDEF TIMING
   call cpu_time_now(endtime)

@@ -21,7 +21,7 @@ subroutine dqmc_update(this, gmat, ntau, nf )
   complex(dp), allocatable, dimension(:,:) ::   gammainv_up,  Gcuta_up, gammainvtmp_up, gmattmp1_up, gmattmp2_up
   complex(dp), allocatable, dimension(:,:) ::   gammainv_dn,  Gcuta_dn, gammainvtmp_dn, gmattmp1_dn, gmattmp2_dn
   complex(dp), allocatable, dimension(:,:) ::   Gmat1_up, Gmat2_up,v,v2,v3
-  complex(dp), allocatable, dimension(:,:) ::   Gmat1_dn, Gmat2_dn,v1, v4,  cvec_up, cvec_dn, bvec_up, bvec_dn
+  complex(dp), allocatable, dimension(:,:) ::   Gmat1_dn, Gmat2_dn,v1, v4,v5, cvec_up, cvec_dn, bvec_up, bvec_dn
   complex(dp), allocatable, dimension(:) ::  Qmat_up, Qmat_dn
   complex(dp), allocatable, dimension(:) ::  Gtmp_up, Gtmp_dn
   integer, allocatable, dimension(:) :: pvec_up, pvec_dn
@@ -44,6 +44,7 @@ subroutine dqmc_update(this, gmat, ntau, nf )
   allocate(v(2,2))
   allocate(v2(2,2))
   allocate(v3(2,2))
+  allocate(v5(2,2))
 
     ! intial pvec,svec,wvec
   accm  = 0.d0
@@ -53,6 +54,7 @@ subroutine dqmc_update(this, gmat, ntau, nf )
   bvec_up = czero
   v2 = czero
   v3 = czero
+  v5 = czero
   do isite = 1, latt%nn_lf
       i1 = latt%nnlf_list(isite)
       i2 = latt%nnlist(i1,nf)
@@ -122,11 +124,15 @@ subroutine dqmc_update(this, gmat, ntau, nf )
          pvec_up(ik) = i2
          Qmat_up(ik-1) = this%delta_bmat_p%blk1(iflip,is)
          Qmat_up(ik) = this%delta_bmat_m%blk1(iflip,is)
-         v3(1,1)=cone + cone/ Qmat_up(ik-1) - gmat%blk1(i1,i1)-v(1,1)
-         v3(1,2)=-gmat%blk1(i1,i2)-v(1,2)
-         v3(2,1)=-gmat%blk1(i2,i1)-v(2,1)
-         v3(2,2)=cone + cone/ Qmat_up(ik) - gmat%blk1(i2,i2)-v(2,2)
-         call s_invlu_z(2, v3)
+         v5(1,1)=cone + cone/ Qmat_up(ik-1) - gmat%blk1(i1,i1)-v(1,1)
+         v5(1,2)=-gmat%blk1(i1,i2)-v(1,2)
+         v5(2,1)=-gmat%blk1(i2,i1)-v(2,1)
+         v5(2,2)=cone + cone/ Qmat_up(ik) - gmat%blk1(i2,i2)-v(2,2)
+         v3(1,1)= cone/v5(1,1)+(cone/v5(1,1))*v5(1,2)*(cone/(v5(2,2)-(cone/v5(1,1))*v5(1,2)*v5(2,1)))*(cone/v5(1,1))*v5(2,1)
+         v3(1,2)= -(cone/v5(1,1))*v5(1,2)*(cone/(v5(2,2)-(cone/v5(1,1))*v5(1,2)*v5(2,1)))
+         v3(2,1)= -(cone/v5(1,1))*v5(2,1)*(cone/(v5(1,1)-(cone/v5(2,2))*v5(2,1)*v5(1,2))) 
+         v3(2,2)= cone/(v5(2,2)-(cone/v5(1,1))*v5(1,2)*v5(2,1))
+
          gammainv_up(ik-1,ik-1) = v3(1,1)
          gammainv_up(ik-1,ik) = v3(1,2)
          gammainv_up(ik,ik-1) = v3(2,1)
@@ -156,11 +162,13 @@ subroutine dqmc_update(this, gmat, ntau, nf )
               gammainv_up(i,m) = gammainv_up(i,m) + v4(i,1)*gammainv_up(ik-1,m) + v4(i,2)*gammainv_up(ik,m)
             end do
           end do
-         ! flip
-         this%conf(isite,nf,ntau) =  isp
+          this%conf(isite,nf,ntau) =  isp
      end if
 
       if( (ik.eq.nublock) .or. (isite.eq.latt%nn_lf) ) then
+#IFDEF TEST
+          write(fout, '(a,2e16.8)') ' update the whole '
+#ENDIF
           ! submatrix update: update the whole Green function
 #IFDEF TIMING
           call cpu_time_now(starttime11)
@@ -225,11 +233,12 @@ subroutine dqmc_update(this, gmat, ntau, nf )
   deallocate( Gcuta_up)
   deallocate(cvec_up)
   deallocate(bvec_up)
-  deallocate(v1)
-  deallocate(v4)
   deallocate(v)
+  deallocate(v1)
   deallocate(v2)
   deallocate(v3)
+  deallocate(v4)
+  deallocate(v5)
   deallocate(gammainv_up)
 
 #IFDEF TIMING

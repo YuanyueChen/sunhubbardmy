@@ -142,8 +142,8 @@ subroutine dqmc_update(this, gmat, ntau, nf )
           do i = 0, ik-4,2
             do m = 0, ik-4,2
               v4(i+1,1) = v4(i+1,1) + gammainv_up(i+1,m+1)*bvec_up(m+1,1)+gammainv_up(i+1,m+2)*bvec_up(m+2,1) 
-              v4(i+2,1) = v4(i+2,1) + gammainv_up(i+1,m+1)*bvec_up(m+1,2)+gammainv_up(i+1,m+2)*bvec_up(m+2,2)
-              v4(i+1,2) = v4(i+1,2) + gammainv_up(i+2,m+1)*bvec_up(m+1,1)+gammainv_up(i+2,m+2)*bvec_up(m+2,1)
+              v4(i+1,2) = v4(i+1,2) + gammainv_up(i+1,m+1)*bvec_up(m+1,2)+gammainv_up(i+1,m+2)*bvec_up(m+2,2)
+              v4(i+2,1) = v4(i+2,1) + gammainv_up(i+2,m+1)*bvec_up(m+1,1)+gammainv_up(i+2,m+2)*bvec_up(m+2,1)
               v4(i+2,2) = v4(i+2,2) + gammainv_up(i+2,m+1)*bvec_up(m+1,2)+gammainv_up(i+2,m+2)*bvec_up(m+2,2)
             end do
           end do
@@ -153,7 +153,7 @@ subroutine dqmc_update(this, gmat, ntau, nf )
             gammainv_up(ik,i+1) = gammainv_up(ik,i+1) + v3(2,1)*v1(1,i+1)+v3(2,2)*v1(2,i+1)
             gammainv_up(ik,i+2) = gammainv_up(ik,i+2) + v3(2,1)*v1(1,i+2)+v3(2,2)*v1(2,i+2)
             gammainv_up(i+1,ik-1) = gammainv_up(i+1,ik-1) + v4(i+1,1)*v3(1,1)+v4(i+1,2)*v3(2,1)
-            gammainv_up(i+2,ik-1) = gammainv_up(i+2,ik-1) + v4(i+2,1)*v3(1,1)+v4(i+2,2)*v3(2,1)
+            gammainv_up(i+2,ik-1) = gammainv_up(i+2,ik-1) +v4(i+2,1)*v3(1,1)+v4(i+2,2)*v3(2,1) 
             gammainv_up(i+1,ik) = gammainv_up(i+1,ik) + v4(i+1,1)*v3(1,2)+v4(i+1,2)*v3(2,2)
             gammainv_up(i+2,ik) = gammainv_up(i+2,ik) + v4(i+2,1)*v3(1,2)+v4(i+2,2)*v3(2,2) 
           end do
@@ -167,7 +167,7 @@ subroutine dqmc_update(this, gmat, ntau, nf )
 
       if( (ik.eq.nublock) .or. (isite.eq.latt%nn_lf) ) then
 #IFDEF TEST
-          write(fout, '(a,2e16.8)') ' update the whole '
+          write(fout, '(a,2e16.8)') ' update the whole green function'
 #ENDIF
           ! submatrix update: update the whole Green function
 #IFDEF TIMING
@@ -215,6 +215,7 @@ subroutine dqmc_update(this, gmat, ntau, nf )
             end do
           end do
           ik = 0
+          gammainv_up = czero
           deallocate( gmattmp1_up )
           deallocate( gmattmp2_up )
           deallocate( Gmat1_up )

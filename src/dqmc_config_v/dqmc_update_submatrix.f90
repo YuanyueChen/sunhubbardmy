@@ -227,7 +227,7 @@ subroutine dqmc_update(this, gmat, ntau, nf )
 #ENDIF
       end if
    end do
-   main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
+   main_obs(4) = main_obs(4) + dcmplx( accm, latt%nn_lf )
   deallocate( pvec_up )
   deallocate( Qmat_up )
   deallocate( Gtmp_up )

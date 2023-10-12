@@ -55,6 +55,7 @@ subroutine dqmc_update(this, gmat, ntau, nf )
   v2 = czero
   v3 = czero
   v5 = czero
+  gammainv_up = czero
   do isite = 1, latt%nn_lf
       i1 = latt%nnlf_list(isite)
       i2 = latt%nnlist(i1,nf)
@@ -162,13 +163,33 @@ subroutine dqmc_update(this, gmat, ntau, nf )
               gammainv_up(i,m) = gammainv_up(i,m) + v4(i,1)*gammainv_up(ik-1,m) + v4(i,2)*gammainv_up(ik,m)
             end do
           end do
+#IFDEF TEST
+          write(fout, '(a,2e16.8)') ' after accepted, cvec_up = '
+          do i = 1, 2
+            write(fout, '(18(2e12.4))') cvec_up(i,:)
+          end do
+          write(fout, '(a,2e16.8)') ' after accepted, bvec_up = '
+          do i = 1, ik
+            write(fout, '(18(2e12.4))') bvec_up(i,:)
+          end do
+         write(fout, '(a,2e16.8)') ' after accepted, v3 = '
+         do i = 1, 2
+           write(fout, '(18(2e12.4))') v3(i,:)
+         end do
+         write(fout, '(a,2e16.8)') ' after accepted, v4 = '
+         do i = 1, ik
+           write(fout, '(18(2e12.4))') v4(i,:)
+         end do
+          write(fout, '(a,2e16.8)') ' after accepted, gammainv_up = '
+         do i = 1, ik
+           write(fout, '(18(2e12.4))') gammainv_up(i,:)
+         end do 
+#ENDIF
           this%conf(isite,nf,ntau) =  isp
      end if
 
+
       if( (ik.eq.nublock) .or. (isite.eq.latt%nn_lf) ) then
-#IFDEF TEST
-          write(fout, '(a,2e16.8)') ' update the whole green function'
-#ENDIF
           ! submatrix update: update the whole Green function
 #IFDEF TIMING
           call cpu_time_now(starttime11)

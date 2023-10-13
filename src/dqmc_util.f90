@@ -325,6 +325,8 @@ module dqmc_util
                                            ' = ', 100*(timecalculation(3)-timecalculation(17))/timecalculation(2), '%'
         write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_proj_submatrix_update:  ', timecalculation(17), 's', &
                                            ' = ', 100*timecalculation(17)/timecalculation(2), '%'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_update_gfunc_proj_submatrix_update:  ', timecalculation(20), 's'
+        write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_update_ratio_proj_submatrix_update:  ', timecalculation(17)-timecalculation(20), 's'
         end if
         write(fout,'(a,f10.3,a,a,f6.2,a)') 'The_time_of_stabilization:      ', timecalculation(7), 's', &
                                            ' = ', 100*timecalculation(7)/timecalculation(2), '%'

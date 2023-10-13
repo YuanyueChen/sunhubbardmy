@@ -25,7 +25,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
   type(gfunc) :: gmmat, ulrinvul, urrecord
   integer :: i, ik, m
 #IFDEF TIMING
-  real(dp) :: starttime, endtime
+  real(dp) :: starttime, endtime, starttime11, endtime11
 #ENDIF
 #IFDEF TIMING
   call cpu_time_now(starttime)
@@ -112,6 +112,9 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
      end if
       
      if( (ik.eq.nublock) .and. (isite.lt.latt%nsites) ) then
+#IFDEF TIMING
+          call cpu_time_now(starttime11)
+#ENDIF     
           ik = 0
           ! delay update: update the whole Green function
           call  zgemm('N', 'T', ndim, ndim, nublock, cone, avec_up, ndim, bvec_up, ndim, cone, gmmat%blk1, ndim)
@@ -122,14 +125,25 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
           ! intial avec, bvec
           avec_up = czero
           bvec_up = czero
+#IFDEF TIMING
+          call cpu_time_now(endtime11)
+          timecalculation(21)=timecalculation(21)+endtime11-starttime11
+#ENDIF
       end if
 
      if(  isite.eq.latt%nsites ) then
+#IFDEF TIMING
+          call cpu_time_now(starttime11)
+#ENDIF
           ik = 0
           ! delay update: update the R and the (LR)^-1
           ur = urrecord
           call zgemm('N', 'N', ne, ne, ndim, cone, ul%blk1, ne, ur%blk1, ndim, czero, ulrinv%blk1, ne)
           call s_invlu_z(ne, ulrinv%blk1) 
+#IFDEF TIMING
+          call cpu_time_now(endtime11)
+          timecalculation(21)=timecalculation(21)+endtime11-starttime11
+#ENDIF
       end if
   end do
   main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )

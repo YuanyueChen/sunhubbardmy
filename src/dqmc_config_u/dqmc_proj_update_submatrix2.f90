@@ -26,7 +26,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
   complex(dp), allocatable, dimension(:) ::  Gtmp_up, Gtmp_dn 
   integer, allocatable, dimension(:) :: pvec_up, pvec_dn
   type(gfunc) :: Fmat_cuta, Fmat, ulrinvul, urrecord
-  integer :: i, ik, m
+  integer :: i, ik, m, is
 #IFDEF TIMING
   real(dp) :: starttime, endtime, starttime11, endtime11
 #ENDIF
@@ -56,6 +56,8 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
   v2 = czero
   v3 = czero
   gammainv_up = czero
+  call zgemm('N', 'N', ne, ndim, ne, cone, Fmat_cuta%blk1, ne, ul%blk1, ne, czero, ulrinvul%blk1, ne)
+  call zgemm('N', 'N', ndim, ndim, ne, cone, ur%blk1, ndim, ulrinvul%blk1, ne, czero, Fmat%blk1, ndim)
   do isite = 1, latt%nsites
       ! delay update: after nublock steps of local update, perform a whole update of Green function
       ! calculate weight ratio, fermion part
@@ -63,13 +65,12 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
       iflip = ceiling( spring_sfmt_stream() * (this%lcomp-1) )
       isp = mod(is+iflip-1,this%lcomp) + 1
       !calculate the F function
-      call zgemm('N', 'N', ne, ndim, ne, cone, Fmat_cuta%blk1, ne, ul%blk1, ne, czero, ulrinvul%blk1, ne)
-      call zgemm('N', 'N', ndim, ndim, ne, cone, ur%blk1, ndim, ulrinvul%blk1, ne, czero, Fmat%blk1, ndim)
       cvec_up = czero
       bvec_up = czero
       do i = 1, ik
-        cvec_up(i) = Fmat%blk1(isite,pvec_up(i))
-        bvec_up(i) = Fmat%blk1(pvec_up(i),isite)
+        is = pvec_up(i)
+        cvec_up(i) = Fmat%blk1(isite,is)
+        bvec_up(i) = Fmat%blk1(is,isite)
       end do
       v1 = czero
       do i = 1, ik
@@ -176,6 +177,8 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
               Fmat_cuta%blk1(i,m) = Fmat_cuta%blk1(i,m) - Gmat2_up(i,m)
             end do
           end do
+          call zgemm('N', 'N', ne, ndim, ne, cone, Fmat_cuta%blk1, ne, ul%blk1, ne, czero, ulrinvul%blk1, ne)
+          call zgemm('N', 'N', ndim, ndim, ne, cone, ur%blk1, ndim, ulrinvul%blk1, ne, czero, Fmat%blk1, ndim)
           ik = 0
           gammainv_up = czero
           deallocate( gmattmp1_up )

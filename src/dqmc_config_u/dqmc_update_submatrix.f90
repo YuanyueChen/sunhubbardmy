@@ -126,8 +126,8 @@ subroutine dqmc_update(this, gmat, ntau )
             gammainv_up(ik,i) = v3*v1(i)
             gammainv_up(i,ik) = v4(i)*v3
           end do
-          do i = 1, ik-1
-            do m = 1, ik-1
+          do m = 1, ik-1
+            do i = 1, ik-1
               gammainv_up(i,m) = gammainv_up(i,m) + v4(i)*v3*v1(m)
             end do
           end do
@@ -142,13 +142,12 @@ subroutine dqmc_update(this, gmat, ntau )
 #IFDEF TIMING
           call cpu_time_now(starttime11)
 #ENDIF
-          gmattmp2_up = czero
           do i = 1, ik
-            gmattmp2_up(i,:) = Gcuta_up(pvec_up(i),:)
+            isf = pvec_up(i) 
+            gmattmp2_up(i,:) = Gcuta_up(isf,:)
           end do
-          Gmat1_up = czero
-          call zgemm('N','N', ndim, nublock, nublock, cone, gmattmp1_up, ndim, gammainv_up, nublock, czero, Gmat1_up, ndim)
-          call zgemm('N','N', ndim, ndim, nublock, cone, Gmat1_up, ndim, gmattmp2_up, nublock, cone, Gcuta_up, ndim)
+          call zgemm('N','N', ndim, nublock, ik, cone, gmattmp1_up, ndim, gammainv_up, nublock, czero, Gmat1_up, ndim)
+          call zgemm('N','N', ndim, ndim, ik, cone, Gmat1_up, ndim, gmattmp2_up, nublock, cone, Gcuta_up, ndim)
           gmat%blk1 = Gcuta_up
           ik = 0
 #IFDEF TIMING

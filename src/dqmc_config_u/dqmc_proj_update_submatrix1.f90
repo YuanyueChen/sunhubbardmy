@@ -26,7 +26,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
   complex(dp), allocatable, dimension(:) ::  Gtmp_up, Gtmp_dn
   integer, allocatable, dimension(:) :: pvec_up, pvec_dn
   type(gfunc) :: Fmat, ulrinvul, urrecord
-  integer :: i, ik, m
+  integer :: i, ik, m, isf
 #IFDEF TIMING
   real(dp) :: starttime, endtime, starttime11, endtime11
 #ENDIF
@@ -40,6 +40,9 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
   allocate(bvec_up(nublock))
   allocate(v1(nublock))
   allocate(v4(nublock))
+  allocate( gmattmp1_up(ndim,nublock) )
+  allocate( gmattmp2_up(nublock,ndim) )
+  allocate( Gmat1_up(ndim,nublock) )
   call allocate_gfunc(Fmat, ndim, ndim)
   call allocate_gfunc(ulrinvul, ne, ndim)
   call allocate_gfunc(urrecord, ndim, ne)
@@ -48,6 +51,8 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
   ulrinvul%blk1 = czero
   Fmat%blk1 = czero
   urrecord%blk1 = ur%blk1
+  gmattmp1_up = czero
+  gmattmp2_up = czero
   !calculate the F function
   call zgemm('N', 'N', ne, ndim, ne, cone, ulrinv%blk1, ne, ul%blk1, ne, czero, ulrinvul%blk1, ne)
   call zgemm('N', 'N', ndim, ndim, ne, cone, ur%blk1, ndim, ulrinvul%blk1, ne, czero, Fmat%blk1, ndim)
@@ -68,8 +73,9 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
       cvec_up = czero
       bvec_up = czero
       do i = 1, ik
-        cvec_up(i) = Fmat%blk1(isite,pvec_up(i))
-        bvec_up(i) = Fmat%blk1(pvec_up(i),isite)
+        isf = pvec_up(i)
+        cvec_up(i) = Fmat%blk1(isite,isf)
+        bvec_up(i) = Fmat%blk1(isf,isite)
       end do
       v1 = czero
       do i = 1, ik
@@ -115,8 +121,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
          ik = ik + 1
          ! store pvec, Qmat, gammainv
          pvec_up(ik) = isite
-         Qmat_up(ik) = this%delta_bmat%blk1(iflip, is)
-         v3 = cone/(-v  + cone/Qmat_up(ik)+Fmat%blk1(isite,isite))
+         v3 = cone/(-v  + cone/this%delta_bmat%blk1(iflip, is)+Fmat%blk1(isite,isite))
          gammainv_up(ik,ik) = v3
          v4 = czero
           do i = 1, ik-1
@@ -134,6 +139,8 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             end do
           end do
           urrecord%blk1(isite,:) = urrecord%blk1(isite,:) + this%delta_bmat%blk1(iflip,is)*urrecord%blk1(isite,:)
+          gmattmp1_up(:,ik) = Fmat%blk1(:,isite)
+          gmattmp2_up(ik,:) = Fmat%blk1(isite,:)
          ! flip
          this%conf(isite,ntau) =  isp
      end if
@@ -142,41 +149,10 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 #IFDEF TIMING
           call cpu_time_now(starttime11)
 #ENDIF 
-          allocate(gammainvtmp_up(ik,ik))
-          gammainvtmp_up = czero
-          do i = 1, ik
-            do m = 1, ik
-              gammainvtmp_up(i,m) = gammainv_up(i,m)
-            end do
-          end do
-          allocate( gmattmp1_up(ndim,ik) )
-          allocate( gmattmp2_up(ik,ndim) )
-          gmattmp1_up = czero
-          gmattmp2_up = czero
-          do i = 1, ik
-            do m = 1, ndim
-              gmattmp1_up(m,i) = Fmat%blk1(m,pvec_up(i))
-              gmattmp2_up(i,m) = Fmat%blk1(pvec_up(i),m)
-            end do
-          end do
-          allocate( Gmat1_up(ndim,ik) )
-          Gmat1_up = czero
-          call zgemm('N','N', ndim, ik, ik, cone, gmattmp1_up, ndim, gammainvtmp_up, ik, czero, Gmat1_up, ndim)
-          allocate( Gmat2_up(ndim,ndim) )
-          Gmat2_up = czero
-          call zgemm('N','N', ndim, ndim, ik, cone, Gmat1_up, ndim, gmattmp2_up, ik, czero, Gmat2_up, ndim)
-          do m = 1, ndim
-            do i = 1, ndim
-              Fmat%blk1(i,m) = Fmat%blk1(i,m) - Gmat2_up(i,m)
-            end do
-          end do
+          call zgemm('N','N', ndim, nublock, ik, cone, gmattmp1_up, ndim, gammainv_up, nublock, czero, Gmat1_up, ndim)
+          call zgemm('N','N', ndim, ndim, ik, -cone, Gmat1_up, ndim, gmattmp2_up, nublock, cone, Fmat%blk1, ndim)
           ik = 0
           gammainv_up = czero
-          deallocate( gmattmp1_up )
-          deallocate( gmattmp2_up )
-          deallocate( Gmat1_up )
-          deallocate( Gmat2_up )
-          deallocate( gammainvtmp_up )
 #IFDEF TIMING
           call cpu_time_now(endtime11)
           timecalculation(20)=timecalculation(20)+endtime11-starttime11
@@ -200,6 +176,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
       end if
   end do
   main_obs(3) = main_obs(3) + dcmplx( accm, latt%nsites )
+  call deallocate_gfunc(Fmat)
   deallocate( pvec_up )
   deallocate( Qmat_up )
   deallocate(cvec_up)
@@ -207,6 +184,9 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
   deallocate(v1)
   deallocate(v4)
   deallocate( gammainv_up )
+  deallocate( gmattmp1_up )
+  deallocate( gmattmp2_up )
+  deallocate( Gmat1_up )
 #IFDEF TIMING
   call cpu_time_now(endtime)
   timecalculation(17)=timecalculation(17)+endtime-starttime

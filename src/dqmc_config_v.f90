@@ -60,7 +60,10 @@ module dqmc_config_v
 #include 'dqmc_config_v/dqmc_proj_update_delay.f90'
 #elif defined(SUBMATRIX1)
 #include 'dqmc_config_v/dqmc_update_submatrix.f90'
-#include 'dqmc_config_v/dqmc_proj_update.f90'
+#include 'dqmc_config_v/dqmc_proj_update_submatrix1.f90'
+#elif defined(SUBMATRIX2)
+#include 'dqmc_config_v/dqmc_update_submatrix.f90'
+#include 'dqmc_config_v/dqmc_proj_update_submatrix2.f90'
 #else
 #include 'dqmc_config_v/dqmc_update.f90'
 #include 'dqmc_config_v/dqmc_proj_update.f90'

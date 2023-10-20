@@ -158,18 +158,18 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
             end do
           end do
           do i = 0, ik-4,2
-            gammainv_up(ik-1,i+1) = gammainv_up(ik-1,i+1) + v3(1,1)*v1(1,i+1)+v3(1,2)*v1(2,i+1)
-            gammainv_up(ik-1,i+2) = gammainv_up(ik-1,i+2) + v3(1,1)*v1(1,i+2)+v3(1,2)*v1(2,i+2)
-            gammainv_up(ik,i+1) = gammainv_up(ik,i+1) + v3(2,1)*v1(1,i+1)+v3(2,2)*v1(2,i+1)
-            gammainv_up(ik,i+2) = gammainv_up(ik,i+2) + v3(2,1)*v1(1,i+2)+v3(2,2)*v1(2,i+2)
-            gammainv_up(i+1,ik-1) = gammainv_up(i+1,ik-1) + v4(i+1,1)*v3(1,1)+v4(i+1,2)*v3(2,1)
-            gammainv_up(i+2,ik-1) = gammainv_up(i+2,ik-1) +v4(i+2,1)*v3(1,1)+v4(i+2,2)*v3(2,1) 
-            gammainv_up(i+1,ik) = gammainv_up(i+1,ik) + v4(i+1,1)*v3(1,2)+v4(i+1,2)*v3(2,2)
-            gammainv_up(i+2,ik) = gammainv_up(i+2,ik) + v4(i+2,1)*v3(1,2)+v4(i+2,2)*v3(2,2) 
+            gammainv_up(ik-1,i+1) = gammainv_up(ik-1,i+1) - v3(1,1)*v1(1,i+1) - v3(1,2)*v1(2,i+1)
+            gammainv_up(ik-1,i+2) = gammainv_up(ik-1,i+2) - v3(1,1)*v1(1,i+2) - v3(1,2)*v1(2,i+2)
+            gammainv_up(ik,i+1) = gammainv_up(ik,i+1) - v3(2,1)*v1(1,i+1) - v3(2,2)*v1(2,i+1)
+            gammainv_up(ik,i+2) = gammainv_up(ik,i+2) - v3(2,1)*v1(1,i+2) - v3(2,2)*v1(2,i+2)
+            gammainv_up(i+1,ik-1) = gammainv_up(i+1,ik-1) - v4(i+1,1)*v3(1,1)- v4(i+1,2)*v3(2,1)
+            gammainv_up(i+2,ik-1) = gammainv_up(i+2,ik-1) - v4(i+2,1)*v3(1,1)- v4(i+2,2)*v3(2,1) 
+            gammainv_up(i+1,ik) = gammainv_up(i+1,ik) - v4(i+1,1)*v3(1,2) - v4(i+1,2)*v3(2,2)
+            gammainv_up(i+2,ik) = gammainv_up(i+2,ik) - v4(i+2,1)*v3(1,2) - v4(i+2,2)*v3(2,2) 
           end do
           do i = 1, ik-2
             do m = 1, ik-2
-              gammainv_up(i,m) = gammainv_up(i,m) + v4(i,1)*gammainv_up(ik-1,m) + v4(i,2)*gammainv_up(ik,m)
+              gammainv_up(i,m) = gammainv_up(i,m) - v4(i,1)*gammainv_up(ik-1,m) - v4(i,2)*gammainv_up(ik,m)
             end do
           end do
           urrecord%blk1(i1,:) = urrecord%blk1(i1,:) + this%delta_bmat_p%blk1(iflip, is)*urrecord%blk1(i1,:)
@@ -195,6 +195,14 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
          do i = 1, ik
            write(fout, '(18(2e12.4))') v4(i,:)
          end do
+         write(fout, '(a,2e16.8)') ' after accepted, v1 = '
+          do i = 1, 2
+            write(fout, '(18(2e12.4))') v1(i,:)
+          end do
+         write(fout, '(a,2e16.8)') ' after accepted, v = '
+         do i = 1, 2
+           write(fout, '(18(2e12.4))') v(i,:)
+         end do
           write(fout, '(a,2e16.8)') ' after accepted, gammainv_up = '
          do i = 1, ik
            write(fout, '(18(2e12.4))') gammainv_up(i,:)
@@ -204,7 +212,7 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
      end if
 
 
-      if( (ik.eq.nublock) .or. (isite.lt.latt%nn_lf) ) then
+      if( (ik.eq.nublock) .and. (isite.lt.latt%nn_lf) ) then
           ! submatrix update: update the whole Green function
 #IFDEF TIMING
           call cpu_time_now(starttime11)
@@ -226,7 +234,7 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
           ik = 0
           ! delay update: update the R and the (LR)^-1
           ! update the R
-          ur = urrecord
+          ur%blk1 = urrecord%blk1
           call zgemm('N', 'N', ne, ne, ndim, cone, ul%blk1, ne, ur%blk1, ndim, czero, ulrinv%blk1, ne)
           call s_invlu_z(ne, ulrinv%blk1) 
 #IFDEF TIMING

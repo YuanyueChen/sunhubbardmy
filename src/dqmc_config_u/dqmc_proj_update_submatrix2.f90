@@ -51,7 +51,6 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 
   
   ulrinvul%blk1 = czero
-  Fmat%blk1 = czero
   urrecord%blk1 = ur%blk1
   Fmat_cuta%blk1 = ulrinv%blk1
   accm  = 0.d0

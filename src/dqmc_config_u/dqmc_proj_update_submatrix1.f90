@@ -150,6 +150,12 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 #ENDIF 
           call zgemm('N','N', ndim, nublock, ik, cone, gmattmp1_up, ndim, gammainv_up, nublock, czero, Gmat1_up, ndim)
           call zgemm('N','N', ndim, ndim, ik, -cone, Gmat1_up, ndim, gmattmp2_up, nublock, cone, Fmat%blk1, ndim)
+#IFDEF TEST
+         write(fout, '(a,2e16.8)') ' after update the G, Fmat = ' 
+         do i = 1, ndim
+           write(fout, '(18(2e12.4))')  Fmat%blk1(i,:)
+         end do
+#ENDIF
           ik = 0
           gammainv_up = czero
 #IFDEF TIMING

@@ -99,9 +99,8 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
       do i = 1, ik
         v = v + v1(i)*bvec_up(i)
       end do
-!$OMP PARALLEL &
-!$OMP PRIVATE ( isf, i )
-!$OMP DO
+!$OMP END DO
+!$OMP END PARALLEL  
       v2 = Fmat%blk1(isite,isite) - v 
       ratio1 = v2 *this%delta_bmat%blk1(iflip, is) + cone
       ratiotot = ratio1**nflr

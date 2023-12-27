@@ -51,6 +51,10 @@
     call measure_nn(gf,gfc)
     znn_bin = znn_bin + znn*zphi
     zn_bin = zn_bin + zn*zphi
+    ! call measure_nnnn(gf,gfc)
+    ! znnnn_bin = znnnn_bin + znnnn*zphi
+    call measure_Crmax(gf,gfc)
+    zCrmax_bin = zCrmax_bin + zCrmax*zphi    
     call measure_jj(gf,gfc)
     zjj_bin = zjj_bin + zjj*zphi
     zj_bin = zj_bin + zj*zphi
@@ -312,6 +316,53 @@
           end do
       end do
     end subroutine measure_nn
+
+    subroutine measure_Crmax(gf,gfc)
+      implicit none
+      type(gfunc), intent(in) :: gf, gfc
+      integer :: j, i
+      zCrmax = czero
+      i = 1
+      if (mod(latt%l1,2) == 0) then
+        j = latt%l1/2 + 1
+      else
+        j = (latt%l1 + 1)/2 + 1
+      end if
+      zCrmax = (dcmplx(-1.d0,0.d0))**(latt%l1/2)*(gfc%blk1(i,i)*gfc%blk1(j,j) +gfc%blk1(i,j)*gf%blk1(i,j)- dcmplx(1.d0/dble(2),0.d0)*(gfc%blk1(i,i) + gfc%blk1(j,j))+dcmplx(1.d0/dble(4),0.d0))
+    end subroutine measure_Crmax
+
+    subroutine measure_nnnn(gf,gfc)
+      implicit none
+      type(gfunc), intent(in) :: gf, gfc
+      integer :: l, k, j, i
+      znnnn = czero
+      do j = 1, latt%nsites
+          do i = 1, latt%nsites
+                do k = 1, latt%nsites
+                    do l = 1, latt%nsites
+                        znnnn = znnnn + &
+                            (dcmplx(-1.d0,0.d0))**(i+j+k+l)*(gf%blk1(i,l) * gf%blk1(j,k) * gfc%blk1(i,l) * gfc%blk1(j,k) + &
+                            gf%blk1(j,k) * gf%blk1(k,l) * gfc%blk1(i,i) * gfc%blk1(j,l) - &
+                            gf%blk1(i,l) * gf%blk1(j,k) * gfc%blk1(i,k) * gfc%blk1(j,l) + &
+                            gf%blk1(i,l) * gfc%blk1(i,l) * gfc%blk1(j,j) * gfc%blk1(k,k) + &
+                            gf%blk1(j,l) * gfc%blk1(i,i) * gfc%blk1(j,l) * gfc%blk1(k,k) - &
+                            gf%blk1(i,l) * gfc%blk1(i,j) * gfc%blk1(j,l) * gfc%blk1(k,k) + &
+                            gf%blk1(k,l) * gfc%blk1(i,i) * gfc%blk1(j,j) * gfc%blk1(k,l) - &
+                            gf%blk1(i,l) * gfc%blk1(i,k) * gfc%blk1(j,j) * gfc%blk1(k,l) - &
+                            gf%blk1(j,l) * gfc%blk1(i,i) * gfc%blk1(j,k) * gfc%blk1(k,l) + &
+                            gf%blk1(i,l) * gfc%blk1(i,j) * gfc%blk1(j,k) * gfc%blk1(k,l) + &
+                            gfc%blk1(i,i) * (gf%blk1(j,k) * gfc%blk1(j,k) + gfc%blk1(j,j) * gfc%blk1(k,k)) * gfc%blk1(l,l) + &
+                            gf%blk1(i,k) * (gf%blk1(k,l) * (gfc%blk1(i,l) * gfc%blk1(j,j) - gfc%blk1(i,j) * gfc%blk1(j,l)) + &
+                            gf%blk1(j,l) * (-gfc%blk1(i,l) * gfc%blk1(j,k) + gfc%blk1(i,k) * gfc%blk1(j,l)) + &
+                            (gfc%blk1(i,k) * gfc%blk1(j,j) - gfc%blk1(i,j) * gfc%blk1(j,k)) * gfc%blk1(l,l)) + &
+                            gf%blk1(i,j) * (gf%blk1(j,l) * (gfc%blk1(i,l) * gfc%blk1(k,k) - gfc%blk1(i,k) * gfc%blk1(k,l)) + &
+                            gf%blk1(j,k) * (gf%blk1(k,l) * gfc%blk1(i,l) + gfc%blk1(i,k) * gfc%blk1(l,l)) + &
+                            gfc%blk1(i,j) * (gf%blk1(k,l) * gfc%blk1(k,l) + gfc%blk1(k,k) * gfc%blk1(l,l))))
+                    end do
+                end do                                
+          end do
+      end do
+    end subroutine measure_nnnn
 
     subroutine measure_jj(gf,gfc)
       ! current current correlation

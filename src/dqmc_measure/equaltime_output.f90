@@ -14,11 +14,13 @@ subroutine equaltime_output
   call mpi_reduce( zcpcm_bin, zcpcm, size(zcpcm), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( zspsm_bin, zspsm, size(zspsm), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( znn_bin, znn, size(znn), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( znnnn_bin, znnnn, 1, mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( zn_bin, zn, size(zn), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( zjj_bin, zjj, size(zjj), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( zj_bin, zj, 1, mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( zbb_bin, zbb, size(zbb), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( zb_bin, zb, 1, mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
+  call mpi_reduce( zCrmax_bin, zCrmax, 1, mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( pair_onsite_bin, pair_onsite, size(pair_onsite), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( pair_nn_bin, pair_nn, size(pair_nn), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
   call mpi_reduce( pair_sn_bin, pair_sn, size(pair_sn), mpi_complex16, mpi_sum, 0, mpi_comm_world, ierr )
@@ -71,6 +73,8 @@ subroutine equaltime_output
       zn = zn / znorm
       zj = zj / znorm
       zb = zb / znorm
+      znnnn = znnnn / znorm
+      zCrmax = zCrmax / znorm
       open (unit=90,file='n.bin',status='unknown', action="write", position="append")
       write(90, '(4e16.8)') zn
       close(90)
@@ -80,7 +84,12 @@ subroutine equaltime_output
       open (unit=90,file='b.bin',status='unknown', action="write", position="append")
       write(90, '(2e16.8)') zb
       close(90)
-
+      open (unit=90,file='nnnn.bin',status='unknown', action="write", position="append")
+      write(90, '(2e16.8)') znnnn
+      close(90)
+      open (unit=90,file='Crmax.bin',status='unknown', action="write", position="append")
+      write(90, '(2e16.8)') zCrmax
+      close(90)
   end if
 
   call mpi_barrier( mpi_comm_world, ierr )
@@ -169,3 +178,4 @@ subroutine fourier_trans_eqt_22(gr,ftag)
 
   deallocate (gk)
 end subroutine fourier_trans_eqt_22
+

@@ -71,21 +71,37 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 
       cvec_up = czero
       bvec_up = czero
+!$OMP PARALLEL &
+!$OMP PRIVATE ( isf, i )
+!$OMP DO
       do i = 1, ik
         isf = pvec_up(i)
         cvec_up(i) = Fmat%blk1(isite,isf)
         bvec_up(i) = Fmat%blk1(isf,isite)
       end do
+!$OMP END DO
+!$OMP END PARALLEL
       v1 = czero
+!$OMP PARALLEL &
+!$OMP PRIVATE ( m, i )
+!$OMP DO      
       do i = 1, ik
         do m = 1, ik
           v1(i) = v1(i) + cvec_up(m)*gammainv_up(m,i)
         end do
       end do
+!$OMP END DO
+!$OMP END PARALLEL
       v = czero
+!$OMP PARALLEL &
+!$OMP PRIVATE ( i )
+!$OMP DO
       do i = 1, ik
         v = v + v1(i)*bvec_up(i)
       end do
+!$OMP PARALLEL &
+!$OMP PRIVATE ( isf, i )
+!$OMP DO
       v2 = Fmat%blk1(isite,isite) - v 
       ratio1 = v2 *this%delta_bmat%blk1(iflip, is) + cone
       ratiotot = ratio1**nflr
@@ -123,20 +139,35 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
          v3 = cone/(-v  + cone/this%delta_bmat%blk1(iflip, is)+Fmat%blk1(isite,isite))
          gammainv_up(ik,ik) = v3
          v4 = czero
+!$OMP PARALLEL &
+!$OMP PRIVATE ( m, i )
+!$OMP DO
           do i = 1, ik-1
             do m = 1, ik-1
               v4(i) = v4(i) + gammainv_up(i,m)*bvec_up(m)
             end do
           end do
+!$OMP END DO
+!$OMP END PARALLEL
+!$OMP PARALLEL &
+!$OMP PRIVATE ( i )
+!$OMP DO
           do i = 1, ik-1
             gammainv_up(ik,i) = -v3*v1(i)
             gammainv_up(i,ik) = -v4(i)*v3
           end do
+!$OMP END DO
+!$OMP END PARALLEL
+!$OMP PARALLEL &
+!$OMP PRIVATE ( m, i )
+!$OMP DO
           do i = 1, ik-1
             do m = 1, ik-1
               gammainv_up(i,m) = gammainv_up(i,m) + v4(i)*v3*v1(m)
             end do
           end do
+!$OMP END DO
+!$OMP END PARALLEL
           urrecord%blk1(isite,:) = urrecord%blk1(isite,:) + this%delta_bmat%blk1(iflip,is)*urrecord%blk1(isite,:)
           gmattmp1_up(:,ik) = Fmat%blk1(:,isite)
           gmattmp2_up(ik,:) = Fmat%blk1(isite,:)
@@ -152,9 +183,14 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
           call zgemm('N','N', ndim, ndim, ik, -cone, Gmat1_up, ndim, gmattmp2_up, nublock, cone, Fmat%blk1, ndim)
 #IFDEF TEST
          write(fout, '(a,2e16.8)') ' after update the G, Fmat = ' 
+!$OMP PARALLEL &
+!$OMP PRIVATE ( i )
+!$OMP DO
          do i = 1, ndim
            write(fout, '(18(2e12.4))')  Fmat%blk1(i,:)
          end do
+!$OMP END DO
+!$OMP END PARALLEL
 #ENDIF
           ik = 0
           gammainv_up = czero

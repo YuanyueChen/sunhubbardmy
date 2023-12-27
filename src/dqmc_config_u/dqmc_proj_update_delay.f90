@@ -47,9 +47,14 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
   accm  = 0.d0
   ik = 0
   ! initial diag G
+!$OMP PARALLEL &
+!$OMP PRIVATE ( isite )
+!$OMP DO
   do isite = 1, latt%nsites
       diagg_up(isite) = gmmat%blk1(isite,isite)
   end do
+!$OMP END DO
+!$OMP END PARALLEL
   ! intial avec, bvec
   avec_up = czero
   bvec_up = czero
@@ -96,16 +101,26 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
          ! store avec(:,ik) and bvec(:,ik)
          avec_up(:,ik) = gmmat%blk1(:,isite)
          bvec_up(:,ik) = gmmat%blk1(isite,:)
+!$OMP PARALLEL &
+!$OMP PRIVATE ( m )
+!$OMP DO
          do m = 1, ik-1
              avec_up(:,ik) = avec_up(:,ik) + bvec_up(isite,m)*avec_up(:,m)
              bvec_up(:,ik) = bvec_up(:,ik) + avec_up(isite,m)*bvec_up(:,m)
          end do
+!$OMP END DO
+!$OMP END PARALLEL
          avec_up(:,ik) =avec_up(:,ik)*sscl%blk1
          bvec_up(isite,ik)=bvec_up(isite,ik) - cone
          ! update diag G
+!$OMP PARALLEL &
+!$OMP PRIVATE ( i )
+!$OMP DO
          do i = 1, ndim
              diagg_up(i) = diagg_up(i) + avec_up(i,ik)*bvec_up(i,ik)
          end do
+!$OMP END DO
+!$OMP END PARALLEL
          urrecord%blk1(isite,:) = urrecord%blk1(isite,:) + this%delta_bmat%blk1(iflip,is)*urrecord%blk1(isite,:)
          ! flip
          this%conf(isite,ntau) =  isp
@@ -119,9 +134,14 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
           ! delay update: update the whole Green function
           call  zgemm('N', 'T', ndim, ndim, nublock, cone, avec_up, ndim, bvec_up, ndim, cone, gmmat%blk1, ndim)
           ! initial diag G
+!$OMP PARALLEL &
+!$OMP PRIVATE ( i )
+!$OMP DO
           do i = 1, ndim
               diagg_up(i) = gmmat%blk1(i,i)
           end do
+!$OMP END DO
+!$OMP END PARALLEL
           ! intial avec, bvec
           avec_up = czero
           bvec_up = czero

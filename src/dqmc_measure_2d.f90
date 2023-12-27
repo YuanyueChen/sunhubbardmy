@@ -21,8 +21,10 @@ module dqmc_measure
 
   complex(dp), save :: energy_bin(10), energy_bin_recv(10)
   complex(dp), save :: zn_bin(2), zn(2)
+  complex(dp), save :: znnnn_bin, znnnn
   complex(dp), save :: zj_bin, zj
   complex(dp), save :: zb_bin, zb
+  complex(dp), save :: zCrmax_bin, zCrmax
 
   complex(dp), allocatable, dimension(:,:,:,:), save :: zspsm_tau, zspsm_tau_bin 
   complex(dp), allocatable, dimension(:,:,:,:), save :: znn_tau, znn_tau_bin 
@@ -107,12 +109,14 @@ module dqmc_measure
     energy_bin = czero
     zspsm_bin = czero
     zcpcm_bin = czero
+    znnnn_bin = czero
     znn_bin = czero
     zn_bin = czero
     zjj_bin = czero
     zj_bin = czero
     zbb_bin = czero
     zb_bin = czero
+    zCrmax_bin = czero
     pair_onsite_bin = czero
     pair_nn_bin = czero
     pair_sn_bin = czero

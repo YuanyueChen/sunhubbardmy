@@ -59,12 +59,17 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
       gpart(1,2) = gmmat(i1,i2)
       gpart(2,1) = gmmat(i2,i1)
       gpart(2,2) = gmmat(i2,i2)
+!$OMP PARALLEL &
+!$OMP PRIVATE ( m )
+!$OMP DO
       do m = 0, ik-2, 2
           gpart(1,1) = gpart(1,1) + avec(i1,1+m)*bvec(i1,1+m) + avec(i1,2+m)*bvec(i1,2+m)
           gpart(1,2) = gpart(1,2) + avec(i1,1+m)*bvec(i2,1+m) + avec(i1,2+m)*bvec(i2,2+m)
           gpart(2,1) = gpart(2,1) + avec(i2,1+m)*bvec(i1,1+m) + avec(i2,2+m)*bvec(i1,2+m)
           gpart(2,2) = gpart(2,2) + avec(i2,1+m)*bvec(i2,1+m) + avec(i2,2+m)*bvec(i2,2+m)
       end do
+!$OMP END DO
+!$OMP END PARALLEL
       vukmat(1,1) = (cone - gpart(1,1))*this%delta_bmat_p%blk1(iflip, is) + cone
       vukmat(1,2) =       - gpart(1,2) *this%delta_bmat_m%blk1(iflip, is)
       vukmat(2,1) =       - gpart(2,1) *this%delta_bmat_p%blk1(iflip, is)
@@ -101,12 +106,17 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
           bvec(i1,1+ik) = gmmat(i1,i1) - cone
           bvec(i2,2+ik) = gmmat(i2,i2) - cone
           if ( ratio_re_abs.gt.random ) then
+!$OMP PARALLEL &
+!$OMP PRIVATE ( m )
+!$OMP DO
               do m = 0, ik-2, 2
                   grow(:,1) = grow(:,1) + avec(:,1+m)*bvec(i1,1+m) + avec(:,2+m)*bvec(i1,2+m)
                   grow(:,2) = grow(:,2) + avec(:,1+m)*bvec(i2,1+m) + avec(:,2+m)*bvec(i2,2+m)
                   bvec(:,1+ik) = bvec(:,1+ik) + avec(i1,1+m)*bvec(:,1+m) + avec(i1,2+m)*bvec(:,2+m)
                   bvec(:,2+ik) = bvec(:,2+ik) + avec(i2,1+m)*bvec(:,1+m) + avec(i2,2+m)*bvec(:,2+m)
               end do
+!$OMP END DO
+!$OMP END PARALLEL
           end if
           avec(:,1+ik) = grow(:,1)*smat(1,1) + grow(:,2)*smat(2,1)
           avec(:,2+ik) = grow(:,1)*smat(1,2) + grow(:,2)*smat(2,2)

@@ -75,6 +75,9 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
       ! intial svec, wvec
       cvec_up = czero
       bvec_up = czero
+!$OMP PARALLEL &
+!$OMP PRIVATE ( is1, is2, i )
+!$OMP DO
       do i = 0, ik-2,2
         is1 = pvec_up(i+1)
         is2 = pvec_up(i+2)
@@ -87,7 +90,12 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
         bvec_up(1+i,2) = Fmat%blk1(is1,i2)
         bvec_up(2+i,2) = Fmat%blk1(is2,i2)
       end do
+!$OMP END DO
+!$OMP END PARALLEL
       v1 = czero
+!$OMP PARALLEL &
+!$OMP PRIVATE ( m, i )
+!$OMP DO
       do i = 0, ik-2,2
         do m = 0, ik-2,2
           v1(1,i+1) = v1(1,i+1) + cvec_up(1,m+1)*gammainv_up(m+1,i+1)+cvec_up(1,m+2)*gammainv_up(m+2,i+1)
@@ -96,13 +104,20 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
           v1(2,i+2) = v1(2,i+2) + cvec_up(2,m+1)*gammainv_up(m+1,i+2)+cvec_up(2,m+2)*gammainv_up(m+2,i+2)
         end do
       end do
+!$OMP END DO
+!$OMP END PARALLEL
       v = czero
+!$OMP PARALLEL &
+!$OMP PRIVATE ( i )
+!$OMP DO      
       do i = 0, ik-2,2
         v(1,1) = v(1,1) + v1(1,i+1)*bvec_up(i+1,1)+v1(1,i+2)*bvec_up(i+2,1)
         v(1,2) = v(1,2) + v1(1,i+1)*bvec_up(i+1,2)+v1(1,i+2)*bvec_up(i+2,2)
         v(2,1) = v(2,1) + v1(2,i+1)*bvec_up(i+1,1)+v1(2,i+2)*bvec_up(i+2,1)
         v(2,2) = v(2,2) + v1(2,i+1)*bvec_up(i+1,2)+v1(2,i+2)*bvec_up(i+2,2)
       end do
+!$OMP END DO
+!$OMP END PARALLEL
       v2(1,1) = this%delta_bmat_p%blk1(iflip,is)*(-v(1,1) + Fmat%blk1(i1,i1) ) + cone
       v2(1,2) = this%delta_bmat_m%blk1(iflip,is)*(-v(1,2) + Fmat%blk1(i1,i2))
       v2(2,1) = this%delta_bmat_p%blk1(iflip,is)*(-v(2,1) + Fmat%blk1(i2,i1))
@@ -149,6 +164,9 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
          gammainv_up(ik,ik) = v3(2,2)
 
          v4 = czero
+!$OMP PARALLEL &
+!$OMP PRIVATE ( m, i )
+!$OMP DO
           do i = 0, ik-4,2
             do m = 0, ik-4,2
               v4(i+1,1) = v4(i+1,1) + gammainv_up(i+1,m+1)*bvec_up(m+1,1)+gammainv_up(i+1,m+2)*bvec_up(m+2,1) 
@@ -157,6 +175,11 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
               v4(i+2,2) = v4(i+2,2) + gammainv_up(i+2,m+1)*bvec_up(m+1,2)+gammainv_up(i+2,m+2)*bvec_up(m+2,2)
             end do
           end do
+!$OMP END DO
+!$OMP END PARALLEL
+!$OMP PARALLEL &
+!$OMP PRIVATE ( i )
+!$OMP DO
           do i = 0, ik-4,2
             gammainv_up(ik-1,i+1) = gammainv_up(ik-1,i+1) - v3(1,1)*v1(1,i+1) - v3(1,2)*v1(2,i+1)
             gammainv_up(ik-1,i+2) = gammainv_up(ik-1,i+2) - v3(1,1)*v1(1,i+2) - v3(1,2)*v1(2,i+2)
@@ -167,11 +190,18 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
             gammainv_up(i+1,ik) = gammainv_up(i+1,ik) - v4(i+1,1)*v3(1,2) - v4(i+1,2)*v3(2,2)
             gammainv_up(i+2,ik) = gammainv_up(i+2,ik) - v4(i+2,1)*v3(1,2) - v4(i+2,2)*v3(2,2) 
           end do
+!$OMP END DO
+!$OMP END PARALLEL
+!$OMP PARALLEL &
+!$OMP PRIVATE ( m, i )
+!$OMP DO            
           do i = 1, ik-2
             do m = 1, ik-2
               gammainv_up(i,m) = gammainv_up(i,m) - v4(i,1)*gammainv_up(ik-1,m) - v4(i,2)*gammainv_up(ik,m)
             end do
           end do
+!$OMP END DO
+!$OMP END PARALLEL
           urrecord%blk1(i1,:) = urrecord%blk1(i1,:) + this%delta_bmat_p%blk1(iflip, is)*urrecord%blk1(i1,:)
           urrecord%blk1(i2,:) = urrecord%blk1(i2,:) + this%delta_bmat_m%blk1(iflip, is)*urrecord%blk1(i2,:)
           gmattmp1_up(:,ik-1) = Fmat%blk1(:,i1)

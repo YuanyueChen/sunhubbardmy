@@ -36,14 +36,9 @@ subroutine dqmc_update(this, gmat, ntau )
   accm  = 0.d0
   ik = 0
   ! initial diag G
-!$OMP PARALLEL &
-!$OMP PRIVATE ( isite )
-!$OMP DO
   do isite = 1, latt%nsites
       diagg_up(isite) = gmat%blk1(isite,isite)
   end do
-!$OMP END DO
-!$OMP END PARALLEL
   ! intial avec, bvec
   avec_up = czero
   bvec_up = czero
@@ -90,26 +85,16 @@ subroutine dqmc_update(this, gmat, ntau )
          ! store avec(:,ik) and bvec(:,ik)
          avec_up(:,ik) = gmat%blk1(:,isite)
          bvec_up(:,ik) = gmat%blk1(isite,:)
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m )
-!$OMP DO
          do m = 1, ik-1
              avec_up(:,ik) = avec_up(:,ik) + bvec_up(isite,m)*avec_up(:,m)
              bvec_up(:,ik) = bvec_up(:,ik) + avec_up(isite,m)*bvec_up(:,m)
          end do
-!$OMP END DO
-!$OMP END PARALLEL
          avec_up(:,ik) =avec_up(:,ik)*sscl%blk1
          bvec_up(isite,ik)=bvec_up(isite,ik) - cone
          ! update diag G
-!$OMP PARALLEL &
-!$OMP PRIVATE ( i )
-!$OMP DO
          do i = 1, ndim
              diagg_up(i) = diagg_up(i) + avec_up(i,ik)*bvec_up(i,ik)
          end do
-!$OMP END DO
-!$OMP END PARALLEL
          ! flip
          this%conf(isite,ntau) =  isp
      end if

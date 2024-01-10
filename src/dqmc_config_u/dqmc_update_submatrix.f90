@@ -65,36 +65,21 @@ subroutine dqmc_update(this, gmat, ntau )
       ! intial svec, wvec
       cvec_up = czero
       bvec_up = czero
-!!$OMP PARALLEL &
-!!$OMP PRIVATE ( isf, i )
-!!$OMP DO
       do i = 1, ik
         isf = pvec_up(i) 
         cvec_up(i) = gmat%blk1(isite,isf)
         bvec_up(i) = gmat%blk1(isf,isite)
       end do
-!!$OMP END DO
-!!$OMP END PARALLEL
       v1 = czero
-!!$OMP PARALLEL &
-!!$OMP PRIVATE ( m, i )
-!!$OMP DO REDUCTION ( + : v1 )
       do i = 1, ik
         do m = 1, ik
           v1(i) = v1(i) + cvec_up(m)*gammainv_up(m,i)
         end do
       end do
-!!$OMP END DO
-!!$OMP END PARALLEL
       v = czero
-!!$OMP PARALLEL &
-!!$OMP PRIVATE ( i )
-!!$OMP DO REDUCTION ( + : v )
       do i = 1, ik
         v = v + v1(i)*bvec_up(i)
       end do
-!!$OMP END DO
-!!$OMP END PARALLEL
       v2 = v + gmat%blk1(isite,isite) - cone 
       ratio1 = -v2 *this%delta_bmat%blk1(iflip, is) + cone
       ratiotot = ratio1**nflr
@@ -132,35 +117,20 @@ subroutine dqmc_update(this, gmat, ntau )
          v3 = cone/(-v + cone + cone/this%delta_bmat%blk1(iflip, is)-gmat%blk1(isite,isite))
          gammainv_up(ik,ik) = v3
          v4 = czero
-!!$OMP PARALLEL &
-!!$OMP PRIVATE ( m, i )
-!!$OMP DO REDUCTION ( + : v4 )
           do i = 1, ik-1
             do m = 1, ik-1
               v4(i) = v4(i) + gammainv_up(i,m)*bvec_up(m)
             end do
           end do
-!!$OMP END DO
-!!$OMP END PARALLEL
-!!$OMP PARALLEL &
-!!$OMP PRIVATE ( i )
-!!$OMP DO  
           do i = 1, ik-1
             gammainv_up(ik,i) = v3*v1(i)
             gammainv_up(i,ik) = v4(i)*v3
           end do
-!!$OMP END DO
-!!$OMP END PARALLEL
-!!$OMP PARALLEL &
-!!$OMP PRIVATE ( m, i )
-!!$OMP DO REDUCTION ( + : gammainv_up )
           do m = 1, ik-1
             do i = 1, ik-1
               gammainv_up(i,m) = gammainv_up(i,m) + v4(i)*v3*v1(m)
             end do
           end do
-!!$OMP END DO
-!!$OMP END PARALLEL
           Gcuta_up(:,isite) = Gcuta_up(:,isite) - this%delta_bmat%blk1(iflip, is)/(cone + this%delta_bmat%blk1(iflip, is))*Gcuta_up(:,isite)
           gmattmp1_up(:,ik) = gmat%blk1(:,isite)
          ! flip

@@ -14,7 +14,7 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 
     ! local
     complex(dp) ::  ratio1, ratiotot, delta
-    integer :: iflip, is, isp, i, i1, i2, ik, m, n, x
+    integer :: iflip, is, isp, i, i1, i2, ik, ik_mat, m, n, x
     real(dp) :: accm, ratio_re, ratio_re_abs, random, weight
 
     complex(dp), allocatable, dimension(:,:) :: vukmat
@@ -63,6 +63,7 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 
     accm  = 0.d0 ! acceptance rate
     ik = 0       ! delay step * k
+    ik_mat = 0   ! size of iktmp
 
     do i = 1, latt%nn_lf
         i1 = latt%nnlf_list(i)
@@ -107,9 +108,20 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 
         if ( ik > 0 ) then
 
+            ! check if we need to reallocate the matrices
+            if (ik_mat < ik) then
+                ik_mat = ik
+                if ( allocated( iktmp ) ) deallocate( iktmp )
+                allocate( iktmp(ik,ik) )
+                if ( allocated( ikktmp) ) deallocate( ikktmp )
+                allocate( ikktmp(ik,2) )
+                if ( allocated( kiktmp) ) deallocate( kiktmp )
+                allocate( kiktmp(2,ik) )
+                if ( allocated( kiktmp2) ) deallocate( kiktmp2 )
+                allocate( kiktmp2(2,ik) )
+            end if
+
             ! ikmat = (I + PFvecs * Delta^{(i-1)}P)^-1
-            if ( allocated( iktmp ) ) deallocate( iktmp )
-            allocate( iktmp(ik,ik) )
 !$OMP PARALLEL &
 !$OMP PRIVATE ( n, x, delta )
 !$OMP DO
@@ -131,8 +143,6 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
             call s_invlu_z(ik, iktmp)
 
             ! ikktmp = PFvecs * Delta_{i}P
-            if ( allocated( ikktmp) ) deallocate( ikktmp )
-            allocate( ikktmp(ik,2) )
 !$OMP PARALLEL &
 !$OMP PRIVATE ( m )
 !$OMP DO
@@ -144,8 +154,6 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 !$OMP END PARALLEL
 
             ! kiktmp = PFvec * Delta^{(i-1)}P
-            if ( allocated( kiktmp) ) deallocate( kiktmp )
-            allocate( kiktmp(2,ik) )
 !$OMP PARALLEL &
 !$OMP PRIVATE ( n, x, delta )
 !$OMP DO
@@ -159,8 +167,6 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 !$OMP END PARALLEL
 
             ! vuktmp = vuktmp - kiktmp * iktmp * ikktmp
-            if ( allocated( kiktmp2 ) ) deallocate( kiktmp2 )
-            allocate( kiktmp2(2,ik) )
             call zgemm('N', 'N', 2, ik, ik, cone, kiktmp, 2, iktmp, ik, czero, kiktmp2, 2)
             call zgemm('N', 'N', 2, 2, ik, -cone, kiktmp2, 2, ikktmp, ik, cone, vukmat, 2)
         
@@ -281,6 +287,7 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 #ENDIF
 
             ik = 0
+            ik_mat = 0
             ! initial xvec, Dvec and PFvecs
             xvec = czero
             Dvec = czero

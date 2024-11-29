@@ -49,7 +49,7 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
     allocate( PFvecs(nublock,ndim) ) ! P^{(i)}_{ik*N}*F
     allocate( PFvec(2,ndim) )        ! P^{(i)}_{k*N}*F
     allocate( Rrow(2,ne) )           ! P^{(i)}_{k*N}*R
-    allocate( Rtmp(2,ne) )
+    allocate( Rtmp(2,ne) )           ! P^{(i)}_{k*N}*R*(LR)^-1
 
 #IFDEF TEST
     write(fout, '(a)') ' in update_v'
@@ -60,6 +60,12 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
     ! Fmmat = Rmmat * L
     call zgemm('N', 'N', ndim, ndim, ne, cone, Rmmat%blk1, ndim, ul%blk1, ne, czero, Fmmat%blk1, ndim)
 #ENDIF
+
+    ! matrices for delay update
+    xvec = 0
+    Dvec = czero
+    PFvecs = czero
+    Vmat%blk1 = czero
 
     accm  = 0.d0 ! acceptance rate
     ik = 0       ! delay step * k
@@ -201,6 +207,9 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
             ! append PFvec to PFvecs
             PFvecs(ik-1,:) = PFvec(1,:)
             PFvecs(ik,:) = PFvec(2,:)
+            ! append Rtmp to Vmat
+            Vmat%blk1(ik-1,:) = Rtmp(1,:)
+            Vmat%blk1(ik,:) = Rtmp(2,:)
 
             ! flip
             this%conf(i,nf,ntau) =  isp
@@ -214,9 +223,8 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
             ! note that since (LR)^-1 depends on R, we should R later
             
             !! update (LR)^-1
-            ! obtain Umat=L*Delta^{(i)} and Vtmp = P_{ik*N}*R
+            ! obtain Umat=L*Delta^{(i)}
             Umat%blk1 = czero
-            Vtmp%blk1 = czero
 !$OMP PARALLEL &
 !$OMP PRIVATE ( m, x, delta )
 !$OMP DO
@@ -224,12 +232,9 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
                 x = xvec(m)
                 delta = Dvec(m)
                 Umat%blk1(:,m) = ul%blk1(:,x)*delta
-                Vtmp%blk1(m,:) = ur%blk1(x,:)
             end do
 !$OMP END DO
 !$OMP END PARALLEL
-            ! obtain Vmat = Vtmp*ulrinv
-            call zgemm('N', 'N', nublock, ne, ne, cone, Vtmp%blk1, nublock, ulrinv%blk1, ne, czero, Vmat%blk1, nublock)
             !
             ! obtain VUmat = (I + Vmat*Umat)^-1
             VUmat%blk1 = czero
@@ -292,6 +297,7 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
             xvec = czero
             Dvec = czero
             PFvecs = czero
+            Vmat%blk1 = czero
 
 #IFDEF TIMING
             call cpu_time_now(endtime11)

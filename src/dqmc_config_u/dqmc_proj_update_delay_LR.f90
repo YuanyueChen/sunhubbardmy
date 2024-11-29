@@ -77,14 +77,12 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             if ( allocated( iktmp ) ) deallocate( iktmp )
             allocate( iktmp(ik,ik) )
 !$OMP PARALLEL &
-!$OMP PRIVATE ( m, n, x, delta )
+!$OMP PRIVATE ( n, x, delta )
 !$OMP DO
-            do m = 1, ik
-                do n = 1, ik
-                    x = xvec(n)
-                    delta = Dvec(n)
-                    iktmp(m,n) = PFvecs(m,x)*delta
-                end do
+            do n = 1, ik
+                x = xvec(n)
+                delta = Dvec(n)
+                iktmp(:,n) = PFvecs(1:ik,x)*delta
             end do
 !$OMP END DO
 !$OMP END PARALLEL
@@ -200,27 +198,40 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 !$OMP END PARALLEL
             ! obtain Vmat = Vtmp*ulrinv
             call zgemm('N', 'N', nublock, ne, ne, cone, Vtmp%blk1, nublock, ulrinv%blk1, ne, czero, Vmat%blk1, nublock)
-            ! obtain VUmat = I + Vmat*Umat
+            !
+            ! obtain VUmat = (I + Vmat*Umat)^-1
             VUmat%blk1 = czero
+            ! VUmat = Vmat*Umat = PFvecs * Delta^{(i)}P
 !$OMP PARALLEL &
-!$OMP PRIVATE ( m )
+!$OMP PRIVATE ( n, x, delta )
 !$OMP DO
-            ! although VUmat may have only ik (< nublock) non-zero elements, we still use nublock here
-            ! otherwise the inverse of VUmat may throw error
-            ! this would not affect the final result since the two diagonal blocks in VUmat are inversed separately
-            do m = 1, nublock
-                VUmat%blk1(m,m) = cone
+            do n = 1, ik
+                x = xvec(n)
+                delta = Dvec(n)
+                VUmat%blk1(:,n) = PFvecs(:,x)*delta
             end do
 !$OMP END DO
 !$OMP END PARALLEL
-            call zgemm('N', 'N', nublock, nublock, ne, cone, Vmat%blk1, nublock, Umat%blk1, ne, cone, VUmat%blk1, nublock)
-            ! obtain (VUmat)^-1
+            ! VUmat = I + Vmat*Umat
+!$OMP PARALLEL &
+!$OMP PRIVATE ( m )
+!$OMP DO
+            do m = 1, nublock
+                ! although VUmat may have only ik (< nublock) non-zero elements, we still use nublock here
+                ! otherwise the inverse of VUmat may throw error
+                ! this would not affect the final result since the two diagonal blocks in VUmat are inversed separately
+                VUmat%blk1(m,m) = VUmat%blk1(m,m) + cone
+            end do
+!$OMP END DO
+!$OMP END PARALLEL
+            ! VUmat = (I + Vmat*Umat)^-1
             call s_invlu_z(nublock, VUmat%blk1)
-            ! obtain Vtmp = VUmat^-1 * Vmat
+            !
+            ! obtain Vtmp = VUmat * Vmat
             call zgemm('N', 'N', nublock, ne, nublock, cone, VUmat%blk1, nublock, Vmat%blk1, nublock, czero, Vtmp%blk1, nublock)
             ! obtain Utmp = ulrinv * Umat
             call zgemm('N', 'N', ne, nublock, ne, cone, ulrinv%blk1, ne, Umat%blk1, ne, czero, Utmp%blk1, ne)
-            ! obtain new ulrinv = ulrinv - Utmp * Vtmp
+            ! obtain new ulrinv = ulrinv - (ulrinv * Umat) * ((I + Vmat*Umat)^-1 * Vmat)
             call zgemm('N', 'N', ne, ne, nublock, -cone, Utmp%blk1, ne, Vtmp%blk1, nublock, cone, ulrinv%blk1, ne)
             
             !! update R^{(n)} = (I + Delta^{(i)}) R^{(0)}

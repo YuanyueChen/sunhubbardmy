@@ -23,9 +23,9 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
     complex(dp), allocatable, dimension(:) :: Dvec
     complex(dp), allocatable, dimension(:,:) :: PFDP
     complex(dp) :: PFDP_kk
-    complex(dp), allocatable, dimension(:) :: PFDP_ikk, PFDP_kik
+    complex(dp), allocatable, dimension(:) :: PFDP_ikk, PFDP_kik ! change size at each step
     complex(dp), allocatable, dimension(:) :: Rrow, Rtmp, LDcol
-    complex(dp), allocatable, dimension(:,:) :: neiktmp, iknetmp, iknetmp2 ! change size at each step
+    complex(dp), allocatable, dimension(:,:) :: neiktmp, iknetmp ! change size at each step
     complex(dp), allocatable, dimension(:,:) :: iktmp ! change size at each step
     complex(dp), allocatable, dimension(:) :: ikktmp ! change size at each step
     type(gfunc) :: Umat, Utmp, Vmat, Vtmp, VUmat, VUtmp ! for update (LR)^-1
@@ -52,6 +52,13 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
     allocate( Rrow(ne) )              ! P^{(i)}_{1*N}*R
     allocate( Rtmp(ne) )
     allocate( LDcol(ne) )             ! L*Delta_{i}*P^{(i)}_{N*1}
+
+    ! matrices for delay update
+    xvec = 0
+    Dvec = czero
+    PFDP = czero
+    Vmat%blk1 = czero
+    Umat%blk1 = czero
 
     accm  = 0.d0 ! acceptance rate
     ik = 0       ! delay step * k
@@ -86,39 +93,22 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             ! check if we need to reallocate the matrices
             if (ik_mat < ik) then
                 ik_mat = ik
-                if ( allocated( iknetmp2 ) ) deallocate( iknetmp2 )
-                allocate( iknetmp2(ik,ne) )
                 if ( allocated( PFDP_ikk ) ) deallocate( PFDP_ikk )
                 allocate( PFDP_ikk(ik) )
-                if ( allocated( iknetmp ) ) deallocate( iknetmp )
-                allocate( iknetmp(ik,ne) )
-                if ( allocated( neiktmp ) ) deallocate( neiktmp )
-                allocate( neiktmp(ne,ik) )
                 if ( allocated( PFDP_kik ) ) deallocate( PFDP_kik )
                 allocate( PFDP_kik(ik) )
             end if
             !!! obtain PFDP_kik
             ! neiktmp = L*Delta^{(i)}*P^{(i)}_{N*ik}
-            ! iknetmp = P^{(i)}_{ik*N}*R
-!$OMP PARALLEL &
-!$OMP PRIVATE ( n, x, delta )
-!$OMP DO
-            do n = 1, ik
-                x = xvec(n)
-                delta = Dvec(n)
-                neiktmp(:,n) = ul%blk1(:,x)*delta
-                iknetmp(n,:) = ur%blk1(x,:)
-            end do
-!$OMP END DO
-!$OMP END PARALLEL
+            neiktmp = Umat%blk1(:,1:ik)
             ! PFDP_kik = Rtmp * neiktmp = P^{(i+1)}_{k*N}*F*Delta^{(i)}*P^{(i)}_{N*ik}
             call zgemv('T', ne, ik, cone, neiktmp, ne, Rtmp, 1, czero, PFDP_kik, 1)
             !
             !!! obtain PFDP_ikk
-            ! iknetmp2 = iknetmp * (LR)^-1
-            call zgemm('N', 'N', ik, ne, ne, cone, iknetmp, ik, ulrinv%blk1, ne, czero, iknetmp2, ik)
-            ! PFDP_ikk = iknetmp2 * LDcol = P^{(i)}_{ik*N}*F*Delta*P^{(i+1)}_{N*k}
-            call zgemv('N', ik, ne, cone, iknetmp2, ik, LDcol, 1, czero, PFDP_ikk, 1)
+            ! iknetmp = P^{(i)}_{ik*N}*R*ulrinv
+            iknetmp = Vmat%blk1(1:ik,:)
+            ! PFDP_ikk = iknetmp * LDcol = P^{(i)}_{ik*N}*F*Delta*P^{(i+1)}_{N*k}
+            call zgemv('N', ik, ne, cone, iknetmp, ik, LDcol, 1, czero, PFDP_ikk, 1)
         end if
 
 
@@ -191,6 +181,9 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
                 PFDP(1:ik-1,ik) = PFDP_ikk
                 PFDP(ik,1:ik-1) = PFDP_kik
             end if
+            ! append Rtmp, LDcol to Vmat%blk1, Umat%blk1
+            Vmat%blk1(ik,:) = Rtmp(:)
+            Umat%blk1(:,ik) = LDcol(:)
             
             ! flip
             this%conf(isite,ntau) =  isp
@@ -204,22 +197,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             ! note that since (LR)^-1 depends on R, we should R later
             
             !! update (LR)^-1
-            ! obtain Umat=L*Delta^{(i)}*P^{(i)}_{N*ik} and Vtmp = P_{ik*N}*R
-            Umat%blk1 = czero
-            Vtmp%blk1 = czero
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m, x, delta )
-!$OMP DO
-            do m = 1, ik
-                x = xvec(m)
-                delta = Dvec(m)
-                Umat%blk1(:,m) = ul%blk1(:,x)*delta
-                Vtmp%blk1(m,:) = ur%blk1(x,:)
-            end do
-!$OMP END DO
-!$OMP END PARALLEL
-            ! obtain Vmat = Vtmp*ulrinv
-            call zgemm('N', 'N', nublock, ne, ne, cone, Vtmp%blk1, nublock, ulrinv%blk1, ne, czero, Vmat%blk1, nublock)
+            ! we already have Umat=L*Delta^{(i)}*P^{(i)}_{N*ik} and Vmat = P^{(i)}_{ik*N}*R*ulrinv
             !
             ! obtain VUmat = (I + Vmat*Umat)^-1
             ! VUmat = Vmat*Umat = PFDP
@@ -264,6 +242,9 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             xvec = czero
             Dvec = czero
             PFDP = czero
+            ! initial Vmat, Umat
+            Vmat%blk1 = czero
+            Umat%blk1 = czero
 
 #IFDEF TIMING
             call cpu_time_now(endtime11)

@@ -58,7 +58,7 @@ module dqmc_config_v
 #elif defined(DELAY)
 #include 'dqmc_config_v/dqmc_update_delay.f90'
 #if defined(DELAYLR)
-#include 'dqmc_config_v/dqmc_proj_update_delay_LR.f90'
+#include 'dqmc_config_v/dqmc_proj_update_delay_LR2.f90'
 #else
 #include 'dqmc_config_v/dqmc_proj_update_delay.f90'
 #endif

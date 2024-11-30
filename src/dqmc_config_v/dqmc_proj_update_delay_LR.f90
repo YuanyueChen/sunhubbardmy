@@ -208,8 +208,7 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
             PFvecs(ik-1,:) = PFvec(1,:)
             PFvecs(ik,:) = PFvec(2,:)
             ! append Rtmp to Vmat
-            Vmat%blk1(ik-1,:) = Rtmp(1,:)
-            Vmat%blk1(ik,:) = Rtmp(2,:)
+            Vmat%blk1(ik-1:ik,:) = Rtmp(:,:)
 
             ! flip
             this%conf(i,nf,ntau) =  isp

@@ -194,7 +194,6 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             call cpu_time_now(starttime11)
 #ENDIF     
             ! delay update: update (LR)^-1 and R
-            ! note that since (LR)^-1 depends on R, we should R later
             
             !! update (LR)^-1
             ! we already have Umat=L*Delta^{(i)}*P^{(i)}_{N*ik} and Vmat = P^{(i)}_{ik*N}*R*ulrinv

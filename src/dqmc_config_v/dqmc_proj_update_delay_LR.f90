@@ -178,7 +178,7 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
         
         end if
 
-        call s_inv_det_qr_z(2, vukmat, ratio1) ! cal det(I+vukmat)
+        ratio1 = vukmat(1,1)*vukmat(2,2) - vukmat(1,2)*vukmat(2,1)
         ratiotot = ratio1
 #IFDEF TEST
         write(fout, '(a,2e16.8)') ' in update_v, ratiotot = ', ratiotot

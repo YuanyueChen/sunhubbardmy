@@ -64,7 +64,11 @@ module dqmc_config_v
 #endif
 #elif defined(SUBMATRIX)
 #include 'dqmc_config_v/dqmc_update_submatrix.f90'
+#if defined(DELAYLR)
+#include 'dqmc_config_v/dqmc_proj_update_submatrix_LR.f90'
+#else
 #include 'dqmc_config_v/dqmc_proj_update_submatrix.f90'
+#endif
 #else
 #include 'dqmc_config_v/dqmc_update.f90'
 #include 'dqmc_config_v/dqmc_proj_update.f90'

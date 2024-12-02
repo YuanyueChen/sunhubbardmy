@@ -21,10 +21,12 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 
     integer, allocatable, dimension(:) :: xvec
     complex(dp), allocatable, dimension(:) :: Dvec
-    complex(dp), allocatable, dimension(:,:) :: PFDP, PFDP_kk, PFDP_ikk, PFDP_kik
-    complex(dp), allocatable, dimension(:,:) :: Rrow, Rtmp, LDcol
+    complex(dp), allocatable, dimension(:,:) :: Gammainv
+    complex(dp), allocatable, dimension(:,:) :: Rrow, Rtmp, LDcol ! intermediate matrices when calculating PFDP
+    complex(dp), allocatable, dimension(:,:) :: PFDP_kk, PFDP_ikk, PFDP_kik ! change size at each step
     complex(dp), allocatable, dimension(:,:) :: neiktmp, iknetmp ! change size at each step
     complex(dp), allocatable, dimension(:,:) :: iktmp, ikktmp ! change size at each step
+    complex(dp), allocatable, dimension(:,:) :: kiktmp, Gammainv_kk ! for update Gammainv
     type(gfunc) :: Umat, Utmp, Vmat, Vtmp, VUmat, VUtmp ! for update (LR)^-1
     type(gfunc) :: Fmmat, Rmmat
 
@@ -36,7 +38,7 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 #ENDIF
 
 #IFDEF TEST
-    write(fout, '(a,2e16.8)') ' in update_v using delay LR'
+    write(fout, '(a,2e16.8)') ' in update_v using submatrix LR'
 #ENDIF
 
     ! for delay update (LR)^-1
@@ -51,11 +53,12 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
     allocate( vukmat(2,2) )           ! I + Vcal*D
     allocate( xvec(nublock) )         ! x^{(i)}_{j}, j=(i-1)*k+1,...,i*k
     allocate( Dvec(nublock))          ! Delta_{i}(j), i=1,...,nublock/k, j=1,...,k
-    allocate( PFDP(nublock,nublock) ) ! P^{(i)}_{ik*N}*F*Delta^{(i)}*P^{(i)}_{N*ik}
     allocate( PFDP_kk(2,2) )          ! P^{(i+1)}_{k*N}*F*Delta*P^{(i+1)}_{N*k}
     allocate( Rrow(2,ne) )            ! P^{(i)}_{k*N}*R
     allocate( Rtmp(2,ne) )
     allocate( LDcol(ne,2) )           ! L*Delta_{i}*P^{(i)}_{N*k}
+    allocate( Gammainv(nublock,nublock) )
+    allocate( Gammainv_kk(2,2))       ! (I + Vcal*D)^{-1}
 
 #IFDEF TEST
     write(fout, '(a)') ' in update_v'
@@ -70,7 +73,7 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
     ! matrices for delay update
     xvec = 0
     Dvec = czero
-    PFDP = czero
+    Gammainv = czero
     Vmat%blk1 = czero
     Umat%blk1 = czero
 
@@ -189,20 +192,9 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
         vukmat(1,2) = PFDP_kk(1,2)
         vukmat(2,2) = PFDP_kk(2,2) + cone
         vukmat(2,1) = PFDP_kk(2,1)
-
         if ( ik > 0 ) then
-            ! iktmp = (I + PFDP)^-1
-            iktmp = PFDP(1:ik,1:ik)
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m )
-!$OMP DO
-            do m = 1, ik
-                iktmp(m,m) = iktmp(m,m) + cone
-            end do
-!$OMP END DO
-!$OMP END PARALLEL
-            call s_invlu_z(ik, iktmp)
-
+            ! iktmp = Gammainv
+            iktmp = Gammainv(1:ik,1:ik)
             ! ikktmp = iktmp*PFDP_ikk
             call zgemm('N', 'N', ik, 2, ik, cone, iktmp, ik, PFDP_ikk, ik, czero, ikktmp, ik)
             ! vukmat = vukmat - PFDP_kik*ikktmp
@@ -229,18 +221,51 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
             write(fout, '(a,2e16.8)') ' in update_v, phase = ', phase
 #ENDIF
 
+            ! update Gammainv: from (ik*ik) Gammainv^{(i)} to ((ik+2)*(ik+2)) Gammainv^{(i+1)} 
+            !! obtain Gammainv_kk = (I + Vcal*D)^-1 = vukmat^-1
+            Gammainv_kk(1,1) = vukmat(2,2)
+            Gammainv_kk(1,2) = -vukmat(1,2)
+            Gammainv_kk(2,1) = -vukmat(2,1)
+            Gammainv_kk(2,2) = vukmat(1,1)
+            Gammainv_kk = Gammainv_kk/ratio1
+            ! update 22 block of Gammainv
+            Gammainv(ik+1:ik+2,ik+1:ik+2) = Gammainv_kk(:,:)
+            if ( ik > 0 ) then
+                !! obtain Gammainv_ikk = - Gammainv^{(i)} * PFDP_ikk * Gammainv_kk
+                ! we already have ikktmp = Gammainv^{(i)} * PFDP_ikk
+                ! PFDP_ikk is useless now
+                ! PFDP_ikk = - ikktmp * Gammainv_kk = Gammainv_ikk
+                call zgemm('N', 'N', ik, 2, 2, -cone, ikktmp, ik, Gammainv_kk, 2, czero, PFDP_ikk, ik)
+                ! update 12 block of Gammainv
+                Gammainv(1:ik,ik+1:ik+2) = PFDP_ikk(:,:)
+
+                !! obtain Gammainv_kik = - Gammainv_kk * PFDP_kik * Gammainv^{(i)}
+                ! we already have iktmp = Gammainv^{(i)}
+                ! kiktmp = PFDP_kik * Gammainv^{(i)}
+                kiktmp = PFDP_kik(:,:) ! a new (re-)allocated temporary matrix
+                call zgemm('N', 'N', 2, ik, ik, cone, PFDP_kik, 2, iktmp, ik, czero, kiktmp, 2)
+                ! PFDP_kik is useless now
+                ! PFDP_kik = - Gammainv_kk * kiktmp = Gammainv_kik
+                call zgemm('N', 'N', 2, ik, 2, -cone, Gammainv_kk, 2, kiktmp, 2, czero, PFDP_kik, 2)
+                ! update 21 block of Gammainv
+                Gammainv(ik+1:ik+2,1:ik) = PFDP_kik(:,:)
+
+                !! obtain Gammainv_ik = Gammainv^{(i)} - Gammainv^{(i)} * PFDP_ikk * Gammainv_kik
+                ! we already have ikktmp = Gammainv^{(i)} * PFDP_ikk
+                ! we already have PFDP_kik = Gammainv_kik
+                ! we already have iktmp = Gammainv^{(i)}
+                ! iktmp = iktmp - ikktmp * PFDP_kik
+                call zgemm('N', 'N', ik, ik, 2, -cone, ikktmp, ik, PFDP_kik, 2, cone, iktmp, ik)
+                ! update 11 block of Gammainv
+                Gammainv(1:ik,1:ik) = iktmp(:,:)
+            end if
+
             ik = ik + 2
             ! store xvec and Dvec
             xvec(ik-1) = i1
             xvec(ik) = i2
             Dvec(ik-1) = this%delta_bmat_p%blk1(iflip,is)
             Dvec(ik) = this%delta_bmat_m%blk1(iflip,is)
-            ! enlarge PFDP
-            PFDP(ik-1:ik,ik-1:ik) = PFDP_kk
-            if ( ik > 2 ) then
-                PFDP(1:ik-2,ik-1:ik) = PFDP_ikk
-                PFDP(ik-1:ik,1:ik-2) = PFDP_kik
-            end if
             ! append Rtmp, LDcol to Vmat%blk1, Umat%blk1
             Vmat%blk1(ik-1:ik,:) = Rtmp(:,:)
             Umat%blk1(:,ik-1:ik) = LDcol(:,:)
@@ -256,31 +281,15 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
             ! delay update: update (LR)^-1 and R
             
             !! update (LR)^-1
-            ! we already have Umat=L*Delta^{(i)}*P^{(i)}_{N*ik} and Vmat = P^{(i)}_{ik*N}*R*ulrinv
-            !
-            ! obtain VUmat = (I + Vmat*Umat)^-1
-            ! VUmat = Vmat*Umat = PFDP
-            VUmat%blk1 = PFDP(:,:)
-            ! VUmat = I + Vmat*Umat
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m )
-!$OMP DO
-            do m = 1, nublock
-                ! although VUmat may have only ik (< nublock) non-zero elements, we still use nublock here
-                ! otherwise the inverse of VUmat may throw error
-                ! this would not affect the final result since the two diagonal blocks in VUmat are inversed separately
-                VUmat%blk1(m,m) = VUmat%blk1(m,m) + cone
-            end do
-!$OMP END DO
-!$OMP END PARALLEL
-            ! VUmat = (I + Vmat*Umat)^-1
-            call s_invlu_z(nublock, VUmat%blk1)
-            !
-            ! obtain Vtmp = VUmat * Vmat
-            call zgemm('N', 'N', nublock, ne, nublock, cone, VUmat%blk1, nublock, Vmat%blk1, nublock, czero, Vtmp%blk1, nublock)
+            ! (LR)^-1 = (LR)^-1 - (LR)^-1 * Umat * (I + Vmat*Umat)^-1 * Vmat
+            ! we already have Umat=L*Delta^{(i)}*P^{(i)}_{N*ik} and Vmat = P^{(i)}_{ik*N}*R*(LR)^-1
+            ! we already have Gammainv = (I + Vmat*Umat)^-1
+            ! 
+            ! obtain Vtmp = Gammainv * Vmat
+            call zgemm('N', 'N', nublock, ne, nublock, cone, Gammainv, nublock, Vmat%blk1, nublock, czero, Vtmp%blk1, nublock)
             ! obtain Utmp = ulrinv * Umat
             call zgemm('N', 'N', ne, nublock, ne, cone, ulrinv%blk1, ne, Umat%blk1, ne, czero, Utmp%blk1, ne)
-            ! obtain new ulrinv = ulrinv - (ulrinv * Umat) * ((I + Vmat*Umat)^-1 * Vmat)
+            ! obtain new ulrinv = ulrinv - (ulrinv * Umat) * (Gammainv * Vmat)
             call zgemm('N', 'N', ne, ne, nublock, -cone, Utmp%blk1, ne, Vtmp%blk1, nublock, cone, ulrinv%blk1, ne)
             
             !! update R^{(n)} = (I + Delta^{(i)}) R^{(0)}
@@ -305,10 +314,10 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 
             ik = 0
             ik_mat = 0
-            ! initial xvec, Dvec and PFvecs
+            ! initial xvec, Dvec and Gammainv
             xvec = czero
             Dvec = czero
-            PFDP = czero
+            Gammainv = czero
             ! initial Vmat, Umat
             Vmat%blk1 = czero
             Umat%blk1 = czero

@@ -53,8 +53,8 @@
     zn_bin = zn_bin + zn*zphi
     ! call measure_nnnn(gf,gfc)
     ! znnnn_bin = znnnn_bin + znnnn*zphi
-    call measure_Crmax(gf,gfc)
-    zCrmax_bin = zCrmax_bin + zCrmax*zphi    
+    !call measure_Crmax(gf,gfc)
+    !zCrmax_bin = zCrmax_bin + zCrmax*zphi    
     call measure_jj(gf,gfc)
     zjj_bin = zjj_bin + zjj*zphi
     zj_bin = zj_bin + zj*zphi

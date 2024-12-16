@@ -259,7 +259,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 
 #IFDEF TIMING
             call cpu_time_now(endtime11)
-            timecalculation(21)=timecalculation(21)+endtime11-starttime11
+            timecalculation(20)=timecalculation(20)+endtime11-starttime11
 #ENDIF
         end if
     end do
@@ -267,6 +267,6 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 
 #IFDEF TIMING
     call cpu_time_now(endtime)
-    timecalculation(15)=timecalculation(15)+endtime-starttime
+    timecalculation(17)=timecalculation(17)+endtime-starttime
 #ENDIF
 end subroutine dqmc_proj_update

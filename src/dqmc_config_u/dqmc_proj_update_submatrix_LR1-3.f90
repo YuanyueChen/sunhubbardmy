@@ -99,46 +99,31 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
         LDcol(:) = ul%blk1(:,isite)*this%delta_bmat%blk1(iflip,is)
         ! PFDP_kk = Rtmp * LDcol = P^{(i+1)}_{k*N}*F*Delta*P^{(i+1)}_{N*k}
         PFDP_kk = czero
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m )
-!$OMP DO
         do m = 1, ne
             !! Warning: BLAS level 1 operation (inner product)
             PFDP_kk = PFDP_kk + Rtmp(m)*LDcol(m)
         end do
-!$OMP END DO
-!$OMP END PARALLEL
         !
         if ( ik > 0 ) then
             !!! obtain PFDP_kik
             ! Umat%blk1 = L*Delta^{(i)}*P^{(i)}_{N*ik}
             ! PFDP_kik = Rtmp * Umat%blk1 = P^{(i+1)}_{k*N}*F*Delta^{(i)}*P^{(i)}_{N*ik}
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m )
-!$OMP DO
             do m = 1, ik
                 PFDP_kik(m) = czero
                 do n = 1, ne
                     PFDP_kik(m) = PFDP_kik(m) + Rtmp(n)*Umat%blk1(n,m)
                 end do
             end do
-!$OMP END DO
-!$OMP END PARALLEL
             !
             !!! obtain PFDP_ikk
             ! Vmat%blk1 = P^{(i)}_{ik*N}*R*ulrinv
             ! PFDP_ikk = Vmat%blk1 * LDcol = P^{(i)}_{ik*N}*F*Delta*P^{(i+1)}_{N*k}
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m )
-!$OMP DO
             do m = 1, ik
                 PFDP_ikk(m) = czero
                 do n = 1, ne
                     PFDP_ikk(m) = PFDP_ikk(m) + Vmat%blk1(m,n)*LDcol(n)
                 end do
             end do
-!$OMP END DO
-!$OMP END PARALLEL
         end if
 
 
@@ -147,27 +132,17 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
         vukmat = cone + PFDP_kk
         if ( ik > 0 ) then
             ! ikktmp = Gammainv*PFDP_ikk
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m )
-!$OMP DO
             do m = 1, ik
                 ikktmp(m) = czero
                 do n = 1, ik
                     ikktmp(m) = ikktmp(m) + Gammainv(m,n)*PFDP_ikk(n)
                 end do
             end do
-!$OMP END DO
-!$OMP END PARALLEL
             ! vukmat = vukmat - PFDP_kik * ikktmp
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m )
-!$OMP DO
             do m = 1, ik
                 !! warning: BLAS level 1 operation (inner product)
                 vukmat = vukmat - PFDP_kik(m)*ikktmp(m)
             end do
-!$OMP END DO
-!$OMP END PARALLEL
         end if
         
         ratio1 = vukmat
@@ -203,17 +178,12 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             if ( ik > 0 ) then
                 !! obtain Gammainv_kik = - Gammainv_kk * PFDP_kik * Gammainv^{(i)}
                 ! kiktmp = PFDP_kik * Gammainv^{(i)}
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m )
-!$OMP DO
                 do m = 1, ik
                     kiktmp(m) = czero
                     do n = 1, ik
                         kiktmp(m) = kiktmp(m) + PFDP_kik(n)*Gammainv(n,m)
                     end do
                 end do
-!$OMP END DO
-!$OMP END PARALLEL
                 ! Gammainv_kik = - Gammainv_kk * kiktmp = Gammainv_kik
                 ! update 21 block of Gammainv
                 Gammainv(ik+1,1:ik) = - Gammainv_kk * kiktmp(1:ik)
@@ -275,16 +245,11 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             call zgemm('N', 'N', ne, ne, nublock, -cone, Utmp%blk1, ne, Vtmp%blk1, nublock, cone, ulrinv%blk1, ne)
             
             !! update R^{(n)} = (I + Delta^{(i)}) R^{(0)}
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m, x, delta )
-!$OMP DO
             do m = 1, ik
                 x = xvec(m)
                 delta = Dvec(m)
                 ur%blk1(x,:) = ur%blk1(x,:) + delta*ur%blk1(x,:)
             end do
-!$OMP END DO
-!$OMP END PARALLEL
 
             ik = 0
             ik_mat = 0

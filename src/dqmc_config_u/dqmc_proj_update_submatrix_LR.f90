@@ -88,15 +88,10 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
         LDcol(:) = ul%blk1(:,isite)*this%delta_bmat%blk1(iflip,is)
         ! PFDP_kk = Rtmp * LDcol = P^{(i+1)}_{k*N}*F*Delta*P^{(i+1)}_{N*k}
         PFDP_kk = czero
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m )
-!$OMP DO
         do m = 1, ne
             !! Warning: BLAS level 1 operation (inner product)
             PFDP_kk = PFDP_kk + Rtmp(m)*LDcol(m)
         end do
-!$OMP END DO
-!$OMP END PARALLEL
         !
         if ( ik > 0 ) then
             ! check if we need to reallocate the matrices
@@ -132,15 +127,10 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             ! ikktmp = iktmp*PFDP_ikk
             call zgemv('N', ik, ik, cone, iktmp, ik, PFDP_ikk, 1, czero, ikktmp, 1)
             ! vukmat = vukmat - PFDP_kik * ikktmp
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m )
-!$OMP DO
             do m = 1, ik
                 !! warning: BLAS level 1 operation (inner product)
                 vukmat = vukmat - PFDP_kik(m)*ikktmp(m)
             end do
-!$OMP END DO
-!$OMP END PARALLEL
         end if
         
         ratio1 = vukmat
@@ -244,16 +234,11 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             call zgemm('N', 'N', ne, ne, nublock, -cone, Utmp%blk1, ne, Vtmp%blk1, nublock, cone, ulrinv%blk1, ne)
             
             !! update R^{(n)} = (I + Delta^{(i)}) R^{(0)}
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m, x, delta )
-!$OMP DO
             do m = 1, ik
                 x = xvec(m)
                 delta = Dvec(m)
                 ur%blk1(x,:) = ur%blk1(x,:) + delta*ur%blk1(x,:)
             end do
-!$OMP END DO
-!$OMP END PARALLEL
 
             ik = 0
             ik_mat = 0

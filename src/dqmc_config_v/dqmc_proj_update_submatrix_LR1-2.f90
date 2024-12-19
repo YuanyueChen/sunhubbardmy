@@ -293,16 +293,11 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
             call zgemm('N', 'N', ne, ne, ik, -cone, Utmp%blk1, ne, Vtmp%blk1, nublock, cone, ulrinv%blk1, ne)
             
             !! update R^{(n)} = (I + Delta^{(i)}) R^{(0)}
-!$OMP PARALLEL &
-!$OMP PRIVATE ( m, x, delta )
-!$OMP DO
             do m = 1, ik
                 x = xvec(m)
                 delta = Dvec(m)
                 ur%blk1(x,:) = ur%blk1(x,:) + delta*ur%blk1(x,:)
             end do
-!$OMP END DO
-!$OMP END PARALLEL
 #IFDEF TEST
             ! update Fmmat
             ! Rmmat = R * (LR)^-1

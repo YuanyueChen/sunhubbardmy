@@ -1,8 +1,8 @@
 subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
-!! update the configuration using submatrix LR2
+!! update the configuration using submatrix LR2-2
 !! intemediate vectors are preallocated through an oversize array
 !! the matrix-vector multiplications are collected in group of "stocks" and done by calling zgemm
-!! update is controlled by nublock
+!! update is controlled by nustock
     use spring
     use model_para
     use dqmc_basic_data
@@ -48,17 +48,17 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 #ENDIF
 
     ! for delay update (LR)^-1
-    call allocate_gfunc( Umat, ne, nublock )
-    call allocate_gfunc( Utmp, ne, nublock )
-    call allocate_gfunc( Vmat, nublock, ne )
-    call allocate_gfunc( Vtmp, nublock, ne )
-    call allocate_gfunc( VUmat, nublock, nublock )
-    call allocate_gfunc( VUtmp, nublock, nublock )
+    call allocate_gfunc( Umat, ne, nustock )
+    call allocate_gfunc( Utmp, ne, nustock )
+    call allocate_gfunc( Vmat, nustock, ne )
+    call allocate_gfunc( Vtmp, nustock, ne )
+    call allocate_gfunc( VUmat, nustock, nustock )
+    call allocate_gfunc( VUtmp, nustock, nustock )
 
     ! for calculate update ratio
-    allocate( xvec(nublock) )         ! x^{(i)}
-    allocate( Dvec(nublock) )         ! Delta_{i}, i=1,...,nublock
-    allocate( Gammainv(nublock,nublock) )
+    allocate( xvec(nustock) )         ! x^{(i)}
+    allocate( Dvec(nustock) )         ! Delta_{i}, i=1,...,nublock
+    allocate( Gammainv(nustock,nustock) )
 
     ! matrices for delay update
     xvec = 0
@@ -68,10 +68,10 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
     Umat%blk1 = czero
 
     ! preallocate oversize arrays for intermediate matrices
-    allocate( kiktmp(nublock) )
-    allocate( ikktmp(nublock) )
-    allocate( PFP_ikk(nublock) )
-    allocate( PFP_kik(nublock) )
+    allocate( kiktmp(nustock) )
+    allocate( ikktmp(nustock) )
+    allocate( PFP_ikk(nustock) )
+    allocate( PFP_kik(nustock) )
     kiktmp = czero
     ikktmp = czero
     PFP_ikk = czero
@@ -109,24 +109,6 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             istk_s = isite
             istk_e = isite + nustkup - 1
             nstk = nustkup
-        else if ((nstk > 0) .and. (istk_e < isite)) then
-            nustkup = min(nustock, latt%nsites - isite + 1)
-#ifdef TEST
-            write(fout, '(a,i4,a,i4)') ' in update_u, istk_e = ', istk_e, ' isite = ', isite
-            write(fout, '(a,i4,a,i4)') ' in update_u, stock up intermediate matrices from ', isite, ' to ', isite+nustkup-1
-#endif
-            ! new Rrows = R(LR)^-1(isite:isite+nustkup-1,:)
-            call zgemm('N', 'N', nustkup, ne, ne, cone, ur%blk1(isite,1), ndim, ulrinv%blk1, ne, czero, Rrows(isite,1), ndim)
-            ! new Lcols = L(:,isite:isite+nustkup-1)
-            ! Lcols(:,isite:isite+nustkup-1) = ul%blk1(:,isite:isite+nustkup-1)
-            ! new Felms_12 = R(LR)^-1*L(istk_s:istk_e,isite:isite+nustkup-1)
-            call zgemm('N', 'N', nstk, nustkup, ne, cone, Rrows(istk_s,1), ndim, ul%blk1(1,isite), ne, czero, Felms(istk_s,isite), ndim)
-            ! new Felms_21 = R(LR)^-1*L(isite:isite+nustkup-1,istk_s:istk_e)
-            call zgemm('N', 'N', nustkup, nstk, ne, cone, Rrows(isite,1), ndim, ul%blk1(1,istk_s), ne, czero, Felms(isite,istk_s), ndim)
-            ! new Felms_22 = R(LR)^-1*L(isite:isite+nustkup-1,isite:isite+nustkup-1)
-            call zgemm('N', 'N', nustkup, nustkup, ne, cone, Rrows(isite,1), ndim, ul%blk1(1,isite), ne, czero, Felms(isite,isite), ndim)
-            istk_e = isite + nustkup - 1
-            nstk = nstk + nustkup
         end if
 
         !! obtain new blocks of PFP = P^{(i+1)}_{(i+1)k*N}*F*P^{(i+1)}_{N*(i+1)k}
@@ -242,7 +224,8 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             this%conf(isite,ntau) =  isp
         end if
 
-        if( (ik.eq.nublock) .or. (isite.eq.latt%nsites) ) then
+        ! when the stock arrays are running out, update (LR)^-1
+        if( (isite == istk_e) .or. (isite == latt%nsites) ) then
 #IFDEF TIMING
             call cpu_time_now(starttime11)
 #ENDIF     

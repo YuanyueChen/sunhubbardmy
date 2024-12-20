@@ -233,6 +233,7 @@ module dqmc_util
     write(fout,'(a,i6)')      ' nsweep = ', nsweep
     write(fout,'(a,i6)')      ' nbin = ', nbin
     write(fout,'(a,i6)')      ' nublock = ', nublock
+    write(fout,'(a,i6)')      ' nustock = ', nustock
     write(fout,'(a,f6.2)')    ' B      = ', xmag
     write(fout,'(a,f8.5)')    ' flux_x = ', flux_x
     write(fout,'(a,f8.5)')    ' flux_y = ', flux_y

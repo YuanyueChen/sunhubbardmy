@@ -116,6 +116,7 @@ module model_para
 
   ! delay update
   integer, save :: nublock ! size of block when doing delay update, if nublock = 0 in input file, it uses default setting based on system size
+  integer, save :: nustock ! size of stock array for submatrix-LR update for projective QMC
 
   contains
 
@@ -143,7 +144,7 @@ module model_para
 #ELSE
     namelist /model_para/ la, lb, beta, dtau, rt, t2, t3, nu, mu, rhub, rv, rhub_plq, alpha, theta, nflr, lprojplqu, lprojv, lproju, xmag, flux_x, flux_y, dimer, rndness
 #ENDIF
-    namelist /ctrl_para/ lstabilize, nwrap, nsweep, nbin, nublock, ltau, dyntau, obs_eqt_mid_len
+    namelist /ctrl_para/ lstabilize, nwrap, nsweep, nbin, nublock, nustock, ltau, dyntau, obs_eqt_mid_len
     
     ! default parameters
     la   = 2
@@ -178,6 +179,7 @@ module model_para
     nsweep = 20
     nbin = 10
     nublock = 0
+    nustock = 0
     ltau = .false.
     dyntau = 0
     obs_eqt_mid_len = 1
@@ -227,6 +229,7 @@ module model_para
     call mpi_bcast( nsweep,       1, mpi_integer,  0, mpi_comm_world, ierr )
     call mpi_bcast( nbin,         1, mpi_integer,  0, mpi_comm_world, ierr )
     call mpi_bcast( nublock,      1, mpi_integer,  0, mpi_comm_world, ierr )
+    call mpi_bcast( nustock,      1, mpi_integer,  0, mpi_comm_world, ierr )
     call mpi_bcast( ltau,         1, mpi_logical,  0, mpi_comm_world, ierr )
     call mpi_bcast( dyntau,       1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( obs_eqt_mid_len,  1, mpi_integer,    0, mpi_comm_world, ierr )
@@ -343,6 +346,9 @@ module model_para
         else ! equal to or greater than 256
             nublock = 64
         end if
+    end if
+    if (nustock .eq. 0) then
+        nustock = nublock
     end if
 
     ! set nst, iwrap_nt and wrap_step

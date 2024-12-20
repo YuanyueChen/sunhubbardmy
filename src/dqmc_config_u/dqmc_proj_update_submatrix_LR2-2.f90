@@ -26,15 +26,14 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
     integer, allocatable, dimension(:) :: xvec
     complex(dp), allocatable, dimension(:) :: Dvec
     complex(dp), allocatable, dimension(:,:) :: Gammainv
-    complex(dp), allocatable, dimension(:) :: Rrow, Lcol ! intermediate matrices when calculating PFDP
     complex(dp) :: PFP_kk
     complex(dp), allocatable, dimension(:) :: PFP_ikk, PFP_kik ! change size at each step
     complex(dp), allocatable, dimension(:) :: ikktmp ! change size at each step
     complex(dp), allocatable, dimension(:) :: kiktmp ! for update Gammainv
     complex(dp) :: Gammainv_kk ! for update Gammainv
     type(gfunc) :: Umat, Utmp, Vmat, Vtmp, VUmat, VUtmp ! for update (LR)^-1
-    integer :: nustkup, nstk, istk_s, istk_e
-    complex(dp), allocatable, dimension(:,:) :: Rrows, Lcols, Felms ! stock arrays for preventing zgemv
+    integer :: nustkup, nstk, istk_s, istk_e, isite_stk
+    complex(dp), allocatable, dimension(:,:) :: Rrows, Felms ! stock arrays for preventing zgemv
 
 #IFDEF TIMING
     real(dp) :: starttime, endtime, starttime11, endtime11
@@ -44,7 +43,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 #ENDIF
 
 #IFDEF TEST
-    write(fout, '(a,2e16.8)') ' in update_u using submatrix LR2'
+    write(fout, '(a,2e16.8)') ' in update_u using submatrix LR2-2'
 #ENDIF
 
     ! for delay update (LR)^-1
@@ -57,7 +56,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 
     ! for calculate update ratio
     allocate( xvec(nustock) )         ! x^{(i)}
-    allocate( Dvec(nustock) )         ! Delta_{i}, i=1,...,nublock
+    allocate( Dvec(nustock) )         ! Delta_{i}, i=1,...,nustock
     allocate( Gammainv(nustock,nustock) )
 
     ! matrices for delay update
@@ -78,9 +77,8 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
     PFP_kik = czero
 
     ! allocate stock arrays for preventing zgemv
-    allocate( Rrows(ndim, ne) ) ! rows of R(LR)^-1
-    ! allocate( Lcols(ne, ndim) ) ! columns of L
-    allocate( Felms(ndim, ndim) ) ! selected rows and columns of F
+    allocate( Rrows(nustock, ne) )      ! rows of R(LR)^-1
+    allocate( Felms(nustock, nustock) ) ! selected rows and columns of F
 
     accm  = 0.d0 ! acceptance rate
     ik = 0       ! delay step * k
@@ -100,34 +98,33 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             write(fout, '(a,i4,a,i4)') ' in update_u, stock up intermediate matrices from ', isite, ' to ', isite+nustkup-1
 #endif
             ! Rrows(isite:isite+nustock,:) = R(LR)^-1(isite:isite+nustock,:)
-            call zgemm('N', 'N', nustkup, ne, ne, cone, ur%blk1(isite,1), ndim, ulrinv%blk1, ne, czero, Rrows(isite,1), ndim)
-            ! Lcols(:,isite:isite+nustkup-1) = L(:,isite:isite+nustkup-1)
-            ! Lcols(:,isite:isite+nustkup-1) = ul%blk1(:,isite:isite+nustkup-1)
+            call zgemm('N', 'N', nustkup, ne, ne, cone, ur%blk1(isite,1), ndim, ulrinv%blk1, ne, czero, Rrows, nustock)
             ! Felms = R(LR)^-1*L(isite:isite+nustock,isite:isite+nustock)
-            ! call zgemm('N', 'N', nustkup, nustkup, ne, cone, Rrows, ndim, Lcols, ne, czero, Felms, nustock)
-            call zgemm('N', 'N', nustkup, nustkup, ne, cone, Rrows(isite,1), ndim, ul%blk1(1,isite), ne, czero, Felms(isite,isite), ndim)
+            call zgemm('N', 'N', nustkup, nustkup, ne, cone, Rrows, nustock, ul%blk1(1,isite), ne, czero, Felms, nustock)
             istk_s = isite
             istk_e = isite + nustkup - 1
             nstk = nustkup
         end if
+
+        isite_stk = isite - istk_s + 1 ! index in the stock arrays
 
         !! obtain new blocks of PFP = P^{(i+1)}_{(i+1)k*N}*F*P^{(i+1)}_{N*(i+1)k}
         !!! obtain PFDP_kk
         ! Rrow = P^{(i+1)}_{1*N}*R * (LR)^-1
         ! Lcol = L*P^{(i+1)}_{N*1}
         ! PFP_kk = Rrow * Lcol = P^{(i+1)}_{k*N}*F*P^{(i+1)}_{N*k}
-        PFP_kk = Felms(isite, isite)
+        PFP_kk = Felms(isite_stk, isite_stk)
         !
         if ( ik > 0 ) then
             !!! obtain PFP_kik
             ! Umat%blk1(:,1:ik) = L*P^{(i)}_{N*ik}
             ! PFP_kik = Rrow * Umat%blk1(:,1:ik) = P^{(i+1)}_{k*N}*F*P^{(i)}_{N*ik}
-            PFP_kik(1:ik) = Felms(isite, xvec(1:ik))
+            PFP_kik(1:ik) = Felms(isite_stk, xvec(1:ik) - istk_s + 1)
             !
             !!! obtain PFP_ikk
             ! Vmat%blk1(1:ik,:) = P^{(i)}_{ik*N}*R*ulrinv
             ! PFP_ikk = Vmat%blk1(1:ik,:) * Lcol = P^{(i)}_{ik*N}*F*P^{(i+1)}_{N*k}
-            PFP_ikk(1:ik) = Felms(xvec(1:ik), isite)
+            PFP_ikk(1:ik) = Felms(xvec(1:ik) - istk_s + 1, isite_stk)
         end if
 
 
@@ -136,7 +133,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
         ! vukmat = PFP_kik * Gammainv * PFDP_ikk
         if ( ik > 0 ) then
             ! ikktmp = Gammainv(1:ik,1:ik)*PFP_ikk
-            call zgemv('N', ik, ik, cone, Gammainv, nublock, PFP_ikk, 1, czero, ikktmp, 1)
+            call zgemv('N', ik, ik, cone, Gammainv, nustock, PFP_ikk, 1, czero, ikktmp, 1)
             ! vukmat = PFP_kik * ikktmp
             do m = 1, ik
                 !! warning: BLAS level 1 operation (inner product)
@@ -183,7 +180,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             if ( ik > 0 ) then
                 !! obtain Gammainv_kik = - Gammainv_kk * PFP_kik * Gammainv^{(i)}
                 ! kiktmp = PFP_kik * Gammainv^{(i)}
-                call zgemv('T', ik, ik, cone, Gammainv, nublock, PFP_kik, 1, czero, kiktmp, 1)
+                call zgemv('T', ik, ik, cone, Gammainv, nustock, PFP_kik, 1, czero, kiktmp, 1)
                 ! Gammainv_kik = - Gammainv_kk * kiktmp
                 ! update 21 block of Gammainv
                 Gammainv(ik+1,1:ik) = - Gammainv_kk * kiktmp(1:ik)
@@ -217,7 +214,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             xvec(ik) = isite
             Dvec(ik) = this%delta_bmat%blk1(iflip,is)
             ! append Rrow, Lcol to Vmat%blk1, Umat%blk1
-            Vmat%blk1(ik,:) = Rrows(isite,:)
+            Vmat%blk1(ik,:) = Rrows(isite_stk,:)
             Umat%blk1(:,ik) = ul%blk1(:,isite)
             
             ! flip
@@ -240,11 +237,11 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
             ! we already have Gammainv = (D^-1 + Vmat*Umat)^-1
             !
             ! obtain Vtmp = Gammainv * Vmat
-            call zgemm('N', 'N', ik, ne, ik, cone, Gammainv, nublock, Vmat%blk1, nublock, czero, Vtmp%blk1, nublock)
+            call zgemm('N', 'N', ik, ne, ik, cone, Gammainv, nustock, Vmat%blk1, nustock, czero, Vtmp%blk1, nustock)
             ! obtain Utmp = ulrinv * Umat
             call zgemm('N', 'N', ne, ik, ne, cone, ulrinv%blk1, ne, Umat%blk1, ne, czero, Utmp%blk1, ne)
             ! obtain new ulrinv = ulrinv - (ulrinv * Umat) * (Gammainv * Vmat)
-            call zgemm('N', 'N', ne, ne, ik, -cone, Utmp%blk1, ne, Vtmp%blk1, nublock, cone, ulrinv%blk1, ne)
+            call zgemm('N', 'N', ne, ne, ik, -cone, Utmp%blk1, ne, Vtmp%blk1, nustock, cone, ulrinv%blk1, ne)
             
             !! update R^{(n)} = (I + Delta^{(i)}) R^{(0)}
             do m = 1, ik

@@ -26,7 +26,6 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
     integer, allocatable, dimension(:) :: xvec
     complex(dp), allocatable, dimension(:) :: Dvec
     complex(dp), allocatable, dimension(:,:) :: Gammainv
-    complex(dp), allocatable, dimension(:) :: Rrow, Lcol ! intermediate matrices when calculating PFDP
     complex(dp) :: PFP_kk
     complex(dp), allocatable, dimension(:) :: PFP_ikk, PFP_kik ! change size at each step
     complex(dp), allocatable, dimension(:) :: ikktmp ! change size at each step
@@ -34,7 +33,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
     complex(dp) :: Gammainv_kk ! for update Gammainv
     type(gfunc) :: Umat, Utmp, Vmat, Vtmp, VUmat, VUtmp ! for update (LR)^-1
     integer :: nustkup, nstk, istk_s, istk_e
-    complex(dp), allocatable, dimension(:,:) :: Rrows, Lcols, Felms ! stock arrays for preventing zgemv
+    complex(dp), allocatable, dimension(:,:) :: Rrows, Felms ! stock arrays for preventing zgemv
 
 #IFDEF TIMING
     real(dp) :: starttime, endtime, starttime11, endtime11
@@ -79,7 +78,6 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 
     ! allocate stock arrays for preventing zgemv
     allocate( Rrows(ndim, ne) ) ! rows of R(LR)^-1
-    ! allocate( Lcols(ne, ndim) ) ! columns of L
     allocate( Felms(ndim, ndim) ) ! selected rows and columns of F
 
     accm  = 0.d0 ! acceptance rate
@@ -101,10 +99,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 #endif
             ! Rrows(isite:isite+nustock,:) = R(LR)^-1(isite:isite+nustock,:)
             call zgemm('N', 'N', nustkup, ne, ne, cone, ur%blk1(isite,1), ndim, ulrinv%blk1, ne, czero, Rrows(isite,1), ndim)
-            ! Lcols(:,isite:isite+nustkup-1) = L(:,isite:isite+nustkup-1)
-            ! Lcols(:,isite:isite+nustkup-1) = ul%blk1(:,isite:isite+nustkup-1)
             ! Felms = R(LR)^-1*L(isite:isite+nustock,isite:isite+nustock)
-            ! call zgemm('N', 'N', nustkup, nustkup, ne, cone, Rrows, ndim, Lcols, ne, czero, Felms, nustock)
             call zgemm('N', 'N', nustkup, nustkup, ne, cone, Rrows(isite,1), ndim, ul%blk1(1,isite), ne, czero, Felms(isite,isite), ndim)
             istk_s = isite
             istk_e = isite + nustkup - 1

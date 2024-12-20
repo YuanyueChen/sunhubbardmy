@@ -97,7 +97,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
 #ifdef TEST
             write(fout, '(a,i4,a,i4)') ' in update_u, stock up intermediate matrices from ', isite, ' to ', isite+nustkup-1
 #endif
-            ! Rrows(isite:isite+nustock,:) = R(LR)^-1(isite:isite+nustock,:)
+            ! Rrows = R(LR)^-1(isite:isite+nustock,:)
             call zgemm('N', 'N', nustkup, ne, ne, cone, ur%blk1(isite,1), ndim, ulrinv%blk1, ne, czero, Rrows, nustock)
             ! Felms = R(LR)^-1*L(isite:isite+nustock,isite:isite+nustock)
             call zgemm('N', 'N', nustkup, nustkup, ne, cone, Rrows, nustock, ul%blk1(1,isite), ne, czero, Felms, nustock)
@@ -109,8 +109,8 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
         isite_stk = isite - istk_s + 1 ! index in the stock arrays
 
         !! obtain new blocks of PFP = P^{(i+1)}_{(i+1)k*N}*F*P^{(i+1)}_{N*(i+1)k}
-        !!! obtain PFDP_kk
-        ! Rrow = P^{(i+1)}_{1*N}*R * (LR)^-1
+        !!! obtain PFP_kk
+        ! Rrow = P^{(i+1)}_{1*N}*R*(LR)^-1
         ! Lcol = L*P^{(i+1)}_{N*1}
         ! PFP_kk = Rrow * Lcol = P^{(i+1)}_{k*N}*F*P^{(i+1)}_{N*k}
         PFP_kk = Felms(isite_stk, isite_stk)
@@ -140,7 +140,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
                 vukmat = vukmat + PFP_kik(m)*ikktmp(m)
             end do
         end if
-        ! vukmat = Vcal = PFP_kk - vukmat
+        ! vukmat = Vcal = PFP_kk - PFP_kik * Gammainv * PFDP_ikk
         vukmat = PFP_kk - vukmat
         ! vukmat = 1 + Vcal*D
         vukmat = cone + vukmat * this%delta_bmat%blk1(iflip,is)

@@ -18,12 +18,12 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 
     ! local
     complex(dp) ::  ratio1, ratiotot, delta
-    integer :: iflip, is, isp, i, ibond, i1, i2, ik, m, n, x, x1
+    integer :: iflip, is, isp, i, ibond, ibond2, i1, i2, i3, i4, ik, m, n, x, x1
     real(dp) :: accm, ratio_re, ratio_re_abs, random, weight
 
     complex(dp), allocatable, dimension(:,:) :: vukmat
 
-    integer, allocatable, dimension(:) :: xvec
+    integer, allocatable, dimension(:) :: xvec, svec
     complex(dp), allocatable, dimension(:) :: Dvec
     complex(dp), allocatable, dimension(:,:) :: Gammainv
     complex(dp), allocatable, dimension(:,:) :: Rrow, Rtmp, LDcol ! intermediate matrices when calculating PFDP
@@ -43,7 +43,7 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 #ENDIF
 
 #IFDEF TEST
-    write(fout, '(a,2e16.8)') ' in update_v using submatrix LR2-2'
+    write(fout, '(a,2e16.8)') ' in update_v using submatrix LR2-3'
 #ENDIF
 
     ! for delay update (LR)^-1
@@ -56,7 +56,8 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 
     ! for calculate update ratio
     allocate( vukmat(2,2) )           ! I + Vcal*D
-    allocate( xvec(nustock) )         ! x^{(i)}_{j}, j=(i-1)*k+1,...,i*k
+    allocate( xvec(nustock) )         ! x^{(i)}_{j}, j=(i-1)*k+1,...,i*k, update index in ndim arrays
+    allocate( svec(nustock) )         ! s^{(i)}_{j}, j=(i-1)*k+1,...,i*k, update index in nustock arrays
     allocate( Dvec(nustock))          ! Delta_{i}(j), i=1,...,nustock/k, j=1,...,k
     allocate( PFP_kk(2,2) )           ! P^{(i+1)}_{k*N}*F*P^{(i+1)}_{N*k}
     allocate( Gammainv(nustock,nustock) )
@@ -64,6 +65,7 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 
     ! matrices for delay update
     xvec = 0
+    svec = 0
     Dvec = czero
     Gammainv = czero
     Vmat%blk1 = czero
@@ -80,22 +82,9 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
     PFP_kik = czero
 
     ! reorder the ul and ur to make the sequential update continuous in memory
-    ! ur = P*ur, ul = ul*P^T, ulrinv is not changed
-    call allocate_gfunc( ulP, ne, ndim )
-    call allocate_gfunc( urP, ndim, ne )
-    ulP%blk1 = czero
-    urP%blk1 = czero
-    i = 0
-    do ibond = 1, latt%nn_lf
-        i1 = latt%nnlf_list(ibond)
-        i2 = latt%nnlist(i1,nf)
-        ulP%blk1(:,i+1) = ul%blk1(:,i1)
-        ulP%blk1(:,i+2) = ul%blk1(:,i2)
-        urP%blk1(i+1,:) = ur%blk1(i1,:)
-        urP%blk1(i+2,:) = ur%blk1(i2,:)
-        i = i + 2
-    end do
-    ! from now on, we work with ulP and urP until finish update
+    ! urP = P*ur, ulP = ul*P^T, ulrinv is not changed
+    call allocate_gfunc( ulP, ne, nustock )
+    call allocate_gfunc( urP, nustock, ne )
 
     ! allocate stock arrays for preventing zgemv
     allocate( Rrows(nustock, ne) )      ! rows of R(LR)^-1
@@ -103,34 +92,48 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
 
     accm  = 0.d0 ! acceptance rate
     ik = 0       ! delay step * k
-    istk_s = 0   ! starting site index in the stock arrays
-    istk_e = 0   ! ending site index in the stock arrays
-    nstk = 0     ! number of sites in the stock arrays
+    istk_s = 0   ! starting bond index in the stock arrays
+    istk_e = 0   ! ending bond index in the stock arrays
+    nstk = 0     ! number of bonds in the stock arrays
 
     do ibond = 1, latt%nn_lf
-        i1 = 2*ibond - 1
-        i2 = 2*ibond
+        i1 = latt%nnlf_list(ibond)
+        i2 = latt%nnlist(i1,nf)
         is = this%conf(ibond, nf, ntau)
         iflip = ceiling( spring_sfmt_stream() * (this%lcomp-1) )
         isp = mod(is+iflip-1,this%lcomp) + 1
         
         !! stock up intermediate matrices
         if (nstk == 0) then
-            nustkup = min(nustock, latt%nsites - i1 + 1)
+            nustkup = min(nustock, (latt%nn_lf - ibond + 1)*2)
 #ifdef TEST
-            write(fout, '(a,i4,a,i4)') ' in update_v, stock up intermediate matrices from ', i1, ' to ', i1+nustkup-1
+            write(fout, '(a,i4,a,i4)') ' in update_v, stock up intermediate matrices from ibond', ibond, ' to ibond', ibond+nustkup/2-1
 #endif
-            ! Rrows = R(LR)^-1(i1:i1+nustock,:)
-            call zgemm('N', 'N', nustkup, ne, ne, cone, urP%blk1(i1,1), ndim, ulrinv%blk1, ne, czero, Rrows, nustock)
-            ! Felms = R(LR)^-1*L(i1:i1+nustock,i1:i1+nustock)
-            call zgemm('N', 'N', nustkup, nustkup, ne, cone, Rrows, nustock, ulP%blk1(1,i1), ne, czero, Felms, nustock)
-            istk_s = i1
-            istk_e = i1 + nustkup - 1
-            nstk = nustkup
+            ! reset ulP and urP
+            ulP%blk1 = czero
+            urP%blk1 = czero
+            i = 0
+            do ibond2 = ibond, ibond+nustkup/2-1
+                i3 = latt%nnlf_list(ibond2)
+                i4 = latt%nnlist(i3,nf)
+                ulP%blk1(:,i+1) = ul%blk1(:,i3)
+                ulP%blk1(:,i+2) = ul%blk1(:,i4)
+                urP%blk1(i+1,:) = ur%blk1(i3,:)
+                urP%blk1(i+2,:) = ur%blk1(i4,:)
+                i = i + 2
+            end do
+
+            ! Rrows = R(LR)^-1
+            call zgemm('N', 'N', nustkup, ne, ne, cone, urP%blk1, nustock, ulrinv%blk1, ne, czero, Rrows, nustock)
+            ! Felms = R(LR)^-1*L
+            call zgemm('N', 'N', nustkup, nustkup, ne, cone, Rrows, nustock, ulP%blk1, ne, czero, Felms, nustock)
+            istk_s = ibond
+            istk_e = ibond + nustkup/2 - 1
+            nstk = nustkup/2
         end if
 
         ! index in the stock arrays
-        i1_stk = i1 - istk_s + 1
+        i1_stk = (ibond - istk_s)*2 + 1
         i2_stk = i1_stk + 1
 
         !! obtain new blocks of PFP = P^{(i+1)}_{(i+1)k*N}*F*P^{(i+1)}_{N*(i+1)k}
@@ -144,12 +147,12 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
             !!! obtain PFP_kik
             ! Umat%blk1(:,1:ik) = L*P^{(i)}_{N*ik}
             ! PFP_kik = Rrow * Umat%blk1(:,1:ik) = P^{(i+1)}_{k*N}*F*P^{(i)}_{N*ik}
-            PFP_kik(:,1:ik) = Felms(i1_stk:i2_stk, xvec(1:ik) - istk_s + 1)
+            PFP_kik(:,1:ik) = Felms(i1_stk:i2_stk, svec(1:ik))
             !
             !!! obtain PFP_ikk
             ! Vmat%blk1(1:ik,:) = P^{(i)}_{ik*N}*R*ulrinv
             ! PFP_ikk = Vmat%blk1(1:ik,:) * Lcol = P^{(i)}_{ik*N}*F*P^{(i+1)}_{N*k}
-            PFP_ikk(1:ik,:) = Felms(xvec(1:ik) - istk_s + 1, i1_stk:i2_stk)
+            PFP_ikk(1:ik,:) = Felms(svec(1:ik), i1_stk:i2_stk)
         end if
 
         !! vukmat = I + Vcal*D
@@ -222,17 +225,19 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
             ! store xvec and Dvec
             xvec(ik-1) = i1
             xvec(ik) = i2
+            svec(ik-1) = i1_stk
+            svec(ik) = i2_stk
             Dvec(ik-1) = this%delta_bmat_p%blk1(iflip,is)
             Dvec(ik) = this%delta_bmat_m%blk1(iflip,is)
             ! append Rrow, Lcol to Vmat%blk1, Umat%blk1
             Vmat%blk1(ik-1:ik,:) = Rrows(i1_stk:i2_stk,:)
-            Umat%blk1(:,ik-1:ik) = ulP%blk1(:,i1:i2)
+            Umat%blk1(:,ik-1:ik) = ulP%blk1(:,i1_stk:i2_stk)
 
             ! flip
             this%conf(ibond,nf,ntau) =  isp
         end if
 
-        if( (i2 == istk_e) .or. (ibond == latt%nn_lf) ) then
+        if( (ibond == istk_e) .or. (ibond == latt%nn_lf) ) then
 #IFDEF TIMING
             call cpu_time_now(starttime11)
 #ENDIF
@@ -257,15 +262,16 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
             do m = 1, ik
                 x = xvec(m)
                 delta = Dvec(m)
-                urP%blk1(x,:) = urP%blk1(x,:) + delta*urP%blk1(x,:)
+                ur%blk1(x,:) = ur%blk1(x,:) + delta*ur%blk1(x,:)
             end do
 
             ik = 0
             istk_s = 0
             istk_e = 0
             nstk = 0
-            ! initial xvec, Dvec and Gammainv
-            xvec = czero
+            ! initial xvec, svec, Dvec and Gammainv
+            xvec = 0
+            svec = 0
             Dvec = czero
             Gammainv = czero
             ! initial Vmat, Umat
@@ -284,20 +290,6 @@ subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
         end if
     end do
     main_obs(4) = main_obs(4) + dcmplx( accm, latt%nn_lf )
-
-
-    ! reorder the ul and ur back
-    ! ur = P^T*ur, ul = ul*P, ulrinv is not changed
-    i = 0
-    do ibond = 1, latt%nn_lf
-        i1 = latt%nnlf_list(ibond)
-        i2 = latt%nnlist(i1,nf)
-        ul%blk1(:,i1) = ulP%blk1(:,i+1)
-        ul%blk1(:,i2) = ulP%blk1(:,i+2)
-        ur%blk1(i1,:) = urP%blk1(i+1,:)
-        ur%blk1(i2,:) = urP%blk1(i+2,:)
-        i = i + 2
-    end do
 
 #IFDEF TIMING
     call cpu_time_now(endtime)

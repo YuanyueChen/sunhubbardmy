@@ -60,11 +60,7 @@ module dqmc_config_u
 #if defined(DELAY) && defined(SUBMATRIX)
 #elif defined(DELAY)
 #include 'dqmc_config_u/dqmc_update_delay.f90'
-#if defined(DELAYLR)
-#include 'dqmc_config_u/dqmc_proj_update_delay_LR2.f90'
-#else
 #include 'dqmc_config_u/dqmc_proj_update_delay.f90'
-#endif
 #elif defined(SUBMATRIX)
 #include 'dqmc_config_u/dqmc_update_submatrix.f90'
 #if defined(DELAYLR)

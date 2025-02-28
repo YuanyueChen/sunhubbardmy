@@ -1,5 +1,5 @@
 subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
-!! update the configuration using submatrix LR2-2
+!! update the configuration using submatrix LR algorithm
 !! intemediate vectors are preallocated through an oversize array
 !! the matrix-vector multiplications are collected in group of "stocks" and done by calling zgemm
 !! update is controlled by nustock

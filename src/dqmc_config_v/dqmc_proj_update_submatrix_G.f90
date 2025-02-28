@@ -1,5 +1,5 @@
 subroutine dqmc_proj_update(this, ntau, nf, ul, ur, ulrinv)
-
+!! update the configuration using submatrix G algorithm
   use spring
   use model_para
   use dqmc_basic_data

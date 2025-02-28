@@ -114,17 +114,12 @@ module dqmc_util
 #ENDIF
 #IFDEF DELAY
         write(fout,'(a)') ' >>> Delay_update is used'
-#IFDEF DELAYLR
-        write(fout,'(a)') ' >>> Delay LR in projective QMC'
-#ELSE
-        write(fout,'(a)') ' >>> Delay G in projective QMC'
-#ENDIF
 #ELIF SUBMATRIX
         write(fout,'(a)') ' >>> Submatrix_update is used'
-#IFDEF DELAYLR
-        write(fout,'(a)') ' >>> Delay LR in projective QMC'
-#ELSE
+#IFDEF DELAYG
         write(fout,'(a)') ' >>> Delay G in projective QMC'
+#ELSE
+        write(fout,'(a)') ' >>> Delay LR in projective QMC'
 #ENDIF
 #ELSE
         write(fout,'(a)') ' >>> Fast_update is used'

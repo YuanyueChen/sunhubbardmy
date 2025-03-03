@@ -332,7 +332,8 @@ module model_para
 #IFDEF PIFLUX
     xmag = dble(la*lb)*(a1_p(1)*a2_p(2) - a1_p(2)*a2_p(1))/2.d0
 #ENDIF
-
+#if defined(DELAY) && defined(SUBMATRIX)
+#elif defined(DELAY)
     if( nublock .eq. 0 ) then
         ! tune para for delay update, it is based on some experiences
         if( ndim/5 .lt. 16) then
@@ -347,6 +348,25 @@ module model_para
             nublock = 64
         end if
     end if
+#elif defined(SUBMATRIX)
+    if( nublock .eq. 0 ) then
+        ! tune para for submatrix update, it is based on some experiences
+        if( ndim/20 .lt. 32) then
+            nublock = 32
+        else if( ndim/20 .lt. 64 ) then
+            nublock = 64
+        else if( ndim/20 .lt. 128 ) then
+            nublock = 16
+        else if( ndim/20 .lt. 256 ) then
+            nublock = 256
+        else if( ndim/20 .lt. 512 ) then
+            nublock = 512
+        else ! equal to or greater than 1024
+            nublock = 1024
+        end if
+    end if
+#endif
+
     if (nustock .eq. 0) then
         nustock = nublock
     end if

@@ -11,11 +11,11 @@ module dqmc_proj_core
   type(gfunc), save :: Ifmat
   type(dfunc), save :: Ifvec
   type(gfunc), save :: gf, gfc ! gfc play as gf_tmp when outside measurement
-  type(gfunc), save :: proj, UR, UL, ULR, ULRINV
+  type(gfunc), save :: projR, projL, UR, UL, ULR, ULRINV
   type(zfunc), save :: logweightf
   type(gfunc), allocatable, dimension(:), save :: Ust, Ust_tmp
   type(zfunc), allocatable, dimension(:), save :: logdetQst, logdetQst_tmp
-  type(rfunc), allocatable, dimension(:), save :: logwDV, logwDV_tmp
+  type(rfunc), allocatable, dimension(:), save :: logwDV, logwDV_tmp ! R=UDV, logwDV=logdet(DV);
   type(gfunc), save :: gt0, g0t, g00
 
   contains
@@ -29,7 +29,8 @@ module dqmc_proj_core
       Ifvec%blk1 = Ivec
       call allocate_gfunc(gf,ndim,ndim)
       call allocate_gfunc(gfc,ndim,ndim)
-      call allocate_gfunc(proj,ndim,ndim)
+      call allocate_gfunc(projR,ndim,ndim)
+      call allocate_gfunc(projL,ndim,ndim)
       call allocate_gfunc(UR,ndim,ne)
       call allocate_gfunc(UL,ne,ndim)
       call allocate_gfunc(ULR,ne,ne)

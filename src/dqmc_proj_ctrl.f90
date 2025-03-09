@@ -37,6 +37,7 @@ module dqmc_ctrl
 
     call allocate_core
     call dqmc_set_proj
+    ! call dqmc_set_proj_mixed
     ! allocate observables
     call allocate_obs
     call dqmc_proj_sweep_start_0b

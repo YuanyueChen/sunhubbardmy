@@ -8,8 +8,8 @@
       ! UR at tau = 0
       do nl = 1, ne
          do i = 1,ndim
-            UR%blk1(i,nl) = proj%blk1(i,nl)
-            Ust(nst)%blk1(i,nl) = dconjg(proj%blk1(i,nl))
+            UR%blk1(i,nl) = projR%blk1(i,nl)
+            Ust(nst)%blk1(i,nl) = dconjg(projL%blk1(i,nl))
          end do
       end do
 
@@ -28,7 +28,7 @@
       ! UL at tau = beta
       do nl = 1, ne
           do i = 1, ndim
-              UL%blk1(nl,i) = dconjg(proj%blk1(i,nl))
+              UL%blk1(nl,i) = dconjg(projL%blk1(i,nl))
           end do
       end do
 

@@ -19,14 +19,16 @@
       call allocate_gfunc(ULRINVtmp,ne,ne)
       call allocate_gfunc(gftmp,ndim,ndim)
       call allocate_gfunc(gfctmp,ndim,ndim)
-
+      
+      ! at this point, Ust(1:nst) contains UR(wrap_step(2,1:nst))
       ! UL at tau = beta
       do nl = 1, ne
           do i = 1, ndim
-              UL%blk1(nl,i) = dconjg(proj%blk1(i,nl))
-              Ust(0)%blk1(i,nl) = proj%blk1(i,nl)
+              UL%blk1(nl,i) = dconjg(projL%blk1(i,nl))
+              Ust(0)%blk1(i,nl) = projR%blk1(i,nl)
           end do
       end do
+      ! now Ust(0:nst) contains UR([0;wrap_step(2,1:nst)])
 
       do nt = ltrot, 1, -1
 #IFDEF TEST
@@ -200,6 +202,9 @@
           timecalculation(7)=timecalculation(7)+time2-time1
 #ENDIF
       end do
+
+      ! at this point, Ust(0:nst-1) contain UL([0;wrap_step(2,1:nst-1)])^T, Ust(nst) reserves outdated UR(wrap_step(2,nst))
+      ! Ust = [UL(0)^T, UL(nwrap)^T, UL(2*nwrap)^T, ..., UL((nst-1)*nwrap)^T, outdated UR(ltrot)]
 
       call deallocate_gfunc(ultmp)
       call deallocate_gfunc(urtmp)

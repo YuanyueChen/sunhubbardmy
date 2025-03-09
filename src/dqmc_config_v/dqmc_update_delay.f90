@@ -117,6 +117,9 @@ subroutine dqmc_update(this, gmat, ntau, nf)
 #IFDEF TIMING
           call cpu_time_now(starttime11)
 #ENDIF
+#ifdef TEST
+          write(fout, '(a)') 'update the whole Green function'
+#endif
           ik = 0
           ! delay update: update the whole Green function
           call  zgemm('N', 'T', ndim, ndim, nublock, cone, avec, ndim, bvec, ndim, cone, gmat%blk1, ndim)

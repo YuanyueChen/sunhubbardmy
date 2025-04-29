@@ -35,6 +35,13 @@ module dqmc_config_u
   private :: dqmc_right_forward_prop
   private :: dqmc_update
   ! for DQMC
+#ifdef EXACTHS
+  ! exact two-component HS transformation
+  ! here -1,1 is mapped to 1,2
+  real(dp), public, parameter :: etal(1:2) = (/-1.d0,1.d0/)
+  real(dp), public, parameter :: gaml(1:2) = (/ 1.d0,1.d0/)
+#else
+  ! general four-component HS transformation
   ! here -2,-1,1,2 is mapped to 1,2,3,4
   real(dp), public, parameter :: etal(1:4) = (/  - dsqrt(2.d0 * ( 3.d0 + dsqrt(6.d0) ) ), &
                                                  - dsqrt(2.d0 * ( 3.d0 - dsqrt(6.d0) ) ), &
@@ -48,6 +55,7 @@ module dqmc_config_u
                                                                3, 4, 1, &
                                                                4, 1, 2, &
                                                                1, 2, 3 /), (/4,3/) )
+#endif
   contains
 #include 'dqmc_config_u/dqmc_set_conf.f90'
 #include 'dqmc_config_u/dqmc_input_conf.f90'

@@ -138,6 +138,11 @@ module dqmc_util
 #ELIF CUBIC
         write(fout,'(a)') ' >>> Cubic lattice model'
 #ENDIF
+#IFDEF EXACTHS
+        write(fout,'(a)') ' >>> Use exact 2-component density-channel HS transformation for Hubbard interaction'
+#ELSE
+        write(fout,'(a)') ' >>> Use general 4-component density-channel HS transformation for Hubbard interaction'
+#ENDIF
     end if
     call cpu_time_now(start_time)
     main_obs(:) = czero

@@ -18,9 +18,21 @@
             stop "Error!!! In the projection case, please set nu to be integer !!! "
         end if
     else
+#ifdef EXACTHS
+        this%lcomp = 2
+#else
         this%lcomp = 4
+#endif
     end if
+#ifdef EXACTHS
+    if ( u .ge. 0.d0 ) then
+        this%alpha = dacos( dexp( -dtau*dabs(u)*0.5d0 ) )
+    else
+        this%alpha = dacosh( dexp( dtau*dabs(u)*0.5d0 ) )
+    end if
+#else
     this%alpha = dsqrt( dtau*dabs(u)*0.5d0 )
+#endif
     call allocate_zvfunc(this%bmat, this%lcomp)
     call allocate_zvfunc(this%bmat_inv, this%lcomp)
     call allocate_gfunc( this%delta_bmat, this%lcomp-1, this%lcomp)

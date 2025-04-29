@@ -67,3 +67,10 @@ The following update algorithms are available for DQMC simulations:
 - **Delay Update**: Add `-DDELAY` to enable the delay update algorithm (Ref: F. Sun and X. Y. Xu, Phys. Rev. B 109, 235140 (2024).)
 - **Submatrix Update**: Add `-DSUBMATRIX` to enable the submatrix update algorithm (Ref: F. Sun and X. Xiao Yan, SciPost Physics 18, 055 (2025).)
   - For projective DQMC, the **Submatrix-LR** algorithm is used by default. Add `-DDELAYG` along with `-DSUBMATRIX` to use the deprecated **Submatrix-G** algorithm instead. 
+
+### Hubbard-Stratonovich (HS) transformation
+
+Only support density-channel HS transformation which preserve the flavor-degenerate property in SU(N) Hubbard model. 
+
+- `-DEXACTHS`: Exact two-component density-channel HS transformation for SU(2) Hubbard model, without system error.
+- Default: general four-component density-channel HS transformation for SU(N) Hubbard model, with system error. 

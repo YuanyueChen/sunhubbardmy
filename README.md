@@ -72,5 +72,8 @@ The following update algorithms are available for DQMC simulations:
 
 Only support density-channel HS transformation which preserve the flavor-degenerate property in SU(N) Hubbard model. 
 
-- `-DEXACTHS`: Exact two-component density-channel HS transformation for SU(2) Hubbard model, without system error.
+- `-DEXACTHS`: Exact density-channel HS transformation for $\mathrm{SU}(N_f\leq 6)$ Hubbard model, without system error.
+  - $N_f=2$: 2-component HS transformation
+  - $N_f=4,6$: 4-component HS transformation (Ref: D. Wang, Y. Li, Z. Cai, Z. Zhou, Y. Wang, and C. Wu, Phys. Rev. Lett. 112, 156403 (2014).)
+  - $N_f>6$: do not support, use general 4-component HS transformation instead. 
 - Default: general four-component density-channel HS transformation for SU(N) Hubbard model, with system error. 

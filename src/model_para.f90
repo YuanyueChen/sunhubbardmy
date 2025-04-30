@@ -299,12 +299,6 @@ module model_para
         lupdateplqu = .false.
     end if
 
-#ifdef EXACTHS
-    if (nflr .ne. 2 .and. rhub .ne. 0.d0) then
-        stop "Error: for now, exact HS transformation is only implemented for SU(2) Hubbard interaction"
-    end if
-#endif
-
     ! set up lattice
 #IFDEF HONEYCOMB
     ! lattice

@@ -139,7 +139,7 @@ module dqmc_util
         write(fout,'(a)') ' >>> Cubic lattice model'
 #ENDIF
 #IFDEF EXACTHS
-        write(fout,'(a)') ' >>> Use exact 2-component density-channel HS transformation for Hubbard interaction'
+        write(fout,'(a)') ' >>> Use exact density-channel HS transformation for SU(N<=6) Hubbard interaction'
 #ELSE
         write(fout,'(a)') ' >>> Use general 4-component density-channel HS transformation for Hubbard interaction'
 #ENDIF

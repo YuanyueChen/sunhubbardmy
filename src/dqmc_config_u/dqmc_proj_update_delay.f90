@@ -67,7 +67,7 @@ subroutine dqmc_proj_update(this, ntau, ul, ur, ulrinv)
       if( lproju ) then
           ratiotot = ratiotot*this%phase_ratio(iflip, is)
       else
-          ratiotot = ratiotot*dcmplx( gaml(isp)/gaml(is), 0.d0 ) * this%phase_ratio(iflip, is)
+          ratiotot = ratiotot*dcmplx( this%gaml(isp)/this%gaml(is), 0.d0 ) * this%phase_ratio(iflip, is)
       end if
 #IFDEF TEST
       write(fout, '(a,2e16.8)') ' in update_u, ratio1 = ', ratio1

@@ -3,10 +3,12 @@ module dqmc_config_u
   use model_para, only: fout, ierr, irank, isize, lproju, nflr, latt
   use dqmc_basic_data
   type uconf
+  !! gaml(l) * exp( (i) * alpha * etal(l) * n ) * phase(l)
       logical :: lwarmup
       integer :: lq, nsites, ltrot, lcomp
       real(dp) :: alpha
-      integer, allocatable:: conf(:,:)
+      real(dp), allocatable :: etal(:), gaml(:)
+      integer, allocatable :: conf(:,:)
       type(zvfunc) :: bmat
       type(zvfunc) :: bmat_inv
       type(gfunc) :: delta_bmat
@@ -34,29 +36,9 @@ module dqmc_config_u
   private :: dqmc_right_backward_prop
   private :: dqmc_right_forward_prop
   private :: dqmc_update
-  ! for DQMC
-#ifdef EXACTHS
-  ! exact two-component HS transformation
-  ! here -1,1 is mapped to 1,2
-  real(dp), public, parameter :: etal(1:2) = (/-1.d0,1.d0/)
-  real(dp), public, parameter :: gaml(1:2) = (/ 1.d0,1.d0/)
-#else
-  ! general four-component HS transformation
-  ! here -2,-1,1,2 is mapped to 1,2,3,4
-  real(dp), public, parameter :: etal(1:4) = (/  - dsqrt(2.d0 * ( 3.d0 + dsqrt(6.d0) ) ), &
-                                                 - dsqrt(2.d0 * ( 3.d0 - dsqrt(6.d0) ) ), &
-                                                   dsqrt(2.d0 * ( 3.d0 - dsqrt(6.d0) ) ), &
-                                                   dsqrt(2.d0 * ( 3.d0 + dsqrt(6.d0) ) ) /)
-  real(dp), public, parameter :: gaml(1:4) =  (/ 1.d0 - dsqrt(6.d0)/3.d0, &
-                                                 1.d0 + dsqrt(6.d0)/3.d0, &
-                                                 1.d0 + dsqrt(6.d0)/3.d0, &
-                                                 1.d0 - dsqrt(6.d0)/3.d0 /)
-  integer, public, parameter :: nflipl(1:4,1:3)  = reshape( (/ 2, 3, 4, & 
-                                                               3, 4, 1, &
-                                                               4, 1, 2, &
-                                                               1, 2, 3 /), (/4,3/) )
-#endif
+
   contains
+
 #include 'dqmc_config_u/dqmc_set_conf.f90'
 #include 'dqmc_config_u/dqmc_input_conf.f90'
 #include 'dqmc_config_u/dqmc_output_conf.f90'
@@ -85,6 +67,8 @@ module dqmc_config_u
     implicit none
     type(uconf) :: this
     deallocate( this%conf )
+    deallocate( this%etal )
+    deallocate( this%gaml )
     deallocate( this%phase )
     deallocate( this%phase_ratio )
   end subroutine deallocate_conf

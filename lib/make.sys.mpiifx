@@ -17,7 +17,7 @@ CPP    = $(FPP) $(MPI) $(OMP) $(API)
 GPROF  = # -pg
 #CHECK  =  -warn all -check all -traceback -g
 #CDUMP  =  -vec-report2 -openmp-report2 -nogen-interfaces
-LEVEL  = -O3 -xHost -align all
+LEVEL  = -O3 -xCORE-AVX2 -unroll -align all
 MARCH  = # -march=corei7-avx # core2 corei7 corei7-avx core-avx-i core-avx2
 #MKL    =  -mkl=sequential
 #MKL =  -mkl=parallel

@@ -1,7 +1,7 @@
 # `sun-hubbard`: Determinant Quantum Monte Carlo Package
 
 A high-performance Determinant Quantum Monte Carlo (DQMC) package for simulating interacting fermionic lattice models, including $\mathrm{SU}(N)$ Hubbard model and spinless $t$-$V$ model. 
-- Supports multiple lattice geometries: square, honeycomb, and cubic
+- Supports multiple lattice geometries: chain, square, honeycomb, and cubic
 - Features full MPI parallelization
 
 ## Project Structure

@@ -30,12 +30,10 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
       do i = 1,latt%nn_lf
          ist = i + (nf - 1)*latt%nn_lf
          i1 = latt%nnlf_list(i) ! A site
-         i2 = latt%nnlist(i1,nf)
+         i2 = latt%nnlist(i1,nf) ! B site
          do j = 1, n1
             v1(j) = gmat%blk1(j,i1)*this%urtm1(ist,1,1) + gmat%blk1(j,i2)*this%urtm1(ist,2,1) 
             v2(j) = gmat%blk1(j,i1)*this%urtm1(ist,1,2) + gmat%blk1(j,i2)*this%urtm1(ist,2,2)
-         enddo
-         do j = 1, n1
             gmat%blk1(j,i1) = v1(j)
             gmat%blk1(j,i2) = v2(j)
          enddo
@@ -53,7 +51,53 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
   complex(dp), dimension(:), allocatable :: fftmp
   complex(dp), dimension(:,:), allocatable :: gtmpC
 
-#IFDEF SQUARE
+#IFDEF CHAIN
+  integer :: dimm(1)
+#IFDEF TIMING 
+  call cpu_time_now(starttime)
+#ENDIF
+  n1 = size(gmat%blk1,1)
+  dimm(:) = (/latt%l1/)
+  Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 1, dimm)
+  allocate( fftmp(lq*n1) )
+
+  ! to perform fft transforms along 2nd dimension of gmat, we can first hermitian conjugate it
+  ! and perform fft transforms along 1st dimension of gmat^+
+  ! namely to calcualte G B = G U D U^+, we calculate ( G B )^+ = B^+ G^+ = U D^+ U^+ G^+
+  allocate( gtmpC(lq,n1) )
+  gtmpC = dconjg( transpose( gmat%blk1 ) )
+
+  ! perform n1 two-dimensional transforms along 1st dimension of gmat^+
+  fftmp = reshape( gtmpC, (/lq*n1/) )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_NUMBER_OF_TRANSFORMS, n1 )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_INPUT_DISTANCE, lq )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_OUTPUT_DISTANCE, lq )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_FORWARD_SCALE, 1.d0/dsqrt(dble(lq)) )
+  Status = DftiCommitDescriptor( Desc_Handle_Dim1 )
+  Status = DftiComputeForward( Desc_Handle_Dim1, fftmp )
+
+  gtmpC = reshape( fftmp, (/lq,n1/) )
+  do j = 1, n1
+      do i = 1, lq
+          gtmpC(i,j) = gtmpC(i,j) * dconjg( this%exph0kinv(i) )
+      end do
+  end do
+
+  ! perform n1 two-dimensional transforms along 1st dimension of gmat^+
+  fftmp = reshape( gtmpC, (/lq*n1/) )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_BACKWARD_SCALE, 1.d0/dsqrt(dble(lq)) )
+  Status = DftiCommitDescriptor( Desc_Handle_Dim1 )
+  Status = DftiComputeBackward( Desc_Handle_Dim1, fftmp )
+
+  Status = DftiFreeDescriptor( Desc_Handle_Dim1 )
+
+  gtmpC = reshape( fftmp, (/lq,n1/) )
+  gmat%blk1 = dconjg( transpose( gtmpC ) )
+
+  deallocate( fftmp )
+  deallocate( gtmpC )
+
+#ELIF SQUARE
   integer :: dimm(2)
 #IFDEF TIMING 
   call cpu_time_now(starttime)
@@ -98,6 +142,7 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
 
   deallocate( fftmp )
   deallocate( gtmpC )
+
 #ELIF CUBIC
   integer :: dimm(3)
 #IFDEF TIMING 
@@ -142,6 +187,7 @@ subroutine dqmc_right_backward_prop(this, nf, gmat)
 
   deallocate( fftmp )
   deallocate( gtmpC )
+
 #ELIF HONEYCOMB
   integer :: i1, i2, dimm(2)
   complex(dp), dimension(:,:), allocatable :: gtmp

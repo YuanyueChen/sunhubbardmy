@@ -1,3 +1,322 @@
+module latt1d_class
+  use constants, only: dp, pi
+  type, public :: latt1d
+    ! two !! in the comment means maybe meaningless for a chain
+    integer :: ncell ! number of unit cells
+    integer :: nsub  ! number of sublattice, just 1 for chain
+    integer :: nsites ! number of sites
+    integer :: l1     ! length of the chain
+    integer :: z_plq  !! number of sites for each plaquette
+    integer :: nn_nf  ! decomposition of nearest neighbor bonds, number of families
+    integer :: nn_lf  ! decomposition of nearest neighbor bonds, number of bonds in each families
+    real(dp) :: a1_p(1) ! primitive vectors
+    real(dp) :: l1_p(1) ! lattice vectors, length in each direction * corresponding primitive vectors
+    real(dp) :: bz1_p(1) ! primitive reciprocal vectors
+    real(dp) :: b1_p(1)  ! lattice reciprocal vectors
+    integer, allocatable :: ulist(:,:)   ! the unit cell list, dimension(ncell,1), (:,1) is the index in a1_p direction
+    integer, allocatable :: nnlf_list(:) ! decomposition of nearest neighbor bonds, the starting site list, dimension(nnlf)
+    integer, allocatable :: list(:,:)    ! site list, dimension(nsite,2), (:,1) is the unit cell index, (:,2) is the sublattice index
+    integer, allocatable :: cord(:,:)    ! site unit cell coordination, dimension(nsites,1), (:,1) is the index in a1_p direction
+    integer, allocatable :: invlist(:,:) ! site invlist, dimension(l1,nsub), given the index in a1_p direction, and index for sublattice, identify the site index
+    integer, allocatable :: nnlist(:,:)    ! nearest neighbor list, dimension(nsites,*), *=2 is the number of nearest neighbors for each site
+    integer, allocatable :: snlist(:,:)    ! second neighbor list, dimension(nistes,*), *=2 is the number of second neighbors for each site
+    integer, allocatable :: tnlist(:,:)    ! third neighbor list, dimension(nsites,*), *=2 is the number of third neighbors for each site
+    integer, allocatable :: plq_cord(:,:)  !! plaquette coordination, dimension(*1,*2), *1 is the number of sites in each plaquette, *2 is the number of plaquettes
+    integer, allocatable :: listk(:,:)     ! k points list, dimension(ncell,1)
+    integer, allocatable :: invlistk(:)    ! k points invlist, dimension(-l1:l1), given the k points coordinate, identify the k point index
+    integer, allocatable :: imj(:,:)       ! equivalent unit cell of Ri-Rj, dimension(ncell,ncell), given the index for unit cell Ri and Rj, identify the equivalent unit cell index for Ri-Rj
+    integer, allocatable :: nnveci(:,:,:)  ! unit cell difference for nearest neighbor sites, dimension(1,*,nsites), * is the number of nearest neighbors for each site
+    real(dp), allocatable :: nnvecr(:,:,:) ! real space difference for nearest neighbor sites, dimension(1,*,nsites), * is the number of nearest neighbors for each site, in the unit of a1_p and a2_p
+    real(dp), allocatable :: rcord(:,:)    ! real sapce coordinates for each site, dimension(1,nsites), in the unit of a1_p
+    complex(dp), allocatable :: zexpiqr(:,:) ! exp(i*qi*Ri), dimension(ncell,ncell)
+
+    contains
+      procedure, public :: setup_latt => setup_latt1d_sub
+      procedure, public :: print_latt => print_latt1d_sub
+      procedure, public :: deallocate_latt => deallocate_latt1d_sub
+  end type latt1d
+
+  private :: setup_latt1d_sub
+  private :: print_latt1d_sub
+  private :: deallocate_latt1d
+
+  contains
+
+  subroutine deallocate_latt1d_sub( this )
+    implicit none
+    class(latt1d) :: this
+    if( allocated(this%ulist) ) deallocate( this%ulist )
+    if( allocated(this%nnlf_list) ) deallocate( this%nnlf_list )
+    if( allocated(this%list) ) deallocate( this%list )
+    if( allocated(this%cord) ) deallocate( this%cord )
+    if( allocated(this%invlist) ) deallocate( this%invlist )
+    if( allocated(this%nnlist) ) deallocate( this%nnlist )
+    if( allocated(this%snlist) ) deallocate( this%snlist )
+    if( allocated(this%tnlist) ) deallocate( this%tnlist )
+    if( allocated(this%plq_cord) ) deallocate( this%plq_cord )
+    if( allocated(this%listk) ) deallocate( this%listk )
+    if( allocated(this%invlistk) ) deallocate( this%invlistk )
+    if( allocated(this%imj) ) deallocate( this%imj )
+    if( allocated(this%nnveci) ) deallocate( this%nnveci )
+    if( allocated(this%nnvecr) ) deallocate( this%nnvecr )
+    if( allocated(this%rcord) ) deallocate( this%rcord )
+    if( allocated(this%zexpiqr) ) deallocate( this%zexpiqr )
+    !write(*,*) " deallocate_latt1d is performed "
+  end subroutine deallocate_latt1d_sub
+
+  subroutine setup_latt1d_sub(this, l1, a1_p)
+    ! set up latt1d
+    
+    implicit none
+    
+    class(latt1d) :: this
+    integer, intent(in) :: l1
+    real(dp), dimension(:), intent(in) :: a1_p
+
+    ! local
+    integer :: i1, i2, m, n, nc, i, j, nk, imj_nx
+    real(dp) :: x
+    real(dp) :: ai_p(1), xk_p(1), b1_p(1), bz1_p(1)
+
+    this%l1 = l1
+    this%ncell = l1
+
+    this%l1_p = l1*a1_p
+    this%a1_p = a1_p
+
+    ! setup ulist
+    allocate( this%ulist( this%ncell,1) )
+    do i1 = 1, this%l1
+        this%ulist( i1, 1) = i1
+    end do
+
+    ! setup k-space lattice
+    allocate ( this%listk(this%ncell,1), this%invlistk(-l1:l1) )
+    ! get the primitive reciprocal vectors bz1_p
+    ! the formula b1 = 2*pi/a1 is used. 
+    bz1_p(1)      = 2.d0*pi/dble(a1_p(1))
+    this%bz1_p = bz1_p
+
+    ! get the lattice reciprocal vectors b1_p
+    ! the above same formula is used.
+    b1_p(1)      = 2.d0*pi/dble(this%l1_p(1))
+    this%b1_p = b1_p
+    
+    nc = 0
+    do m = -(l1+1)/2+1, l1/2 
+        nc = nc + 1
+        this%listk(nc,1) = m
+        this%invlistk(m) = nc
+    end do
+    if (nc.ne.this%ncell) then 
+      write(6,*) 'error ', nc, this%ncell
+      stop
+    endif
+
+    ! setup imj 
+    allocate ( this%imj(this%ncell,this%ncell) )
+    do j = 1, this%ncell
+      do i = 1, this%ncell
+        imj_nx = npbc( this%ulist(i,1) - this%ulist(j,1), this%l1 ) 
+        this%imj(i,j) = imj_nx
+      end do
+    end do
+
+    ! setup zexpiqr
+    allocate( this%zexpiqr(this%ncell,this%ncell) )
+    do i = 1,this%ncell
+      ai_p = dble(this%ulist(i,1))*this%a1_p
+      do nk = 1,this%ncell
+        xk_p = dble(this%listk(nk,1))*this%b1_p
+        this%zexpiqr(nk,i) = exp( dcmplx( 0.d0, xk_p(1)*ai_p(1) ) )
+      enddo
+    enddo
+    
+  end subroutine setup_latt1d_sub
+
+  integer function npbc(nr,l)
+    implicit none
+    integer, intent(in) :: nr
+    integer, intent(in) :: l
+    npbc = nr
+    if (nr.gt.l) npbc = nr - l
+    if (nr.lt.1) npbc = nr + l
+  end function npbc
+
+  subroutine print_latt1d_sub(this, fid)
+    implicit none
+
+    class(latt1d) :: this
+    integer,intent(in) :: fid
+
+    integer :: i, j, imj
+
+    write(fid,'(a)') 'lattice information: '
+    write(fid,'(a,2f16.12)') ' primitive lattice  vector a1_p(:) =  ', this%a1_p(:)
+    write(fid,'(a,2f16.12)') ' primitive reciprocal vector bz1_p / 2pi = ', this%bz1_p(:)/(2.d0*pi)
+    write(fid,*)
+    write(fid,'(a)')' --------------------- '
+    write(fid,'(a)')' The lattice sites list '
+    write(fid,'(a)')' --------------------- '
+    write(fid,'(a)') '   i     list(i,:) '
+    do i = 1, this%nsites
+        write(fid,'(i6,3i4)') i,  this%list(i,:)
+    end do
+
+    write(fid,*)
+    write(fid,'(a)')' --------------------- '
+    write(fid,'(a)')' The lattice sites cord '
+    write(fid,'(a)')' --------------------- '
+    write(fid,'(a)') '   i     cord(i,:) '
+    do i = 1, this%nsites
+        write(fid,'(i6,3i4)') i,  this%cord(i,:)
+    end do
+
+    write(fid,*)
+    write(fid,'(a)')' --------------------- '
+    write(fid,'(a)')' The lattice nnlist '
+    write(fid,'(a)')' --------------------- '
+    write(fid,'(a)') '   i     nnlist(i,:) '
+    do i = 1, this%nsites
+        write(fid,'(i6,12i4)') i,  this%nnlist(i,:)
+    end do
+
+    write(fid,*)
+    write(fid,'(a)')' --------------------- '
+    write(fid,'(a)')' The lattice snlist '
+    write(fid,'(a)')' --------------------- '
+    write(fid,'(a)') '   i     snlist(i,:) '
+    do i = 1, this%nsites
+        write(fid,'(i6,12i4)') i,  this%snlist(i,:)
+    end do
+
+    write(fid,*)
+    write(fid,'(a)')' --------------------- '
+    write(fid,'(a)')' The lattice tnlist '
+    write(fid,'(a)')' --------------------- '
+    write(fid,'(a)') '   i     tnlist(i,:) '
+    do i = 1, this%nsites
+        write(fid,'(i6,12i4)') i,  this%tnlist(i,:)
+    end do
+
+    write(fid,*)
+    write(fid,'(a)')' --------------------- '
+    write(fid,'(a)')' The momentum listk '
+    write(fid,'(a)')' --------------------- '
+    write(fid,'(a)') '   i     listk(i,:) '
+    do i = 1, this%ncell
+        write(fid,'(i6,3i4)') i,  this%listk(i,:)
+    end do
+  
+#ifdef PLEVEL2
+    if( this%ncell < 50 ) then
+    write(fid, *)
+    write(fid,'(a)') '----------------------------'
+    write(fid,'(a)') ' latt_imj info   '
+    write(fid,'(a)') '----------------------------'
+    write(fid, '(a)') '   i   j   imj '
+    do j = 1, this%ncell
+        do i = 1, this%ncell
+            imj  = this%imj(i,j)
+            write(fid, '(3i4)') i, j, imj
+        end do
+    end do
+    end if
+#endif
+  end subroutine print_latt1d_sub
+end module latt1d_class
+
+module chain_lattice
+  use constants, only: dp
+  use latt1d_class
+  type, public, extends(latt1d) :: chain
+     contains
+       procedure, public :: setup_chain => setup_chain_sub
+  end type chain
+  private :: setup_chain_sub
+
+  contains
+
+  subroutine setup_chain_sub(this, l1, a1_p)
+
+    ! set up chain lattice
+    
+    implicit real (kind=8) (a-g,o-z)
+    implicit integer (h-n)
+    
+    integer, intent(in) :: l1
+    real(dp), dimension(:), intent(in) :: a1_p
+    class(chain) :: this
+
+    ! local
+    real(dp) :: ai_p(1), xk_p(1), b1_p(1), bz1_p(1)
+    real(dp) :: mat(2,2), mat_inv(2,2)
+
+    call this%setup_latt(l1, a1_p) 
+
+    this%nsub = 1
+    this%nsites = l1
+    this%z_plq = 1
+    this%nn_nf = 2
+    this%nn_lf = l1/2
+
+    allocate( this%cord( this%nsites,1) )
+    allocate( this%rcord(this%nsites,1) )
+    allocate( this%nnlf_list( this%nn_lf) )
+    allocate( this%list( this%nsites,2) )
+    allocate( this%invlist(l1, this%nsub) )
+
+    ind = 0
+    do i1 = 1, this%l1
+        this%list( i1, 1) = i1
+        this%list( i1, 2) = 1
+        this%rcord( i1, 1) = dble(i1)
+        this%invlist(i1,1) = i1
+        if( mod(i1,2) == 0 ) then
+            ind = ind + 1
+            this%nnlf_list(ind) = i1
+        end if
+    end do
+    this%cord = this%ulist
+    !                                                                                                                                                                       
+    !              A ----a1--- A --------- A                                                                 
+    !                                                                                              
+
+    ! set nearest neighbor
+    allocate( this%nnvecr(1,2,this%nsites) )
+    allocate( this%nnveci(1,2,this%nsites) )
+    allocate( this%nnlist(this%nsites,2) )
+    allocate( this%snlist(this%nsites,2) )
+    allocate( this%tnlist(this%nsites,2) )
+    ! A->B
+    do i = 1, this%nsites, 2
+        this%nnvecr(1,1,i) = 1.d0 ! in the unit of a1_p and a2_p
+        this%nnvecr(1,2,i) = -1.d0
+        this%nnveci(1,1,i) = 1
+        this%nnveci(1,2,i) = -1
+    end do
+    ! B->A
+    do i = 2, this%nsites, 2
+        this%nnvecr(1,1,i) = 1.d0 ! in the unit of a1_p and a2_p
+        this%nnvecr(1,2,i) = -1.d0
+        this%nnveci(1,1,i) = 1
+        this%nnveci(1,2,i) = -1
+    end do
+    do i  = 1, this%ncell
+        this%nnlist(i,1) = npbc(this%ulist(i,1)+1,l1)
+        this%nnlist(i,2) = npbc(this%ulist(i,1)-1,l1)
+
+        this%snlist(i,1) = npbc(this%ulist(i,1)+2,l1)
+        this%snlist(i,2) = npbc(this%ulist(i,1)-2,l1)
+
+        this%tnlist(i,1) = npbc(this%ulist(i,1)+3,l1)
+        this%tnlist(i,2) = npbc(this%ulist(i,1)-3,l1)
+    end do
+
+  end subroutine setup_chain_sub
+
+end module chain_lattice
+
 module latt2d_class
   use constants, only: dp, pi
   type, public :: latt2d
@@ -257,7 +576,7 @@ module latt2d_class
         write(fid,'(i6,3i4)') i,  this%listk(i,:)
     end do
   
-#IFDEF PLEVEL2
+#ifdef PLEVEL2
     if( this%ncell < 50 ) then
     write(fid, *)
     write(fid,'(a)') '----------------------------'
@@ -271,7 +590,7 @@ module latt2d_class
         end do
     end do
     end if
-#ENDIF
+#endif
   end subroutine print_latt2d_sub
 
 end module latt2d_class
@@ -758,7 +1077,8 @@ module latt3d_class
     mat(3,2) = dble(a3_p(2))
     mat(3,3) = dble(a3_p(3))
 
-    x = mat(1,1)*( mat(2,2)*mat(3,3) - mat(2,3)*mat(3,2) ) - mat(1,2)*( mat(2,1)*mat(3,3) - mat(2,3)*mat(3,1) ) + mat(1,3)*( mat(2,1)*mat(3,2) - mat(2,2)*mat(3,1) ) 
+    x = mat(1,1)*( mat(2,2)*mat(3,3) - mat(2,3)*mat(3,2) ) - mat(1,2)*( mat(2,1)*mat(3,3) - mat(2,3)*mat(3,1) )&
+    + mat(1,3)*( mat(2,1)*mat(3,2) - mat(2,2)*mat(3,1) ) 
     mat_inv(1,1) = 1.d0/x * (mat(2,2)*mat(3,3) - mat(2,3)*mat(3,2))
     mat_inv(1,2) = 1.d0/x * (mat(1,3)*mat(3,2) - mat(1,2)*mat(3,3)) 
     mat_inv(1,3) = 1.d0/x * (mat(1,2)*mat(2,3) - mat(1,3)*mat(2,2)) 
@@ -925,7 +1245,7 @@ module latt3d_class
         write(fid,'(i6,3i4)') i,  this%listk(i,:)
     end do
   
-#IFDEF PLEVEL2
+#ifdef PLEVEL2
     if( this%ncell < 50 ) then
     write(fid, *)
     write(fid,'(a)') '----------------------------'
@@ -939,7 +1259,7 @@ module latt3d_class
         end do
     end do
     end if
-#ENDIF
+#endif
   end subroutine print_latt3d_sub
 
 end module latt3d_class

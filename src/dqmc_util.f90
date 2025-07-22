@@ -67,6 +67,7 @@ module dqmc_util
     !------------------------------------------------
     call system_clock(system_time)
     stream_seed = abs( system_time - ( irank * 1981 + 2008 ) * 951049 )
+    ! stream_seed = abs( 0 - ( irank * 1981 + 2008 ) * 951049 )
 #IFDEF TEST
     stream_seed = abs( 0 - ( irank * 1981 + 2008 ) * 951049 )
     write(fout, '(a,i20)') ' stream_seed = ', stream_seed
@@ -137,6 +138,8 @@ module dqmc_util
         write(fout,'(a)') ' >>> Honeycomb lattice model'
 #ELIF CUBIC
         write(fout,'(a)') ' >>> Cubic lattice model'
+#elif defined(CHAIN)
+        write(fout,'(a)') ' >>> Chain lattice model'
 #ENDIF
 #IFDEF EXACTHS
         write(fout,'(a)') ' >>> Use exact density-channel HS transformation for SU(N<=6) Hubbard interaction'
@@ -221,7 +224,9 @@ module dqmc_util
     write(fout,'(a,f7.3)')    ' rv      = ', rv
     write(fout,*)             ' lprojv   = ', lprojv
     write(fout,'(a,i4)')      ' la     = ', latt%l1
+#if (defined(HONEYCOMB) || defined(SQUARE) || defined(CUBIC))
     write(fout,'(a,i4)')      ' lb     = ', latt%l2
+#endif
 #IFDEF CUBIC
     write(fout,'(a,i4)')      ' lc     = ', latt%l3
 #ENDIF
@@ -266,6 +271,8 @@ module dqmc_util
 #ENDIF
 #IFDEF CUBIC
     write(fout,'(a)') 'cubic_lattice'
+#elif defined(CHAIN)
+    write(fout,'(a)') 'chain_lattice'
 #ENDIF
     call latt%print_latt(fout)
   

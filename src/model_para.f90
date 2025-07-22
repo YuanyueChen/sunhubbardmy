@@ -6,29 +6,29 @@ module model_para
   ! subroutine make_tables, read parameters from input file, and set up parameters
   ! subroutine deallocate_tables, deallocate parameter arrays
   use constants, only: dp, czero, cone, ctwo, cthree, cfour, pi
-#IFDEF HONEYCOMB
+#if defined(CHAIN)
+  use chain_lattice
+#elif defined(HONEYCOMB)
   use honeycomb_lattice
-#ENDIF
-#IFDEF SQUARE
+#elif defined(SQUARE)
   use square_lattice
-#ENDIF
-#IFDEF CUBIC
+#elif defined(CUBIC)
   use cubic_lattice
-#ENDIF
+#endif
   use spring ! random number generator
   use dqmc_basic_data
   implicit none
 
   ! lattice
-#IFDEF HONEYCOMB
+#if defined(CHAIN)
+  type(chain) :: latt
+#elif defined(HONEYCOMB)
   type(honeycomb) :: latt
-#ENDIF
-#IFDEF SQUARE
+#elif defined(SQUARE)
   type(square) :: latt
-#ENDIF
-#IFDEF CUBIC
+#elif defined(CUBIC)
   type(cubic) :: latt
-#ENDIF
+#endif
   integer, save :: ndim ! typical dimension of matrix, usually it is the total number of sites of the system
   integer, save :: lq   ! total number of unit cell
   integer, save :: norb ! number of orbital*sublattice (e.g. for single orbital model, 1 for square, 2 for honeycomb)
@@ -125,33 +125,40 @@ module model_para
 
     include 'mpif.h'
 
-    integer :: i, nwrap_mid
+    integer :: i, j, k, count, nwrap_mid
     real(dp) :: rtmp
     complex(dp) :: zw
     logical :: exists
 
-#IFDEF CUBIC
+#if defined(CUBIC)
     integer :: la, lb, lc ! lattice size in each direction, for 3d
     real(dp) :: a1_p(3), a2_p(3), a3_p(3) ! primitive vectors, for 3d
-#ELSE
+#elif defined(CHAIN)
+    integer :: la ! lattice size in each direction, for 1d
+    real(dp) :: a1_p(1) ! primitive vectors, for 1d
+#else
     integer :: la, lb ! lattice size in each direction, for 2d
     real(dp) :: a1_p(2), a2_p(2) ! primitive vectors, for 2d
-#ENDIF
+#endif
 
     ! namelist is used for reading parameters from input file
-#IFDEF CUBIC
+#if defined(CUBIC)
     namelist /model_para/ la, lb, lc, beta, dtau, rt, t2, t3, nu, mu, rhub, rv, rhub_plq, alpha, theta, nflr, lprojplqu, lprojv, lproju, xmag, flux_x, flux_y, dimer, rndness
-#ELSE
+#elif defined(CHAIN)
+    namelist /model_para/ la, beta, dtau, rt, t2, t3, nu, mu, rhub, rv, rhub_plq, alpha, theta, nflr, lprojplqu, lprojv, lproju, xmag, flux_x, dimer, rndness
+#else
     namelist /model_para/ la, lb, beta, dtau, rt, t2, t3, nu, mu, rhub, rv, rhub_plq, alpha, theta, nflr, lprojplqu, lprojv, lproju, xmag, flux_x, flux_y, dimer, rndness
-#ENDIF
-    namelist /ctrl_para/ lstabilize, nwrap, nsweep, nbin, nublock, nustock, ltau, dyntau, obs_eqt_mid_len
+#endif
+    namelist /ctrl_para/ lstabilize, nwrap, nsweep, nbin, nublock, ltau, dyntau, obs_eqt_mid_len
     
     ! default parameters
     la   = 2
+#if (defined(HONEYCOMB) || defined(SQUARE) || defined(CUBIC))
     lb   = 2
-#IFDEF CUBIC
+#endif
+#if defined(CUBIC)
     lc   = 2
-#ENDIF
+#endif
     beta = 20
     dtau = 0.05d0
     rt   = 1.d0
@@ -199,10 +206,12 @@ module model_para
 !#ifdef MPI
     ! broadcast parameters to all processes
     call mpi_bcast( la,           1, mpi_integer,  0, mpi_comm_world, ierr )
+#if (defined(HONEYCOMB) || defined(SQUARE) || defined(CUBIC))
     call mpi_bcast( lb,           1, mpi_integer,  0, mpi_comm_world, ierr )
-#IFDEF CUBIC
+#endif
+#if defined(CUBIC)
     call mpi_bcast( lc,           1, mpi_integer,  0, mpi_comm_world, ierr )
-#ENDIF
+#endif
     call mpi_bcast( beta,         1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( dtau,         1, mpi_real8,    0, mpi_comm_world, ierr )
     call mpi_bcast( rt,           1, mpi_real8,    0, mpi_comm_world, ierr )
@@ -300,23 +309,30 @@ module model_para
     end if
 
     ! set up lattice
-#IFDEF HONEYCOMB
+#if defined(CHAIN)
+    !lattice
+    if (mod(la,2) .ne. 0) then
+        stop 'Chain lattice is only implemented for even number of unit cells !'
+    end if
+    lq = la
+    ndim = lq
+    a1_p(1) = 1.0d0
+    call latt%setup_chain(la,a1_p)
+#elif defined(HONEYCOMB)
     ! lattice
     lq = la*lb
     ndim = lq*2
    	a1_p(1) = 0.5d0 ; a1_p(2) = -0.5d0*dsqrt(3.d0)
     a2_p(1) = 0.5d0 ; a2_p(2) =  0.5d0*dsqrt(3.d0)
     call latt%setup_honeycomb(la,lb,a1_p,a2_p)
-#ENDIF
-#IFDEF SQUARE
+#elif defined(SQUARE)
     ! lattice
     lq = la*lb
     ndim = lq
    	a1_p(1) = 1.0d0 ; a1_p(2) =  0.0d0
     a2_p(1) = 0.0d0 ; a2_p(2) =  1.0d0
     call latt%setup_square(la,lb,a1_p,a2_p)
-#ENDIF
-#IFDEF CUBIC
+#elif defined(CUBIC)
     ! lattice
     lq = la*lb*lc
     ndim = lq
@@ -324,7 +340,7 @@ module model_para
     a2_p(1) = 0.0d0 ; a2_p(2) =  1.0d0; a2_p(3) = 0.d0;
     a3_p(1) = 0.0d0 ; a3_p(2) =  0.0d0; a3_p(3) = 1.d0;
     call latt%setup_cubic(la,lb,lc,a1_p,a2_p,a3_p)
-#ENDIF
+#endif
 
     ne = ndim/2+int(nu*dble(ndim)/8.d0)  ! number of particles
     ltrot = nint( beta / dtau ) ! total number of time slices

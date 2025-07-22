@@ -30,12 +30,10 @@ subroutine dqmc_left_backward_prop(this, nf, gmat)
       do i = 1,latt%nn_lf
          ist = i + (nf - 1)*latt%nn_lf
          i1 = latt%nnlf_list(i) ! A site
-         i2 = latt%nnlist(i1,nf)
+         i2 = latt%nnlist(i1,nf) ! B site
          do j = 1, n2
             v1(j) = this%urtm1(ist,1,1)*gmat%blk1(i1,j) + this%urtm1(ist,1,2)*gmat%blk1(i2,j) 
             v2(j) = this%urtm1(ist,2,1)*gmat%blk1(i1,j) + this%urtm1(ist,2,2)*gmat%blk1(i2,j) 
-         enddo
-         do j = 1, n2
             gmat%blk1(i1,j) = v1(j)
             gmat%blk1(i2,j) = v2(j)
          enddo
@@ -52,7 +50,45 @@ subroutine dqmc_left_backward_prop(this, nf, gmat)
   type(DFTI_DESCRIPTOR), POINTER :: Desc_Handle_Dim1
   complex(dp), dimension(:), allocatable :: fftmp
 
-#IFDEF SQUARE
+#IFDEF CHAIN
+  integer :: dimm(1)
+#IFDEF TIMING 
+  call cpu_time_now(starttime)
+#ENDIF
+  n2 = size(gmat%blk1,2)
+  dimm(:) = (/latt%l1/)
+  Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 1, dimm)
+  allocate( fftmp(lq*n2) )
+
+  ! perform n2 two-dimensional transforms along 1st dimension of gmat
+  fftmp = reshape( gmat%blk1, (/lq*n2/) )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_NUMBER_OF_TRANSFORMS, n2 )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_INPUT_DISTANCE, lq )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_OUTPUT_DISTANCE, lq )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_FORWARD_SCALE, 1.d0/dsqrt(dble(lq)) )
+  Status = DftiCommitDescriptor( Desc_Handle_Dim1 )
+  Status = DftiComputeForward( Desc_Handle_Dim1, fftmp )
+
+  gmat%blk1 = reshape( fftmp, (/lq,n2/) )
+  do j = 1, n2
+      do i = 1, lq
+          gmat%blk1(i,j) = gmat%blk1(i,j) * this%exph0kinv(i)
+      end do
+  end do
+
+  ! perform n2 two-dimensional transforms along 1st dimension of gmat
+  fftmp = reshape( gmat%blk1, (/lq*n2/) )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_BACKWARD_SCALE, 1.d0/dsqrt(dble(lq)) )
+  Status = DftiCommitDescriptor( Desc_Handle_Dim1 )
+  Status = DftiComputeBackward( Desc_Handle_Dim1, fftmp )
+
+  Status = DftiFreeDescriptor( Desc_Handle_Dim1 )
+
+  gmat%blk1 = reshape( fftmp, (/lq,n2/) )
+
+  deallocate( fftmp )
+
+#ELIF SQUARE
   integer :: dimm(2)
 #IFDEF TIMING 
   call cpu_time_now(starttime)
@@ -89,6 +125,7 @@ subroutine dqmc_left_backward_prop(this, nf, gmat)
   gmat%blk1 = reshape( fftmp, (/lq,n2/) )
 
   deallocate( fftmp )
+
 #ELIF CUBIC
   integer :: dimm(3)
 #IFDEF TIMING 
@@ -126,6 +163,7 @@ subroutine dqmc_left_backward_prop(this, nf, gmat)
   gmat%blk1 = reshape( fftmp, (/lq,n2/) )
 
   deallocate( fftmp )
+
 #ELIF HONEYCOMB
   integer :: i1, i2, dimm(2)
   complex(dp), dimension(:,:), allocatable :: gtmp

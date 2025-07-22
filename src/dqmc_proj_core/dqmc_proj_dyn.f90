@@ -29,7 +29,7 @@ subroutine dqmc_proj_dyn(ust, ul, ur, xmax_dyn1)
 #ENDIF
      ! ur is on time slice nt
      ntau = nt - ntauin
-     !if ( mod(nt,nwrap).eq.0) then
+     ! assume that iwrap_nt(ntauin) > 0, otherwise the dynamical measurements before the first wrap are not correct since g00, gtt, gt0, g0t are not initialized.
      if ( iwrap_nt(nt) .gt. 0 ) then
         ! write(fout,'(a,i6)') 'wrapping, nt = ', nt
         ntau = nt - ntauin

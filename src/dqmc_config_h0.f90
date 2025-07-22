@@ -7,25 +7,19 @@ module dqmc_config_h0
       integer :: lq, ltrot
       real(dp) :: rt, mu
       complex(dp), allocatable :: h0mat(:,:)
-#IFDEF BREAKUP_T
+#if defined(BREAKUP_T)
       complex(dp), allocatable :: urt(:,:,:), urtm1(:,:,:)
-
-#ELIF FFT
-
-#IFDEF SQUARE
+#elif defined(FFT)
+#if defined(SQUARE) || defined(CUBIC) || defined(CHAIN)
       complex(dp), allocatable :: exph0k(:)
       complex(dp), allocatable :: exph0kinv(:)
-#ELIF CUBIC
-      complex(dp), allocatable :: exph0k(:)
-      complex(dp), allocatable :: exph0kinv(:)
-#ELIF HONEYCOMB
+#elif defined(HONEYCOMB)
       complex(dp), allocatable :: exph0k(:,:,:)
       complex(dp), allocatable :: exph0kinv(:,:,:)
-#ENDIF
-
-#ELSE
+#endif
+#else
       complex(dp), allocatable :: urt(:,:), urtm1(:,:)
-#ENDIF
+#endif
       contains
         procedure, public :: set_h0conf           => dqmc_set_h0conf
         procedure, public :: left_backward_prop   => dqmc_left_backward_prop
@@ -45,11 +39,13 @@ module dqmc_config_h0
 
   contains
 
-#IFDEF CUBIC
+#if defined(CUBIC)
 #include 'dqmc_config_h0/expar3d.f90'
-#ELSE
+#elif defined(CHAIN)
+#include 'dqmc_config_h0/expar1d.f90'
+#else
 #include 'dqmc_config_h0/expar.f90'
-#ENDIF
+#endif
 #include 'dqmc_config_h0/seth0.f90'
 #include 'dqmc_config_h0/set_trial_h0.f90'
 #include 'dqmc_config_h0/dqmc_set_h0conf.f90'
@@ -63,13 +59,13 @@ module dqmc_config_h0
     implicit none
     type(h0conf) :: this
     deallocate( this%h0mat )
-#IFDEF FFT
+#if defined(FFT)
     deallocate( this%exph0k )
     deallocate( this%exph0kinv )
-#ELSE
+#else
     deallocate( this%urt )
     deallocate( this%urtm1 )
-#ENDIF
+#endif
   end subroutine deallocate_h0conf
 
 end module dqmc_config_h0

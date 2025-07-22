@@ -1,4 +1,4 @@
-  subroutine dqmc_set_h0conf(this, lq, ltrot, rt, mu )
+subroutine dqmc_set_h0conf(this, lq, ltrot, rt, mu )
     use model_para, only: latt, xmag, flux_x, flux_y, dimer, dtau
     implicit none
     class(h0conf) :: this
@@ -80,6 +80,9 @@
 #ELIF SQUARE
     complex(dp), allocatable :: h0k(:)
     integer :: Status, Stride(3), dimm(2)
+#ELIF CHAIN
+    complex(dp), allocatable :: h0k(:)
+    integer :: Status, Stride(2), dimm(1)
 #ENDIF
     this%lq = lq
     this%ltrot = ltrot
@@ -90,9 +93,79 @@
     allocate( h0vec(latt%nsites*latt%nsites) )
     call seth0(this%h0mat, rt, mu, xmag, flux_x, flux_y, dimer)
 
+  ! case 2.0, fft for chain
+  ! H = U D U^+ => D = U^+ H U
+#IFDEF CHAIN
+  dimm = (/latt%l1/)
+  allocate( this%exph0k(lq), this%exph0kinv(lq) )
+  allocate( h0k(lq) )
+#IFDEF TEST
+  write(fout, '(a)') 'before fft, h0mat = '
+  do i = 1, lq
+      write(fout, '(16f8.3)') dble(this%h0mat(i,:))
+  end do
+#ENDIF
+  h0vec = reshape( this%h0mat, (/lq*lq/) )
+  Status = DftiCreateDescriptor(Desc_Handle_Dim1, DFTI_DOUBLE, DFTI_COMPLEX, 1, dimm )
+  Status = DftiCreateDescriptor(Desc_Handle_Dim2, DFTI_DOUBLE, DFTI_COMPLEX, 1, dimm )
+
+  ! perform lq two-dimensional transforms along 1st dimension of h0mat
+  ! U^+ H
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_NUMBER_OF_TRANSFORMS, lq )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_INPUT_DISTANCE, lq )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_OUTPUT_DISTANCE, lq )
+  Status = DftiSetValue( Desc_Handle_Dim1, DFTI_FORWARD_SCALE, 1.d0/dsqrt(dble(lq)) )
+  Status = DftiCommitDescriptor( Desc_Handle_Dim1 )
+  Status = DftiComputeForward( Desc_Handle_Dim1, h0vec )
+  ! perform lq two-dimensional transforms along 2nd dimension of h0mat
+  ! (U^+ H) U
+  ! Stride is used to locate the data
+  ! e.g. suppose our data has structure data(i,j1), where j1 are the index for 2nd dimension
+  !      then the address is i + s1*i + s2*j1
+  Stride(1) = 0; Stride(2) = lq;
+  Status = DftiSetValue( Desc_Handle_Dim2, DFTI_NUMBER_OF_TRANSFORMS, lq )
+  Status = DftiSetValue( Desc_Handle_Dim2, DFTI_INPUT_DISTANCE, 1 )
+  Status = DftiSetValue( Desc_Handle_Dim2, DFTI_OUTPUT_DISTANCE, 1 )
+  Status = DftiSetValue( Desc_Handle_Dim2, DFTI_INPUT_STRIDES, Stride )
+  Status = DftiSetValue( Desc_Handle_Dim2, DFTI_OUTPUT_STRIDES, Stride )
+  Status = DftiSetValue( Desc_Handle_Dim2, DFTI_BACKWARD_SCALE, 1.d0/dsqrt(dble(lq)) )
+  Status = DftiCommitDescriptor( Desc_Handle_Dim2 )
+  Status = DftiComputeBackward( Desc_Handle_Dim2, h0vec )
+  Status = DftiFreeDescriptor( Desc_Handle_Dim1 )
+  Status = DftiFreeDescriptor( Desc_Handle_Dim2 )
+
+  this%h0mat = reshape( h0vec, (/lq,lq/) )
+  do i = 1, lq
+      h0k(i) = this%h0mat(i,i)
+      this%exph0k(i)    = exp( -dcmplx(0.5d0*dtau,0.d0)*this%h0mat(i,i) )
+      this%exph0kinv(i) = exp(  dcmplx(0.5d0*dtau,0.d0)*this%h0mat(i,i) )
+  end do
+#IFDEF TEST
+  write(fout, '(a)') 'after fft, h0mat = '
+  do i = 1, lq
+      write(fout, '(16f8.3)') dble(this%h0mat(i,:))
+  end do
+#ENDIF
+  if( irank.eq.0 ) then
+      write(fout,*)
+      write(fout,'(a)') 'fft get eigenvalues = '
+      do i = 1, lq
+          write(fout,'(e16.8)') dble(h0k(i))
+      end do
+
+      en_free = 0.d0
+      do i = 1, lq
+          if (dble(h0k(i))<=0.d0) then
+              en_free = en_free + dble(h0k(i))
+          end if
+      end do
+      write(fout,*)
+      write(fout,'(a,e16.8)') ' fft get en_free = ', en_free
+  end if
+
   ! case 2.1, fft for square
   ! H = U D U^+ => D = U^+ H U
-#IFDEF SQUARE
+#ELIF SQUARE
   dimm = (/latt%l1, latt%l2/)
   allocate( this%exph0k(lq), this%exph0kinv(lq) )
   allocate( h0k(lq) )

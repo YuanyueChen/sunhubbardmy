@@ -5,8 +5,8 @@ LINKER = $(F90)
 
 # fortran preprocessor options, common setting
 #-------------------------------------------------------------------------
-RUNMODE = -DFFT -DRENYI -DDELAY -DCHAIN -DDYNERROR -DWRAPERROR # -DTEST # -DBREAKUP_T #  -DTEST -DTEST_LEVEL3 # DSQUARE
-OMP    = -qopenmp
+RUNMODE = -DBREAKUP_T -DSUBMATRIX -DDELAYLR -DCHAIN -DDYNERROR -DWRAPERROR# -DTEST_LEVEL3 -DPLEVEL2 # -DBREAKUP_T #  -DTEST -DTEST_LEVEL3 # DSQUARE
+# OMP    = -qopenmp
 FPP    = -fpp
 CPP    = $(FPP) $(RUNMODE) $(OMP)
 
@@ -16,7 +16,7 @@ CPP    = $(FPP) $(RUNMODE) $(OMP)
 #CHECK  = -warn all -check all -traceback -g -nogen-interfaces
 #CHECK  = -warn all -check uninit,bounds,arg_temp_created -traceback -g -nogen-interfaces
 #CDUMP  = -vec-report2 -openmp-report2 -nogen-interfaces
-LEVEL  = -O3 -march=core-avx2 -unroll-aggressive  -align all
+LEVEL  = -O3 -xCORE-AVX2 -unroll -align all
 #MKL =  -mkl=parallel
 MTUNE  = #-mtune=core-avx2
 INCLUDE= #-I${MKLROOT}/include
@@ -32,4 +32,4 @@ LIBS= ../lib/libMM.a
 #LIBS+= -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a ${MKLROOT}/lib/intel64/libmkl_core.a \
 #       ${MKLROOT}/lib/intel64/libmkl_sequential.a -Wl,--end-group -lpthread -lm
 LIBS+= -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a ${MKLROOT}/lib/intel64/libmkl_intel_thread.a \
-       ${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -liomp5 -lpthread -lm -ldl 
+       ${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -liomp5 -lpthread -lm -ldl

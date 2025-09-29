@@ -140,6 +140,8 @@ module dqmc_util
         write(fout,'(a)') ' >>> Cubic lattice model'
 #elif defined(CHAIN)
         write(fout,'(a)') ' >>> Chain lattice model'
+#ELIF R_CUBIC
+        write(fout,'(a)') ' >>> Rhombohedral cubic lattice model'
 #ENDIF
 #IFDEF EXACTHS
         write(fout,'(a)') ' >>> Use exact density-channel HS transformation for SU(N<=6) Hubbard interaction'
@@ -227,9 +229,9 @@ module dqmc_util
 #if (defined(HONEYCOMB) || defined(SQUARE) || defined(CUBIC))
     write(fout,'(a,i4)')      ' lb     = ', latt%l2
 #endif
-#IFDEF CUBIC
+#if (defined(CUBIC) || defined(R_CUBIC))
     write(fout,'(a,i4)')      ' lc     = ', latt%l3
-#ENDIF
+#endif
     write(fout,'(a,f6.2)')    ' beta   = ', beta
     write(fout,'(a,f7.3)')    ' dtau   = ', dtau
     write(fout,'(a,i6)')      ' ndim = ', ndim
@@ -273,6 +275,8 @@ module dqmc_util
     write(fout,'(a)') 'cubic_lattice'
 #elif defined(CHAIN)
     write(fout,'(a)') 'chain_lattice'
+#ELIF R_CUBIC
+    write(fout,'(a)') 'rhombohedral_cubic_lattice'
 #ENDIF
     call latt%print_latt(fout)
   

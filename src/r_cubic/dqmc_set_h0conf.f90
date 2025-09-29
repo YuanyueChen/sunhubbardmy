@@ -1,4 +1,4 @@
-subroutine dqmc_set_h0conf(this, lq, ltrot, rt, mu, rtd)
+subroutine dqmc_set_h0conf(this, lq, ltrot, rt, mu , rtd)
     use model_para, only: latt, xmag, flux_x, flux_y, dimer, dtau
     implicit none
     class(h0conf) :: this
@@ -24,7 +24,7 @@ subroutine dqmc_set_h0conf(this, lq, ltrot, rt, mu, rtd)
     this%ltrot = ltrot
     this%rt = rt
     this%mu = mu
-    this%rtd = rtd
+    this%rth = rth
     allocate( this%urt(latt%nn_nf*latt%nn_lf,2,2) )
     allocate( this%urtm1(latt%nn_nf*latt%nn_lf,2,2) )
 
@@ -41,7 +41,7 @@ subroutine dqmc_set_h0conf(this, lq, ltrot, rt, mu, rtd)
            if (nf .ne. 4) then
            z = dcmplx(-rt,0.d0)*expar(i0,nf,xmag,flux_x,flux_y,dimer)
            else
-           z = dcmplx(-rtd,0.d0)*expar(i0,nf,xmag,flux_x,flux_y,dimer)
+           z = dcmplx(-rth,0.d0)*expar(i0,nf,xmag,flux_x,flux_y,dimer)
            end if
            hmat_tmp(1,2) = z
            hmat_tmp(2,1) = dconjg(z)

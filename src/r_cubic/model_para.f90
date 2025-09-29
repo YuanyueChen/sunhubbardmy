@@ -76,7 +76,6 @@ module model_para
 #ENDIF
   ! dqmc relative
   logical, save :: lwrapT ! whether wrap hopping (false when rt=0, true when rt \= 0)
-  logical, save :: lwrapTH ! whether wrap hopping between different layers (false when rtd=0, true when rth\=0) 
   logical, save :: lwrapu ! whether wrap onsite interaction (false when rhub=0, true when rhub\=0)
   logical, save :: lwrapv ! whether wrap nn interaction (false when rv=0, true when rv\=0)
   logical, save :: lwrapplqu ! whether wrap plaquette interaction (false when rhub_plq=0, true when rhub_plq\=0)
@@ -289,7 +288,7 @@ module model_para
         lwrapT = .false.
     end if
 
-    if(rtd .ne. 0.d0) then
+    if(rth .ne. 0.d0) then
         lwrapTH = .true.
     else
         lwrapTH = .false.
@@ -355,7 +354,7 @@ module model_para
    	a1_p(1) = 1.0d0 ; a1_p(2) =  0.0d0
     a2_p(1) = 0.0d0 ; a2_p(2) =  1.0d0
     call latt%setup_square(la,lb,a1_p,a2_p)
-#elif defined(CUBIC)
+#elif (defined(CUBIC) || defined(R_CUBIC))
     ! lattice
     lq = la*lb*lc
     ndim = lq
@@ -363,14 +362,6 @@ module model_para
     a2_p(1) = 0.0d0 ; a2_p(2) =  1.0d0; a2_p(3) = 0.d0;
     a3_p(1) = 0.0d0 ; a3_p(2) =  0.0d0; a3_p(3) = 1.d0;
     call latt%setup_cubic(la,lb,lc,a1_p,a2_p,a3_p)
-#elif defined(R_CUBIC)
-    ! lattice
-    lq = la*lb*lc
-    ndim = lq*6
-   	a1_p(1) = 0.5d0*dsqrt(3.d0) ; a1_p(2) =  -0.5d0; a1_p(3) = 0.d0;
-    a2_p(1) = 0.5d0*dsqrt(3.d0) ; a2_p(2) =   0.5d0; a2_p(3) = 0.d0;  
-    a3_p(1) = 0.0d0             ; a3_p(2) =   0.0d0; a3_p(3) = 1.d0;
-    call latt%setup_r_cubic(la,lb,lc,a1_p,a2_p,a3_p) 
 #endif
 
     ne = ndim/2+int(nu*dble(ndim)/8.d0)  ! number of particles

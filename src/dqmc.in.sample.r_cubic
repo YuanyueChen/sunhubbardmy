@@ -1,0 +1,31 @@
+&model_para
+rt = 1.0,
+rtd = 0.5,
+la = 3,
+lb = 3,
+lc = 1,
+beta = 4.0,
+dtau = 0.1,
+nu =  0.0,
+rhub = 4.0,
+rhub_plq = 0.0,
+rv = 0.0,
+alpha = 0.0,
+theta = 0.0,
+nflr = 2,
+lprojplqu = F,
+lproju = F,
+xmag = 0.0,
+flux_x = 0.0000,
+flux_y = 0.0,
+rndness = 0.00001,
+/
+&ctrl_para
+ltau = F,
+dyntau = 0.0,
+obs_eqt_mid_len = 21,
+nwrap = 10,
+nsweep = 2,
+nbin = 2,
+nublock = 0
+/

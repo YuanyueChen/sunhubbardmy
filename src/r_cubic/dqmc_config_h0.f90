@@ -5,12 +5,12 @@ module dqmc_config_h0
 
   type h0conf
       integer :: lq, ltrot
-      real(dp) :: rt, mu, rtd
+      real(dp) :: rt, mu, rth
       complex(dp), allocatable :: h0mat(:,:)
 #if defined(BREAKUP_T)
       complex(dp), allocatable :: urt(:,:,:), urtm1(:,:,:)
 #elif defined(FFT)
-#if defined(SQUARE) || defined(CUBIC) || defined(CHAIN) || defined(R_CUBIC)
+#if defined(SQUARE) || defined(CUBIC) || defined(CHAIN)
       complex(dp), allocatable :: exph0k(:)
       complex(dp), allocatable :: exph0kinv(:)
 #elif defined(HONEYCOMB)

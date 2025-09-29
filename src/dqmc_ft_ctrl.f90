@@ -13,7 +13,7 @@ module dqmc_ctrl
 
     ! H0 part
     if(lwrapT) then
-        call h0c%set_h0conf(lq, ltrot, rt, mu)
+        call h0c%set_h0conf(lq, ltrot, rt, mu, rtd)
     end if
 
     ! plaquette interaction

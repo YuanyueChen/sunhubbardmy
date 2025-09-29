@@ -1476,17 +1476,17 @@ module r_cubic_lattice   !in the rombohedral graphite(3 layers as a unit cell)
    use latt3d_class
    type, public, extends(latt3d) :: r_cubic
       contains 
-        procedure, public :: setup_r_cubic => setup_r_cubic_sub 
+        procedure, public :: setup_cubic => setup_cubic_sub 
    end type r_cubic  
-  private :: setup_r_cubic_sub
+
   contains
 
- 
+  private :: setup_r_cubic_sub
 
   subroutine setup_r_cubic_sub(this, l1, l2, l3, a1_p, a2_p, a3_p)
 
     class(r_cubic) :: this
-    integer, intent(in) :: l1, l2, l3
+    integer, intent(in) :: l1, l2, l3, isub, i1, i2, i3, i, ind
     real(dp), dimension(:), intent(in) :: a1_p, a2_p, a3_p
 
     real(dp) :: ai_p(3), xk_p(3), b1_p(3), b2_p(3), b3_p(3), bz1_p(3), bz2_p(3), bz3_p(3), b_p(3) 
@@ -1504,10 +1504,6 @@ module r_cubic_lattice   !in the rombohedral graphite(3 layers as a unit cell)
     allocate( this%nnlf_list(this%nn_lf) )
     allocate( this%list( this%nsites, 2) )
     allocate( this%invlist(l1, l2, l3,this%nsub))
-
-    do i = 1, this%nn_lf
-        this%nnlf_list(i) = 2*i - 1
-    end do
 
     ind = 0
     do i3 = 1, this%l3
@@ -1554,18 +1550,12 @@ module r_cubic_lattice   !in the rombohedral graphite(3 layers as a unit cell)
 
 
 ! set nearest neighbor
-    allocate( this%nnvecr(3, 4, this%nsites))
-    allocate( this%nnveci(3, 4, this%nsites))
+    ! allocate( this%nnvecr(3, 4, this%nsites))
+    ! allocate( this%nnveci(3, 4, this%nsites))
     allocate( this%nnlist(this%nsites, 4))
-    allocate( this%snlist(this%nsites, 12))
-    allocate( this%tnlist(this%nsites, 8))
-    ! set plq_cord       
-    allocate( this%plq_cord(8, this%ncell))
-    this%nnvecr = czero
-    this%nnveci = czero
-    this%snlist = czero
-    this%tnlist = czero
-    this%plq_cord = czero
+    !allocate( this%snlist(this%nsites, 12))
+    !allocate( this%tnlist(this%nsites, 8))
+
     ! Ai->Bi(the same layer)+Ai->B(i-1)
     ! do i = 1, this%nsites, 2
     !     this%nnvecr(:,1,i) = (/ 1.d0/3.d0, 1.d0/3.d0, 0.d0/)   ! in the unit of a1_p and a2_p
